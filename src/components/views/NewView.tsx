@@ -1,12 +1,18 @@
-import React from 'react';
-import { FileText, Link, Sparkles } from 'lucide-react';
+import React, { useState } from 'react';
+import { FileText, Link, Sparkles, Check } from 'lucide-react';
+import type { DocumentContent } from '../../types/document';
+import SingleVoiceNarrationPanel from '../narration/SingleVoiceNarrationPanel';
 
 interface NewViewProps {
   currentView: string;
   onOpenUpload: () => void;
+  uploadedContent?: DocumentContent[] | null;
+  uploadedFiles?: File[] | null;
 }
 
-const NewView: React.FC<NewViewProps> = ({ currentView, onOpenUpload }) => {
+const NewView: React.FC<NewViewProps> = ({ currentView, onOpenUpload, uploadedContent, uploadedFiles }) => {
+  const [isSingleVoicePanelOpen, setIsSingleVoicePanelOpen] = useState(false);
+  
   if (currentView !== 'new') return null;
 
   const uploadOptions = [
@@ -39,23 +45,29 @@ const NewView: React.FC<NewViewProps> = ({ currentView, onOpenUpload }) => {
       description: 'Professional narrator reading your content with adjustable speed',
       features: ['Natural speech patterns', 'Customizable pace', 'Clear pronunciation'],
       recommended: false,
+      action: () => setIsSingleVoicePanelOpen(true),
     },
     {
       title: 'Multi-Voice Conversation',
       description: 'Dynamic discussion between 2-4 AI speakers about your content',
       features: ['Natural interruptions', 'Emotional responses', 'Engaging dialogue'],
       recommended: true,
+      action: () => {},
     },
     {
       title: 'Expert Panel Discussion',
       description: 'Professional analysis with multiple expert perspectives',
       features: ['In-depth analysis', 'Opposing viewpoints', 'Expert insights'],
       recommended: false,
+      action: () => {},
     },
   ];
 
   return (
-    <div className="p-8 space-y-8">
+    <>
+      <div className={`p-8 space-y-8 transition-all duration-300 ${
+        isSingleVoicePanelOpen ? 'mr-1/2' : ''
+      }`}>
       {/* Hero Section */}
       <section className="text-center mb-12">
         <h1 className="text-4xl font-bold text-gray-900 mb-4">
@@ -76,8 +88,13 @@ const NewView: React.FC<NewViewProps> = ({ currentView, onOpenUpload }) => {
               <div
                 key={index}
                 onClick={option.action}
-                className="group p-6 bg-white rounded-xl border border-gray-200 hover-lift cursor-pointer transition-all duration-200"
+                className="group relative p-6 bg-white rounded-xl border border-gray-200 hover-lift cursor-pointer transition-all duration-200"
               >
+                {option.title === 'Upload Document' && uploadedContent && uploadedContent.length > 0 && (
+                  <div className="absolute -top-2 -right-2 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
+                    <Check size={14} className="text-white" />
+                  </div>
+                )}
                 <div className={`w-12 h-12 bg-gradient-to-br ${option.color} rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-200`}>
                   <Icon className="w-6 h-6 text-white" />
                 </div>
@@ -100,6 +117,7 @@ const NewView: React.FC<NewViewProps> = ({ currentView, onOpenUpload }) => {
           {generationStyles.map((style, index) => (
             <div
               key={index}
+              onClick={style.action}
               className={`relative p-6 rounded-xl border-2 transition-all duration-200 hover-lift cursor-pointer ${
                 style.recommended
                   ? 'border-accent-500 bg-accent-50'
@@ -152,7 +170,16 @@ const NewView: React.FC<NewViewProps> = ({ currentView, onOpenUpload }) => {
           ))}
         </div>
       </section>
-    </div>
+      </div>
+
+      {/* Single Voice Narration Panel */}
+      <SingleVoiceNarrationPanel
+        isOpen={isSingleVoicePanelOpen}
+        onClose={() => setIsSingleVoicePanelOpen(false)}
+        uploadedContent={uploadedContent}
+        uploadedFiles={uploadedFiles}
+      />
+    </>
   );
 };
 

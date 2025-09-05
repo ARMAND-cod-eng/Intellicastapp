@@ -3,6 +3,7 @@ import HomeView from './HomeView';
 import LibraryView from './LibraryView';
 import NewView from './NewView';
 import DocumentUpload from '../upload/DocumentUpload';
+import { PodcastGenerationView } from '../../views/PodcastGenerationView';
 import type { DocumentContent } from '../../types/document';
 
 interface MainContentProps {
@@ -11,30 +12,33 @@ interface MainContentProps {
 
 const MainContent: React.FC<MainContentProps> = ({ currentView }) => {
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+  const [uploadedContent, setUploadedContent] = useState<DocumentContent[] | null>(null);
+  const [uploadedFiles, setUploadedFiles] = useState<File[] | null>(null);
+  const [showPodcastGeneration, setShowPodcastGeneration] = useState(false);
 
   const handleFilesUploaded = (files: File[]) => {
     console.log('Files uploaded:', files);
-    // Handle file upload logic here
+    setUploadedFiles(files); // Store the original files
   };
 
   const handleDocumentsProcessed = (documents: DocumentContent[]) => {
     console.log('Documents processed:', documents);
-    // TODO: Store processed documents in state/store
-    // TODO: Navigate to podcast generation view
+    setUploadedContent(documents);
     setIsUploadModalOpen(false);
+    // Don't navigate to podcast generation view, just store the content
   };
 
   const renderView = () => {
     switch (currentView) {
       case 'home':
-        return <HomeView currentView={currentView} onOpenUpload={() => setIsUploadModalOpen(true)} />;
+        return <HomeView currentView={currentView} onOpenUpload={() => setIsUploadModalOpen(true)} uploadedContent={uploadedContent} />;
       case 'new':
-        return <NewView currentView={currentView} onOpenUpload={() => setIsUploadModalOpen(true)} />;
+        return <NewView currentView={currentView} onOpenUpload={() => setIsUploadModalOpen(true)} uploadedContent={uploadedContent} uploadedFiles={uploadedFiles} />;
       case 'library':
       case 'episodes':
         return <LibraryView currentView={currentView} />;
       default:
-        return <HomeView currentView="home" onOpenUpload={() => setIsUploadModalOpen(true)} />;
+        return <HomeView currentView="home" onOpenUpload={() => setIsUploadModalOpen(true)} uploadedContent={uploadedContent} />;
     }
   };
 

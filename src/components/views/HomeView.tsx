@@ -1,5 +1,6 @@
 import React from 'react';
-import { Play, Clock, Headphones } from 'lucide-react';
+import { Play, Clock, Headphones, Check } from 'lucide-react';
+import type { DocumentContent } from '../../types/document';
 
 interface Episode {
   id: string;
@@ -14,9 +15,10 @@ interface Episode {
 interface HomeViewProps {
   currentView: string;
   onOpenUpload: () => void;
+  uploadedContent?: DocumentContent[] | null;
 }
 
-const HomeView: React.FC<HomeViewProps> = ({ currentView, onOpenUpload }) => {
+const HomeView: React.FC<HomeViewProps> = ({ currentView, onOpenUpload, uploadedContent }) => {
   if (currentView !== 'home') return null;
 
   // Mock data for demonstration
@@ -193,8 +195,13 @@ const HomeView: React.FC<HomeViewProps> = ({ currentView, onOpenUpload }) => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div 
             onClick={onOpenUpload}
-            className="p-6 bg-white rounded-xl border border-gray-200/50 hover-lift cursor-pointer"
+            className="relative p-6 bg-white rounded-xl border border-gray-200/50 hover-lift cursor-pointer"
           >
+            {uploadedContent && uploadedContent.length > 0 && (
+              <div className="absolute -top-2 -right-2 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
+                <Check size={14} className="text-white" />
+              </div>
+            )}
             <div className="w-12 h-12 bg-gradient-to-br from-blue-100 to-blue-200 rounded-lg flex items-center justify-center mb-4">
               <Play className="w-6 h-6 text-blue-600" />
             </div>
