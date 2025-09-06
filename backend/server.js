@@ -7,16 +7,17 @@ import fs from 'fs-extra';
 // Import routes
 import narrationRoutes from './routes/narration.js';
 import audioRoutes from './routes/audio.js';
+import voicesRoutes from './routes/voices.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-const PORT = process.env.PORT || 3002;
+const PORT = process.env.PORT || 3003;
 
 // Middleware
 app.use(cors({
-  origin: ['http://localhost:5173', 'http://localhost:5174'], // Vite dev server
+  origin: ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175'], // Vite dev server
   credentials: true
 }));
 app.use(express.json({ limit: '50mb' }));
@@ -39,6 +40,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 // Routes
 app.use('/api/narration', narrationRoutes);
 app.use('/api/audio', audioRoutes);
+app.use('/api/voices', voicesRoutes);
 
 // Health check
 app.get('/health', (req, res) => {

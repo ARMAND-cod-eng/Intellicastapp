@@ -3,6 +3,7 @@ import Sidebar from './Sidebar';
 import TopBar from './TopBar';
 import AudioPlayer from '../audio/AudioPlayer';
 import MainContent from '../views/MainContent';
+import AIHealthCheck from '../debug/AIHealthCheck';
 
 const Layout: React.FC = () => {
   const [currentView, setCurrentView] = useState('home');
@@ -34,6 +35,9 @@ const Layout: React.FC = () => {
       {isPlayerVisible && (
         <AudioPlayer onClose={() => setIsPlayerVisible(false)} />
       )}
+
+      {/* AI Health Check - Debug Component */}
+      <AIHealthCheck />
     </div>
   );
 };

@@ -111,7 +111,7 @@ router.post('/generate', async (req, res) => {
     const {
       documentContent,
       narrationType = 'summary',
-      voice = 'emma',
+      voice: requestedVoice = 'emma',
       speed = 1.0,
       backgroundMusic = false,
       musicType = 'none'
@@ -140,11 +140,21 @@ router.post('/generate', async (req, res) => {
     // Generate unique ID for narration
     const narrationId = uuidv4();
     
-    // Generate TTS audio if not document-summary type
+    // Validate that voice is a Kokoro voice ID and get the final voice to use
+    let voice = requestedVoice;
+    if (!voice.startsWith('af_') && !voice.startsWith('am_') && !voice.startsWith('bf_') && !voice.startsWith('bm_')) {
+      console.warn(`⚠️  Invalid voice ID: ${requestedVoice}, defaulting to af_heart (Kokoro-82M only)`);
+      voice = 'af_heart';
+    }
+    
+    // Generate TTS audio with Kokoro-82M ONLY
     let audioResult = null;
     if (narrationType !== 'document-summary') {
-      console.log(`🎧 Generating TTS audio for narration...`);
-      audioResult = await ttsService.generateAudio(scriptResult.response, { voice, speed });
+      console.log(`🎧 Generating TTS audio with Kokoro-82M ONLY...`);
+      audioResult = await ttsService.generateAudio(scriptResult.response, { 
+        voice: voice, 
+        speed 
+      });
       
       if (!audioResult.success) {
         console.warn('⚠️  TTS generation failed, proceeding without audio');

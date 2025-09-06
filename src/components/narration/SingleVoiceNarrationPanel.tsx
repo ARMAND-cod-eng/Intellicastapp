@@ -1,7 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { X, Play, Pause, Volume2, VolumeX, Music, ChevronDown, Upload, FileText, Settings, Download, Square, MessageCircle, RotateCcw } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useDropzone } from 'react-dropzone';
+import { X, Play, Pause, Volume2, VolumeX, Music, ChevronDown, Upload, FileText, Settings, Download, Square, MessageCircle, RotateCcw, Mic2, Grid3X3 } from 'lucide-react';
 import type { DocumentContent } from '../../types/document';
 import { NarrationAPI } from '../../services/narrationApi';
+import KokoroVoiceSelector from '../voice/KokoroVoiceSelector';
 
 interface SingleVoiceNarrationPanelProps {
   isOpen: boolean;
@@ -16,7 +18,7 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
   uploadedContent,
   uploadedFiles
 }) => {
-  const [selectedVoice, setSelectedVoice] = useState('emma');
+  const [selectedVoice, setSelectedVoice] = useState('af_heart');
   const [narrationType, setNarrationType] = useState('summary');
   const [backgroundMusicEnabled, setBackgroundMusicEnabled] = useState(false);
   const [selectedMusic, setSelectedMusic] = useState('none');
@@ -36,14 +38,19 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
   const [audioUrl, setAudioUrl] = useState<string>('');
   const [audioElement, setAudioElement] = useState<HTMLAudioElement | null>(null);
   const [currentNarration, setCurrentNarration] = useState<{id: string, audioUrl: string, duration: number} | null>(null);
+  const [internalUploadedFiles, setInternalUploadedFiles] = useState<File[] | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [showAdvancedVoiceSelector, setShowAdvancedVoiceSelector] = useState(true);
+  const [contentCategory, setContentCategory] = useState<string>('');
 
-  const voiceOptions = [
-    { id: 'emma', name: 'Emma', description: 'Professional female voice', accent: 'American' },
-    { id: 'james', name: 'James', description: 'Authoritative male voice', accent: 'British' },
-    { id: 'sophia', name: 'Sophia', description: 'Warm female voice', accent: 'Australian' },
-    { id: 'michael', name: 'Michael', description: 'Deep male voice', accent: 'American' },
-    { id: 'olivia', name: 'Olivia', description: 'Clear female voice', accent: 'Canadian' },
-    { id: 'david', name: 'David', description: 'Friendly male voice', accent: 'Irish' },
+  // Popular Kokoro voices for simple selection mode
+  const popularKokoroVoices = [
+    { id: 'af_heart', name: 'Heart', description: 'Professional American female', accent: 'American' },
+    { id: 'bm_james', name: 'James', description: 'Authoritative British male', accent: 'British' },
+    { id: 'af_sophia', name: 'Sophia', description: 'Intellectual American female', accent: 'American' },
+    { id: 'am_adam', name: 'Adam', description: 'Confident American male', accent: 'American' },
+    { id: 'bf_heart', name: 'Heart', description: 'Refined British female', accent: 'British' },
+    { id: 'am_david', name: 'David', description: 'Friendly American male', accent: 'American' },
   ];
 
   const narrationTypes = [
@@ -63,13 +70,36 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
     { id: 'electronic', name: 'Electronic Minimal' },
   ];
 
+  // Handle file drop for internal uploads
+  const onDrop = useCallback((acceptedFiles: File[]) => {
+    if (acceptedFiles.length > 0) {
+      setInternalUploadedFiles(acceptedFiles);
+      setIsUploading(false);
+      // Process the file immediately
+      processDocumentThroughBackend(acceptedFiles);
+    }
+  }, []);
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    accept: {
+      'application/pdf': ['.pdf'],
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
+      'text/plain': ['.txt'],
+      'text/markdown': ['.md'],
+    },
+    maxFiles: 1,
+    maxSize: 50 * 1024 * 1024, // 50MB
+  });
+
   // Process document through backend API
-  const processDocumentThroughBackend = async () => {
-    if (!uploadedFiles || uploadedFiles.length === 0) {
+  const processDocumentThroughBackend = async (filesToProcess?: File[]) => {
+    const files = filesToProcess || uploadedFiles || internalUploadedFiles;
+    if (!files || files.length === 0) {
       return;
     }
 
-    const file = uploadedFiles[0];
+    const file = files[0];
     setIsProcessingDocument(true);
     
     try {
@@ -96,7 +126,13 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
     let content = '';
 
     // First try to get content from backend processing
-    if (uploadedFiles && uploadedFiles.length > 0) {
+    if (internalUploadedFiles && internalUploadedFiles.length > 0) {
+      if (!backendProcessedContent) {
+        content = await processDocumentThroughBackend(internalUploadedFiles) || '';
+      } else {
+        content = backendProcessedContent;
+      }
+    } else if (uploadedFiles && uploadedFiles.length > 0) {
       if (!backendProcessedContent) {
         content = await processDocumentThroughBackend() || '';
       } else {
@@ -132,7 +168,9 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
 
   // Get document summary for display
   const getDocumentSummary = () => {
-    if ((!uploadedContent || uploadedContent.length === 0) && (!uploadedFiles || uploadedFiles.length === 0)) {
+    if ((!uploadedContent || uploadedContent.length === 0) && 
+        (!uploadedFiles || uploadedFiles.length === 0) && 
+        (!internalUploadedFiles || internalUploadedFiles.length === 0)) {
       return "No document uploaded. Please upload a document to see the summary.";
     }
 
@@ -157,6 +195,8 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
     // Try to use backend-processed content first
     if (backendProcessedContent) {
       content = backendProcessedContent;
+    } else if (internalUploadedFiles && internalUploadedFiles.length > 0) {
+      content = await processDocumentThroughBackend(internalUploadedFiles) || '';
     } else if (uploadedFiles && uploadedFiles.length > 0) {
       content = await processDocumentThroughBackend() || '';
     } else if (uploadedContent && uploadedContent.length > 0) {
@@ -192,7 +232,7 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
           setAudioUrl(response.audioUrl);
           
           // Create and configure audio element
-          const audio = new Audio(`http://localhost:3002${response.audioUrl}`);
+          const audio = new Audio(`http://localhost:3003${response.audioUrl}`);
           audio.onloadeddata = () => {
             console.log('Audio loaded successfully');
             setAudioElement(audio);
@@ -227,11 +267,13 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
 
   // Generate summary when document is loaded
   useEffect(() => {
-    const hasContent = (uploadedContent && uploadedContent.length > 0) || (uploadedFiles && uploadedFiles.length > 0);
+    const hasContent = (uploadedContent && uploadedContent.length > 0) || 
+                      (uploadedFiles && uploadedFiles.length > 0) || 
+                      (internalUploadedFiles && internalUploadedFiles.length > 0);
     if (hasContent && !documentSummary && !isLoadingSummary && !isProcessingDocument) {
       generateDocumentSummary();
     }
-  }, [uploadedContent, uploadedFiles]);
+  }, [uploadedContent, uploadedFiles, internalUploadedFiles]);
 
   // Simulate voice intonation changes or use real audio data
   useEffect(() => {
@@ -259,7 +301,7 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
   const handleDownload = () => {
     if (currentNarration && audioUrl) {
       const link = document.createElement('a');
-      link.href = `http://localhost:3002${audioUrl}`;
+      link.href = `http://localhost:3003${audioUrl}`;
       link.download = `narration_${currentNarration.id}.wav`;
       document.body.appendChild(link);
       link.click();
@@ -288,6 +330,8 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
     // Try to use backend-processed content first
     if (backendProcessedContent) {
       content = backendProcessedContent;
+    } else if (internalUploadedFiles && internalUploadedFiles.length > 0) {
+      content = await processDocumentThroughBackend(internalUploadedFiles) || '';
     } else if (uploadedFiles && uploadedFiles.length > 0) {
       content = await processDocumentThroughBackend() || '';
     } else if (uploadedContent && uploadedContent.length > 0) {
@@ -543,7 +587,9 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
             {/* Left Side - Document Summary Section */}
             <div className="flex-1">
               <div className="bg-white rounded-xl border-2 border-blue-500/50 p-6 shadow-sm h-full">
-                {(uploadedContent && uploadedContent.length > 0) || (uploadedFiles && uploadedFiles.length > 0) ? (
+                {(uploadedContent && uploadedContent.length > 0) || 
+                 (uploadedFiles && uploadedFiles.length > 0) || 
+                 (internalUploadedFiles && internalUploadedFiles.length > 0) ? (
                   <>
                     <h2 className="text-xl font-bold text-gray-900 mb-2">Document Summary</h2>
                     <div className="mb-4">
@@ -552,9 +598,11 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
                         <span className="text-sm font-medium text-gray-700">
                           {uploadedContent && uploadedContent.length > 0 
                             ? uploadedContent[0].metadata?.fileName || uploadedContent[0].title
-                            : uploadedFiles && uploadedFiles.length > 0 
-                              ? uploadedFiles[0].name 
-                              : 'Document'}
+                            : internalUploadedFiles && internalUploadedFiles.length > 0
+                              ? internalUploadedFiles[0].name
+                              : uploadedFiles && uploadedFiles.length > 0 
+                                ? uploadedFiles[0].name 
+                                : 'Document'}
                         </span>
                       </div>
                     </div>
@@ -604,12 +652,26 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
                     </p>
                     
                     {/* Upload Area */}
-                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center mb-4 hover:border-blue-500/50 transition-colors bg-gray-50">
+                    <div 
+                      {...getRootProps()} 
+                      className={`border-2 border-dashed rounded-lg p-6 text-center mb-4 transition-colors cursor-pointer ${
+                        isDragActive 
+                          ? 'border-blue-500 bg-blue-50' 
+                          : 'border-gray-300 bg-gray-50 hover:border-blue-500/50'
+                      }`}
+                    >
+                      <input {...getInputProps()} />
                       <FileText className="w-10 h-10 text-gray-400 mx-auto mb-3" />
-                      <p className="text-gray-600 text-sm mb-3">Drag and drop your file here or click to browse</p>
-                      <button className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors">
-                        Choose File
-                      </button>
+                      {isDragActive ? (
+                        <p className="text-blue-600 text-sm mb-3">Drop your file here</p>
+                      ) : (
+                        <>
+                          <p className="text-gray-600 text-sm mb-3">Drag and drop your file here or click to browse</p>
+                          <div className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors inline-block">
+                            Choose File
+                          </div>
+                        </>
+                      )}
                     </div>
                   </>
                 )}
@@ -626,29 +688,61 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
 
                 {/* Voice Selection */}
                 <div className="mb-6">
-                  <div className="flex items-center space-x-2 mb-3">
-                    <Volume2 className="w-4 h-4 text-gray-700" />
-                    <h3 className="text-gray-900 font-medium text-sm">Voice Selection</h3>
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center space-x-2">
+                      <Volume2 className="w-4 h-4 text-gray-700" />
+                      <h3 className="text-gray-900 font-medium text-sm">Voice Selection</h3>
+                      <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">Kokoro-82M Only</span>
+                    </div>
+                    <button
+                      onClick={() => setShowAdvancedVoiceSelector(!showAdvancedVoiceSelector)}
+                      className="flex items-center space-x-1 text-xs text-blue-600 hover:text-blue-800 transition-colors"
+                      title={showAdvancedVoiceSelector ? 'Switch to simple selection' : 'Browse all 30 Kokoro voices'}
+                    >
+                      {showAdvancedVoiceSelector ? (
+                        <>
+                          <ChevronDown className="w-3 h-3" />
+                          <span>Simple</span>
+                        </>
+                      ) : (
+                        <>
+                          <Grid3X3 className="w-3 h-3" />
+                          <span>All Voices</span>
+                        </>
+                      )}
+                    </button>
                   </div>
                   
-                  <div>
-                    <label className="text-xs text-gray-600 block mb-1">Primary Narrator</label>
-                    <p className="text-xs text-gray-500 mb-2">Main voice for the content</p>
-                    <div className="relative">
-                      <select
-                        value={selectedVoice}
-                        onChange={(e) => setSelectedVoice(e.target.value)}
-                        className="w-full px-3 py-2 text-sm bg-white border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none"
-                      >
-                        {voiceOptions.map((voice) => (
-                          <option key={voice.id} value={voice.id}>
-                            {voice.name} ({voice.accent}, {voice.description})
-                          </option>
-                        ))}
-                      </select>
-                      <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                  {showAdvancedVoiceSelector ? (
+                    <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                      <KokoroVoiceSelector
+                        selectedVoice={selectedVoice}
+                        onVoiceSelect={setSelectedVoice}
+                        showPreview={true}
+                        compactMode={true}
+                        contentCategory={contentCategory || 'general'}
+                      />
                     </div>
-                  </div>
+                  ) : (
+                    <div>
+                      <label className="text-xs text-gray-600 block mb-1">Primary Narrator</label>
+                      <p className="text-xs text-gray-500 mb-2">Popular Kokoro voices (click "All Voices" for 30 total options)</p>
+                      <div className="relative">
+                        <select
+                          value={selectedVoice}
+                          onChange={(e) => setSelectedVoice(e.target.value)}
+                          className="w-full px-3 py-2 text-sm bg-white border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none"
+                        >
+                          {popularKokoroVoices.map((voice) => (
+                            <option key={voice.id} value={voice.id}>
+                              {voice.name} ({voice.accent}, {voice.description})
+                            </option>
+                          ))}
+                        </select>
+                        <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Format Options */}
@@ -714,7 +808,10 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
                 ) : (
                   <button
                     onClick={handleGenerate}
-                    disabled={(!uploadedContent || uploadedContent.length === 0) && (!uploadedFiles || uploadedFiles.length === 0) || isGenerating}
+                    disabled={((!uploadedContent || uploadedContent.length === 0) && 
+                              (!uploadedFiles || uploadedFiles.length === 0) && 
+                              (!internalUploadedFiles || internalUploadedFiles.length === 0)) || 
+                              isGenerating}
                     className="w-full px-4 py-3 bg-blue-600 text-white rounded-lg font-semibold text-sm hover:bg-blue-700 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed transition-colors"
                   >
                     {isGenerating ? (

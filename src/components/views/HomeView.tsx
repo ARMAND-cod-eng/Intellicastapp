@@ -1,6 +1,7 @@
 import React from 'react';
 import { Play, Clock, Headphones, Check } from 'lucide-react';
 import type { DocumentContent } from '../../types/document';
+import AudioTester from '../debug/AudioTester';
 
 interface Episode {
   id: string;
@@ -177,6 +178,11 @@ const HomeView: React.FC<HomeViewProps> = ({ currentView, onOpenUpload, uploaded
             <EpisodeCard key={episode.id} episode={episode} featured />
           ))}
         </div>
+      </section>
+
+      {/* Debug Audio Tester */}
+      <section>
+        <AudioTester />
       </section>
 
       {/* Recent Episodes */}
