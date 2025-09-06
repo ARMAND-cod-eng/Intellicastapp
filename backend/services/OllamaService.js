@@ -142,6 +142,38 @@ class OllamaService {
   }
 
   /**
+   * Clean up generated script to remove any stage directions
+   */
+  cleanNarrationScript(script) {
+    // Remove common stage directions and formatting
+    let cleaned = script
+      // Remove parenthetical stage directions
+      .replace(/\([^)]*pause[^)]*\)/gi, '')
+      .replace(/\([^)]*emphasis[^)]*\)/gi, '')
+      .replace(/\([^)]*dramatic[^)]*\)/gi, '')
+      .replace(/\([^)]*effect[^)]*\)/gi, '')
+      .replace(/\([^)]*sound[^)]*\)/gi, '')
+      .replace(/\([^)]*music[^)]*\)/gi, '')
+      .replace(/\([^)]*beat[^)]*\)/gi, '')
+      .replace(/\([^)]*silence[^)]*\)/gi, '')
+      // Remove bracket-based stage directions
+      .replace(/\[[^\]]*pause[^\]]*\]/gi, '')
+      .replace(/\[[^\]]*emphasis[^\]]*\]/gi, '')
+      .replace(/\[[^\]]*dramatic[^\]]*\]/gi, '')
+      .replace(/\[[^\]]*effect[^\]]*\]/gi, '')
+      // Remove other formatting
+      .replace(/\*[^*]*\*/g, '') // Remove *emphasis*
+      .replace(/_[^_]*_/g, '')   // Remove _underlined_
+      .replace(/\s*\.\.\.\s*/g, '... ') // Clean up ellipses
+      // Clean up multiple spaces and newlines
+      .replace(/\s+/g, ' ')
+      .replace(/\n\s*\n/g, '\n\n')
+      .trim();
+
+    return cleaned;
+  }
+
+  /**
    * Generate narration script based on content type
    */
   async generateNarrationScript(text, type = 'summary', contentAnalysis = {}) {
@@ -155,20 +187,34 @@ class OllamaService {
       
       console.log(`📝 Generating ${type} narration script for large document...`);
       
-      return await this.generateText(fullPrompt, {
+      const result = await this.generateText(fullPrompt, {
         temperature: 0.6,
         maxTokens: 800 // More focused for large documents
       });
+
+      // Clean the generated script
+      if (result.success) {
+        result.response = this.cleanNarrationScript(result.response);
+      }
+      
+      return result;
     }
     
     const fullPrompt = `${prompt}\n\nContent to narrate:\n${text}`;
     
     console.log(`📝 Generating ${type} narration script...`);
     
-    return await this.generateText(fullPrompt, {
+    const result = await this.generateText(fullPrompt, {
       temperature: 0.7,
       maxTokens: this.calculateMaxTokens(type, text.length)
     });
+
+    // Clean the generated script
+    if (result.success) {
+      result.response = this.cleanNarrationScript(result.response);
+    }
+    
+    return result;
   }
 
   /**
@@ -177,7 +223,7 @@ class OllamaService {
   getNarrationPrompts(contentAnalysis = {}) {
     const { contentType = 'general', complexity = 'medium' } = contentAnalysis;
     
-    const baseInstructions = `Create an engaging narration script for a podcast. Use natural, conversational language that sounds good when spoken aloud. Include appropriate pauses and emphasis. Keep sentences clear and not too long.`;
+    const baseInstructions = `Create an engaging narration script for a podcast. Use natural, conversational language that flows smoothly when spoken aloud. Write only the words that should be spoken - NO stage directions, sound effects, or formatting instructions. Keep sentences clear and not too long.`;
     
     return {
       summary: `${baseInstructions}
@@ -187,8 +233,9 @@ Task: Create a compelling summary that captures the main points and key insights
 Requirements:
 - Start with a brief, engaging introduction
 - Present key points in logical order
-- Use conversational tone
+- Use conversational tone that flows naturally
 - End with a memorable conclusion
+- Write ONLY spoken words - no parenthetical directions, no (pause), no (emphasis)
 - Length: Aim for 3-5 minutes of spoken content`,
 
       full: `${baseInstructions}
@@ -199,8 +246,9 @@ Requirements:
 - Maintain all crucial information
 - Break complex concepts into digestible parts
 - Use storytelling techniques where appropriate
-- Add transitions between sections
-- Include brief explanations for technical terms`,
+- Create smooth transitions between sections with natural language
+- Include brief explanations for technical terms
+- Write ONLY spoken words - no stage directions or parenthetical instructions`,
 
       explanatory: `${baseInstructions}
 
@@ -209,10 +257,11 @@ Task: Create an educational narration that explains concepts clearly and thoroug
 Requirements:
 - Start with context and background
 - Break down complex ideas step by step
-- Use analogies and examples
-- Define key terms
+- Use analogies and examples naturally in speech
+- Define key terms conversationally
 - Encourage understanding rather than memorization
-- Include rhetorical questions to engage listeners`,
+- Include rhetorical questions as natural speech
+- Write ONLY spoken words - no stage directions or formatting`,
 
       briefing: `${baseInstructions}
 
@@ -221,21 +270,22 @@ Task: Create a focused briefing that highlights actionable insights and key take
 Requirements:
 - Lead with the most important points
 - Focus on practical implications
-- Highlight actionable items
-- Use bullet-point style delivery where appropriate
-- Keep it concise but comprehensive`,
+- Highlight actionable items naturally in speech
+- Present information in clear, organized manner
+- Keep it concise but comprehensive
+- Write ONLY spoken words - no formatting or stage directions`,
 
       interactive: `${baseInstructions}
 
 Task: Create an interactive narration that engages listeners and encourages active thinking.
 
 Requirements:
-- Include rhetorical questions throughout
-- Pause for reflection moments
-- Use "think about this" statements
-- Create mental exercises
+- Include rhetorical questions naturally in speech
+- Use "think about this" and similar phrases conversationally
+- Create mental exercises through natural speech
 - Encourage listeners to relate content to their experience
-- Make it feel like a conversation`,
+- Make it feel like a natural conversation
+- Write ONLY spoken words - no stage directions or parenthetical instructions`,
 
       'document-summary': `Create a concise, professional document summary without any podcast formatting or conversational elements.
 

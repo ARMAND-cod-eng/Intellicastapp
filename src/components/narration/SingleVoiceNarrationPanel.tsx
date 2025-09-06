@@ -543,13 +543,19 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
             {/* Left Side - Document Summary Section */}
             <div className="flex-1">
               <div className="bg-white rounded-xl border-2 border-blue-500/50 p-6 shadow-sm h-full">
-                {uploadedContent && uploadedContent.length > 0 ? (
+                {(uploadedContent && uploadedContent.length > 0) || (uploadedFiles && uploadedFiles.length > 0) ? (
                   <>
                     <h2 className="text-xl font-bold text-gray-900 mb-2">Document Summary</h2>
                     <div className="mb-4">
                       <div className="flex items-center space-x-2 mb-3">
                         <FileText className="w-5 h-5 text-blue-600" />
-                        <span className="text-sm font-medium text-gray-700">{uploadedContent[0].fileName}</span>
+                        <span className="text-sm font-medium text-gray-700">
+                          {uploadedContent && uploadedContent.length > 0 
+                            ? uploadedContent[0].metadata?.fileName || uploadedContent[0].title
+                            : uploadedFiles && uploadedFiles.length > 0 
+                              ? uploadedFiles[0].name 
+                              : 'Document'}
+                        </span>
                       </div>
                     </div>
                     
@@ -577,16 +583,18 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
                     </div>
                     
                     {/* Document Stats */}
-                    <div className="grid grid-cols-2 gap-4 text-sm">
-                      <div className="bg-blue-50 rounded-lg p-3">
-                        <div className="text-blue-600 font-medium">Word Count</div>
-                        <div className="text-gray-700">{uploadedContent[0].content.split(' ').length} words</div>
+                    {uploadedContent && uploadedContent.length > 0 && (
+                      <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div className="bg-blue-50 rounded-lg p-3">
+                          <div className="text-blue-600 font-medium">Word Count</div>
+                          <div className="text-gray-700">{uploadedContent[0].metadata?.wordCount || uploadedContent[0].content.split(' ').length} words</div>
+                        </div>
+                        <div className="bg-green-50 rounded-lg p-3">
+                          <div className="text-green-600 font-medium">Est. Reading Time</div>
+                          <div className="text-gray-700">{Math.ceil((uploadedContent[0].metadata?.wordCount || uploadedContent[0].content.split(' ').length) / 250)} min</div>
+                        </div>
                       </div>
-                      <div className="bg-green-50 rounded-lg p-3">
-                        <div className="text-green-600 font-medium">Est. Reading Time</div>
-                        <div className="text-gray-700">{Math.ceil(uploadedContent[0].content.split(' ').length / 250)} min</div>
-                      </div>
-                    </div>
+                    )}
                   </>
                 ) : (
                   <>
@@ -706,7 +714,7 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
                 ) : (
                   <button
                     onClick={handleGenerate}
-                    disabled={!uploadedContent || uploadedContent.length === 0 || isGenerating}
+                    disabled={(!uploadedContent || uploadedContent.length === 0) && (!uploadedFiles || uploadedFiles.length === 0) || isGenerating}
                     className="w-full px-4 py-3 bg-blue-600 text-white rounded-lg font-semibold text-sm hover:bg-blue-700 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed transition-colors"
                   >
                     {isGenerating ? (
