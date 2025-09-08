@@ -89,7 +89,17 @@ export class NarrationAPI {
     voice: string = 'emma',
     speed: number = 1.0,
     backgroundMusic: boolean = false,
-    musicType: string = 'none'
+    musicType: string = 'none',
+    voiceSettings?: {
+      exaggeration?: number;
+      temperature?: number;
+      cfg_weight?: number;
+      min_p?: number;
+      top_p?: number;
+      repetition_penalty?: number;
+      seed?: number;
+      reference_audio?: File | null;
+    }
   ): Promise<GenerateNarrationResponse> {
     const response = await fetch(`${API_BASE_URL}/narration/generate`, {
       method: 'POST',
@@ -103,6 +113,16 @@ export class NarrationAPI {
         speed,
         backgroundMusic,
         musicType,
+        ...(voiceSettings && {
+          exaggeration: voiceSettings.exaggeration,
+          temperature: voiceSettings.temperature,
+          cfg_weight: voiceSettings.cfg_weight,
+          min_p: voiceSettings.min_p,
+          top_p: voiceSettings.top_p,
+          repetition_penalty: voiceSettings.repetition_penalty,
+          seed: voiceSettings.seed,
+          // Note: reference_audio file upload would need FormData, handling separately
+        }),
       }),
     });
 

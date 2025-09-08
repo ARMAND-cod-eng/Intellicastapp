@@ -62,7 +62,7 @@ router.get('/:id', async (req, res) => {
 
 /**
  * POST /api/audio/generate
- * Generate TTS audio (placeholder for Kokoro-82M integration)
+ * Generate TTS audio using Chatterbox multilingual TTS
  */
 router.post('/generate', async (req, res) => {
   try {

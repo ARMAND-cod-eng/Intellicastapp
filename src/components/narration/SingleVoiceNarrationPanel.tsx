@@ -3,7 +3,19 @@ import { useDropzone } from 'react-dropzone';
 import { X, Play, Pause, Volume2, VolumeX, Music, ChevronDown, Upload, FileText, Settings, Download, Square, MessageCircle, RotateCcw, Mic2, Grid3X3 } from 'lucide-react';
 import type { DocumentContent } from '../../types/document';
 import { NarrationAPI } from '../../services/narrationApi';
-import KokoroVoiceSelector from '../voice/KokoroVoiceSelector';
+import ChatterboxVoiceSelector from '../voice/ChatterboxVoiceSelector';
+
+// Voice settings interface
+interface VoiceSettings {
+  exaggeration: number;
+  temperature: number;
+  cfg_weight: number;
+  min_p: number;
+  top_p: number;
+  repetition_penalty: number;
+  seed: number;
+  reference_audio?: File | null;
+}
 
 interface SingleVoiceNarrationPanelProps {
   isOpen: boolean;
@@ -18,7 +30,7 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
   uploadedContent,
   uploadedFiles
 }) => {
-  const [selectedVoice, setSelectedVoice] = useState('af_heart');
+  const [selectedVoice, setSelectedVoice] = useState('emma_en');
   const [narrationType, setNarrationType] = useState('summary');
   const [backgroundMusicEnabled, setBackgroundMusicEnabled] = useState(false);
   const [selectedMusic, setSelectedMusic] = useState('none');
@@ -42,12 +54,22 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
   const [isUploading, setIsUploading] = useState(false);
   const [showAdvancedVoiceSelector, setShowAdvancedVoiceSelector] = useState(true);
   const [contentCategory, setContentCategory] = useState<string>('');
+  const [voiceSettings, setVoiceSettings] = useState<VoiceSettings>({
+    exaggeration: 0.5,
+    temperature: 0.8,
+    cfg_weight: 0.5,
+    min_p: 0.05,
+    top_p: 1.0,
+    repetition_penalty: 1.2,
+    seed: 0,
+    reference_audio: null
+  });
 
-  // Popular Kokoro voices for simple selection mode
-  const popularKokoroVoices = [
-    { id: 'af_heart', name: 'Heart', description: 'Professional American female', accent: 'American' },
-    { id: 'bm_james', name: 'James', description: 'Authoritative British male', accent: 'British' },
-    { id: 'af_sophia', name: 'Sophia', description: 'Intellectual American female', accent: 'American' },
+  // Popular Chatterbox voices for simple selection mode
+  const popularChatterboxVoices = [
+    { id: 'emma_en', name: 'Emma', description: 'Professional English female', language: 'English' },
+    { id: 'james_en', name: 'James', description: 'Authoritative English male', language: 'English' },
+    { id: 'sophia_es', name: 'Sophia', description: 'Warm Spanish female', language: 'Spanish' },
     { id: 'am_adam', name: 'Adam', description: 'Confident American male', accent: 'American' },
     { id: 'bf_heart', name: 'Heart', description: 'Refined British female', accent: 'British' },
     { id: 'am_david', name: 'David', description: 'Friendly American male', accent: 'American' },
@@ -216,7 +238,8 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
         selectedVoice,
         playbackSpeed,
         backgroundMusicEnabled,
-        backgroundMusicEnabled ? selectedMusic : 'none'
+        backgroundMusicEnabled ? selectedMusic : 'none',
+        voiceSettings
       );
       
       if (response.success) {
@@ -692,12 +715,12 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
                     <div className="flex items-center space-x-2">
                       <Volume2 className="w-4 h-4 text-gray-700" />
                       <h3 className="text-gray-900 font-medium text-sm">Voice Selection</h3>
-                      <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">Kokoro-82M Only</span>
+                      <span className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded-full">Chatterbox Multilingual</span>
                     </div>
                     <button
                       onClick={() => setShowAdvancedVoiceSelector(!showAdvancedVoiceSelector)}
                       className="flex items-center space-x-1 text-xs text-blue-600 hover:text-blue-800 transition-colors"
-                      title={showAdvancedVoiceSelector ? 'Switch to simple selection' : 'Browse all 30 Kokoro voices'}
+                      title={showAdvancedVoiceSelector ? 'Switch to simple selection' : 'Browse all Chatterbox multilingual voices'}
                     >
                       {showAdvancedVoiceSelector ? (
                         <>
@@ -715,27 +738,27 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
                   
                   {showAdvancedVoiceSelector ? (
                     <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
-                      <KokoroVoiceSelector
+                      <ChatterboxVoiceSelector
                         selectedVoice={selectedVoice}
-                        onVoiceSelect={setSelectedVoice}
-                        showPreview={true}
-                        compactMode={true}
+                        onVoiceChange={setSelectedVoice}
+                        showAdvanced={true}
+                        compact={true}
                         contentCategory={contentCategory || 'general'}
                       />
                     </div>
                   ) : (
                     <div>
                       <label className="text-xs text-gray-600 block mb-1">Primary Narrator</label>
-                      <p className="text-xs text-gray-500 mb-2">Popular Kokoro voices (click "All Voices" for 30 total options)</p>
+                      <p className="text-xs text-gray-500 mb-2">Popular Chatterbox multilingual voices (click "All Voices" for full selection)</p>
                       <div className="relative">
                         <select
                           value={selectedVoice}
                           onChange={(e) => setSelectedVoice(e.target.value)}
                           className="w-full px-3 py-2 text-sm bg-white border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none"
                         >
-                          {popularKokoroVoices.map((voice) => (
+                          {popularChatterboxVoices.map((voice) => (
                             <option key={voice.id} value={voice.id}>
-                              {voice.name} ({voice.accent}, {voice.description})
+                              {voice.name} ({voice.language}, {voice.description})
                             </option>
                           ))}
                         </select>
@@ -743,6 +766,43 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
                       </div>
                     </div>
                   )}
+                </div>
+
+                {/* Voice Customization */}
+                <div className="mb-6">
+                  <div className="p-3 bg-blue-50 rounded-lg">
+                    <h4 className="text-sm font-medium text-gray-700 mb-2">Voice Customization (Advanced)</h4>
+                    
+                    <div className="space-y-3">
+                      <div>
+                        <label className="text-xs text-gray-600 block mb-1">Exaggeration</label>
+                        <input
+                          type="range"
+                          min="0.25"
+                          max="2"
+                          step="0.05"
+                          value={voiceSettings.exaggeration}
+                          onChange={(e) => setVoiceSettings(prev => ({...prev, exaggeration: parseFloat(e.target.value)}))}
+                          className="w-full accent-blue-600"
+                        />
+                        <span className="text-xs text-gray-500">{voiceSettings.exaggeration.toFixed(2)}</span>
+                      </div>
+                      
+                      <div>
+                        <label className="text-xs text-gray-600 block mb-1">Temperature</label>
+                        <input
+                          type="range"
+                          min="0.05"
+                          max="2"
+                          step="0.05"
+                          value={voiceSettings.temperature}
+                          onChange={(e) => setVoiceSettings(prev => ({...prev, temperature: parseFloat(e.target.value)}))}
+                          className="w-full accent-blue-600"
+                        />
+                        <span className="text-xs text-gray-500">{voiceSettings.temperature.toFixed(2)}</span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
                 {/* Format Options */}

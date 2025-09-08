@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Kokoro-82M TTS Service for IntelliCast AI
-High-quality Text-to-Speech using Kokoro-82M model
+Multilingual Chatterbox TTS Service for IntelliCast AI
+High-quality Text-to-Speech using latest Chatterbox with multiple language support
 """
 
 import sys
@@ -12,79 +12,149 @@ import logging
 import tempfile
 import subprocess
 from pathlib import Path
-from typing import Dict, Any, Optional, TYPE_CHECKING
-
-if TYPE_CHECKING:
-    import torch
-    import numpy as np
+from typing import Dict, Any, Optional, List
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-class KokoroTTSService:
-    """High-quality TTS service using Kokoro-82M model"""
+class ChatterboxTTSService:
+    """Multilingual TTS service using latest Chatterbox with emotion control"""
     
-    def __init__(self, model_path: Optional[str] = None):
-        """Initialize the TTS service"""
-        self.model_path = model_path or "hexgrad/Kokoro-82M"  # Default HuggingFace model
+    def __init__(self):
+        """Initialize the Chatterbox TTS service"""
         self.audio_dir = Path(__file__).parent.parent / "audio"
         self.audio_dir.mkdir(exist_ok=True)
         
-        # Initialize model components
-        self.model = None
-        self.tokenizer = None
-        self.vocoder = None
+        # Initialize Chatterbox components
+        self.tts = None
+        self.mtl_tts = None
         self.device = "cuda" if self._check_cuda() else "cpu"
         
-        # Voice configurations with natural podcast delivery settings
-        # Using actual available Kokoro-82M voices: af_heart, af_sky, af_bella, af_sarah, af_nicole, am_adam
+        # Chatterbox voice configurations with exaggeration control (0-1 scale)
+        # Each language uses the built-in multilingual model voices
         self.voices = {
-            'emma': {
-                'kokoro_voice': 'af_heart',  # Professional female - warm and clear
-                'speed': 0.9, 
-                'description': 'Professional female voice (Kokoro AF Heart)',
-                'intonation': 'professional',
-                'pause_style': 'thoughtful'
+            # English
+            'default_en': {
+                'language': 'en',
+                'exaggeration': 0.3,
+                'description': 'Default English voice (Chatterbox built-in)',
+                'characteristics': ['natural', 'clear', 'expressive'],
+                'best_for': ['general', 'news', 'educational']
             },
-            'james': {
-                'kokoro_voice': 'am_adam', 
-                'speed': 0.85, 
-                'description': 'Authoritative male voice (Kokoro AM Adam)',
-                'intonation': 'authoritative',
-                'pause_style': 'confident'
+            # Spanish
+            'default_es': {
+                'language': 'es',
+                'exaggeration': 0.4,
+                'description': 'Default Spanish voice (Chatterbox built-in)',
+                'characteristics': ['warm', 'expressive', 'natural'],
+                'best_for': ['general', 'storytelling', 'conversational']
             },
-            'sophia': {
-                'kokoro_voice': 'af_sarah', 
-                'speed': 0.95, 
-                'description': 'Warm female voice (Kokoro AF Sarah)',
-                'intonation': 'conversational',
-                'pause_style': 'natural'
+            # French
+            'default_fr': {
+                'language': 'fr',
+                'exaggeration': 0.5,
+                'description': 'Default French voice (Chatterbox built-in)',
+                'characteristics': ['elegant', 'sophisticated', 'expressive'],
+                'best_for': ['general', 'cultural', 'educational']
             },
-            'michael': {
-                'kokoro_voice': 'am_adam', 
-                'speed': 0.8, 
-                'description': 'Deep male voice (Kokoro AM Adam)',
-                'intonation': 'narrative',
-                'pause_style': 'dramatic'
+            # German
+            'default_de': {
+                'language': 'de',
+                'exaggeration': 0.3,
+                'description': 'Default German voice (Chatterbox built-in)',
+                'characteristics': ['clear', 'precise', 'professional'],
+                'best_for': ['general', 'technical', 'business']
             },
-            'olivia': {
-                'kokoro_voice': 'af_sarah', 
-                'speed': 0.92, 
-                'description': 'Clear female voice (Kokoro AF Sarah)',
-                'intonation': 'educational',
-                'pause_style': 'clear'
+            # Additional major languages
+            'default_ar': {
+                'language': 'ar',
+                'exaggeration': 0.4,
+                'description': 'Default Arabic voice (Chatterbox built-in)',
+                'characteristics': ['expressive', 'natural', 'clear'],
+                'best_for': ['general', 'news', 'cultural']
             },
-            'david': {
-                'kokoro_voice': 'af_bella', 
-                'speed': 0.88, 
-                'description': 'Friendly voice (Kokoro AF Bella)',
-                'intonation': 'friendly',
-                'pause_style': 'engaging'
+            'default_zh': {
+                'language': 'zh',
+                'exaggeration': 0.3,
+                'description': 'Default Chinese voice (Chatterbox built-in)',
+                'characteristics': ['natural', 'clear', 'expressive'],
+                'best_for': ['general', 'educational', 'business']
             },
+            'default_ja': {
+                'language': 'ja',
+                'exaggeration': 0.4,
+                'description': 'Default Japanese voice (Chatterbox built-in)',
+                'characteristics': ['natural', 'expressive', 'clear'],
+                'best_for': ['general', 'anime', 'educational']
+            },
+            'default_ko': {
+                'language': 'ko',
+                'exaggeration': 0.3,
+                'description': 'Default Korean voice (Chatterbox built-in)',
+                'characteristics': ['natural', 'clear', 'expressive'],
+                'best_for': ['general', 'K-pop', 'educational']
+            },
+            'default_it': {
+                'language': 'it',
+                'exaggeration': 0.5,
+                'description': 'Default Italian voice (Chatterbox built-in)',
+                'characteristics': ['expressive', 'warm', 'melodic'],
+                'best_for': ['general', 'cultural', 'storytelling']
+            },
+            'default_pt': {
+                'language': 'pt',
+                'exaggeration': 0.4,
+                'description': 'Default Portuguese voice (Chatterbox built-in)',
+                'characteristics': ['warm', 'expressive', 'natural'],
+                'best_for': ['general', 'storytelling', 'conversational']
+            },
+            'default_ru': {
+                'language': 'ru',
+                'exaggeration': 0.3,
+                'description': 'Default Russian voice (Chatterbox built-in)',
+                'characteristics': ['clear', 'authoritative', 'expressive'],
+                'best_for': ['general', 'news', 'formal']
+            },
+            'default_hi': {
+                'language': 'hi',
+                'exaggeration': 0.4,
+                'description': 'Default Hindi voice (Chatterbox built-in)',
+                'characteristics': ['expressive', 'warm', 'natural'],
+                'best_for': ['general', 'cultural', 'educational']
+            }
         }
         
-        logger.info(f"🎙️  Kokoro-82M TTS Service initialized on {self.device}")
+        # Language detection mapping (all 23 supported languages)
+        self.language_patterns = {
+            'en': ['english', 'en', 'eng'],
+            'es': ['spanish', 'es', 'esp', 'español'],
+            'fr': ['french', 'fr', 'fra', 'français'], 
+            'de': ['german', 'de', 'deu', 'deutsch'],
+            'ar': ['arabic', 'ar', 'ara', 'العربية'],
+            'da': ['danish', 'da', 'dan', 'dansk'],
+            'el': ['greek', 'el', 'ell', 'ελληνικά'],
+            'fi': ['finnish', 'fi', 'fin', 'suomi'],
+            'he': ['hebrew', 'he', 'heb', 'עברית'],
+            'hi': ['hindi', 'hi', 'hin', 'हिन्दी'],
+            'it': ['italian', 'it', 'ita', 'italiano'],
+            'ja': ['japanese', 'ja', 'jpn', '日本語'],
+            'ko': ['korean', 'ko', 'kor', '한국어'],
+            'ms': ['malay', 'ms', 'may', 'bahasa melayu'],
+            'nl': ['dutch', 'nl', 'nld', 'nederlands'],
+            'no': ['norwegian', 'no', 'nor', 'norsk'],
+            'pl': ['polish', 'pl', 'pol', 'polski'],
+            'pt': ['portuguese', 'pt', 'por', 'português'],
+            'ru': ['russian', 'ru', 'rus', 'русский'],
+            'sv': ['swedish', 'sv', 'swe', 'svenska'],
+            'sw': ['swahili', 'sw', 'swa', 'kiswahili'],
+            'tr': ['turkish', 'tr', 'tur', 'türkçe'],
+            'zh': ['chinese', 'zh', 'chi', 'zho', '中文', 'mandarin']
+        }
+        
+        logger.info(f"🎙️  Exclusive Chatterbox TTS Service initialized on {self.device}")
+        logger.info(f"🌍 23 supported languages: {list(self.language_patterns.keys())}")
+        logger.info("🚫 No fallback TTS - Chatterbox exclusive mode enabled")
 
     def _check_cuda(self) -> bool:
         """Check if CUDA is available"""
@@ -94,384 +164,454 @@ class KokoroTTSService:
         except ImportError:
             return False
 
-    def _load_kokoro_model(self):
-        """Load the Kokoro-82M model using the official Kokoro library"""
-        if self.model is not None:
+    def _load_chatterbox_model(self):
+        """Load the latest Chatterbox TTS model"""
+        if self.tts is not None and self.mtl_tts is not None:
             return True  # Already loaded
         
         try:
-            from kokoro import KPipeline
+            # Import the actual Chatterbox TTS modules
+            import sys
+            chatterbox_path = str(Path(__file__).parent.parent / "chatterbox" / "src")
+            if chatterbox_path not in sys.path:
+                sys.path.insert(0, chatterbox_path)
             
-            logger.info(f"📥 Loading Kokoro-82M model...")
+            from chatterbox.tts import ChatterboxTTS
+            from chatterbox.mtl_tts import ChatterboxMultilingualTTS
             
-            # Load the official Kokoro pipeline with correct language code
-            # 'a' = American English, 'b' = British English
-            self.model = KPipeline(lang_code='a')
+            logger.info(f"📥 Loading latest Chatterbox TTS models...")
             
-            # Get available voices from the loaded model
-            available_voices = getattr(self.model, 'voices', [])
-            logger.info(f"📋 Available Kokoro voices: {available_voices}")
+            # Load English TTS model
+            self.tts = ChatterboxTTS.from_pretrained(device=self.device)
+            logger.info(f"✅ English Chatterbox TTS model loaded")
             
-            logger.info(f"✅ Kokoro-82M model loaded successfully on {self.device}")
+            # Load Multilingual TTS model (supports 23 languages)
+            self.mtl_tts = ChatterboxMultilingualTTS.from_pretrained(device=self.device)
+            supported_languages = ChatterboxMultilingualTTS.get_supported_languages()
+            logger.info(f"✅ Multilingual Chatterbox TTS model loaded ({len(supported_languages)} languages)")
+            logger.info(f"🌍 Supported languages: {list(supported_languages.keys())}")
+            
             return True
             
         except Exception as e:
-            logger.error(f"❌ Failed to load Kokoro-82M model: {str(e)}")
-            logger.info("🔄 Falling back to Windows SAPI TTS")
+            logger.error(f"❌ Failed to load Chatterbox TTS model: {str(e)}")
+            import traceback
+            logger.error(f"Full traceback: {traceback.format_exc()}")
+            logger.error("🚫 Chatterbox TTS is required - no fallback available")
             return False
 
-    def _generate_with_kokoro(self, text: str, voice_config: Dict, speed: float, output_path: str) -> bool:
-        """Generate TTS using Kokoro-82M model"""
+    def detect_language(self, text: str) -> str:
+        """Auto-detect language from text"""
+        try:
+            # Try using langdetect if available
+            from langdetect import detect
+            detected = detect(text)
+            
+            # Map to our supported languages
+            lang_map = {'en': 'en', 'es': 'es', 'fr': 'fr', 'de': 'de'}
+            return lang_map.get(detected, 'en')  # Default to English
+            
+        except ImportError:
+            # Fallback: simple pattern matching
+            text_lower = text.lower()
+            
+            # Check for Spanish indicators
+            if any(word in text_lower for word in ['la', 'el', 'de', 'que', 'y', 'es', 'en', 'un', 'se', 'no']):
+                return 'es'
+            
+            # Check for French indicators  
+            if any(word in text_lower for word in ['le', 'de', 'et', 'à', 'un', 'il', 'être', 'avoir', 'que', 'ce']):
+                return 'fr'
+                
+            # Check for German indicators
+            if any(word in text_lower for word in ['der', 'die', 'das', 'und', 'ich', 'sie', 'er', 'es', 'ist', 'mit']):
+                return 'de'
+            
+            return 'en'  # Default to English
+            
+        except Exception:
+            return 'en'  # Safe fallback
+
+    def get_voice_for_language(self, language: str, gender: str = None) -> str:
+        """Get appropriate voice ID for language"""
+        # First try to find exact language match
+        default_voice = f'default_{language}'
+        if default_voice in self.voices:
+            return default_voice
+        
+        # Find any voice with matching language
+        for voice_id, config in self.voices.items():
+            if config['language'] == language:
+                return voice_id
+        
+        # Fallback to English if language not supported
+        return 'default_en'
+
+    def _generate_with_chatterbox_advanced(self, text: str, voice_config: Dict, output_path: str,
+                                          exaggeration: float = 0.5, temperature: float = 0.8,
+                                          cfg_weight: float = 0.5, min_p: float = 0.05, 
+                                          top_p: float = 1.0, repetition_penalty: float = 1.2,
+                                          seed: int = 0, reference_audio: str = None) -> bool:
+        """Generate TTS using latest Chatterbox model with advanced parameters"""
         
         try:
-            import soundfile as sf
-            import numpy as np
+            import torchaudio as ta
+            import torch
             
             # Load model if not already loaded
-            if not self._load_kokoro_model():
+            if not self._load_chatterbox_model():
                 return False
             
-            # Get voice name from the selected voice in generate_audio call
-            current_voice = getattr(self, '_current_voice', 'emma')
+            language = voice_config['language']
             
-            logger.info(f"🎤 Generating with Kokoro-82M: voice={current_voice}, speed={speed}")
+            # Set seed for reproducible results
+            if seed != 0:
+                import random
+                import numpy as np
+                torch.manual_seed(seed)
+                torch.cuda.manual_seed(seed)
+                torch.cuda.manual_seed_all(seed)
+                random.seed(seed)
+                np.random.seed(seed)
             
-            # Generate audio using Kokoro pipeline with voice specification
-            # Based on Kokoro error message: voice="af_heart" is expected format
-            # Common Kokoro voices: af_heart, af_sky, af_sandra, etc.
+            logger.info(f"🎤 Generating with Chatterbox: lang={language}, exag={exaggeration}, temp={temperature}, cfg={cfg_weight}, seed={seed}")
             
-            voice_mapping = {
-                'emma': 'af_heart',    # Professional female - warm, clear
-                'james': 'am_adam',    # Authoritative male - only male voice available
-                'sophia': 'af_sarah',  # Warm female - alternative working voice
-                'michael': 'am_adam',  # Deep male voice
-                'olivia': 'af_sarah',  # Clear female - using working alternative
-                'david': 'af_bella'    # Friendly voice - approachable tone
-            }
-            
-            kokoro_voice = voice_mapping.get(current_voice, 'af_heart')
-            
-            logger.info(f"Using Kokoro voice: {kokoro_voice}")
-            audio_generator = self.model(text, voice=kokoro_voice)
-            
-            # The model returns a generator, we need to collect the audio data
-            audio_segments = []
-            sample_rate = 24000  # Kokoro's native sample rate
-            
-            try:
-                # Iterate through the generator to get audio segments
-                for segment in audio_generator:
-                    if hasattr(segment, 'audio'):
-                        audio_data = segment.audio
-                    else:
-                        audio_data = segment
-                    
-                    # Convert to numpy if needed
-                    if hasattr(audio_data, 'cpu'):
-                        audio_data = audio_data.cpu().numpy()
-                    elif hasattr(audio_data, 'numpy'):
-                        audio_data = audio_data.numpy()
-                    elif not isinstance(audio_data, np.ndarray):
-                        audio_data = np.array(audio_data, dtype=np.float32)
-                    
-                    # Ensure proper format
-                    if len(audio_data.shape) > 1:
-                        audio_data = audio_data.flatten()
-                    
-                    audio_segments.append(audio_data)
-                    
-            except Exception as gen_error:
-                # If generator approach fails, try direct conversion
-                logger.info(f"Generator approach failed: {gen_error}, trying direct conversion...")
-                
-                # Try to get the raw audio data directly
-                if hasattr(audio_generator, 'cpu'):
-                    audio_data = audio_generator.cpu().numpy()
-                elif hasattr(audio_generator, 'numpy'):
-                    audio_data = audio_generator.numpy()
-                else:
-                    audio_data = np.array(list(audio_generator), dtype=np.float32).flatten()
-                
-                audio_segments = [audio_data]
-            
-            # Concatenate all segments
-            if audio_segments:
-                final_audio = np.concatenate(audio_segments) if len(audio_segments) > 1 else audio_segments[0]
+            # Use multilingual model for non-English or English model for English
+            if language == 'en':
+                # Use English model
+                model = self.tts
+                wav = model.generate(
+                    text=text,
+                    audio_prompt_path=reference_audio,
+                    exaggeration=exaggeration,
+                    temperature=temperature,
+                    cfg_weight=cfg_weight,
+                    min_p=min_p,
+                    top_p=top_p,
+                    repetition_penalty=repetition_penalty
+                )
             else:
-                logger.error("No audio data generated")
-                return False
+                # Use multilingual model
+                model = self.mtl_tts
+                wav = model.generate(
+                    text=text,
+                    language_id=language,
+                    audio_prompt_path=reference_audio,
+                    exaggeration=exaggeration,
+                    temperature=temperature,
+                    cfg_weight=cfg_weight,
+                    min_p=min_p,
+                    top_p=top_p,
+                    repetition_penalty=repetition_penalty
+                )
             
-            # Check if we have valid audio data
-            if len(final_audio) == 0:
-                logger.error("Generated audio is empty")
-                return False
+            # Save audio using torchaudio
+            ta.save(output_path, wav, model.sr)
             
-            # Apply speed adjustment if needed (simple time stretching)
-            if speed != 1.0:
-                # Simple resampling for speed adjustment
-                target_length = int(len(final_audio) / speed)
-                if target_length > 0:
-                    indices = np.linspace(0, len(final_audio) - 1, target_length).astype(int)
-                    final_audio = final_audio[indices]
-            
-            # Normalize audio to prevent clipping
-            max_val = np.max(np.abs(final_audio))
-            if max_val > 0:
-                final_audio = final_audio / max_val * 0.95
-            else:
-                logger.warning("Audio signal has zero amplitude, using original")
-            
-            # Save audio file
-            sf.write(output_path, final_audio, sample_rate)
-            
-            logger.info(f"✅ Kokoro-82M audio generated: {output_path} ({len(final_audio)/sample_rate:.2f}s)")
+            # Get duration for logging
+            duration = wav.shape[1] / model.sr
+            logger.info(f"✅ Chatterbox audio generated: {output_path} ({duration:.2f}s)")
             return True
             
         except Exception as e:
-            logger.error(f"❌ Kokoro-82M generation error: {str(e)}")
+            logger.error(f"❌ Chatterbox generation error: {str(e)}")
             import traceback
             logger.error(f"Full traceback: {traceback.format_exc()}")
             return False
 
-    def _features_to_audio(self, features, voice_config: Dict, speed: float):
-        """Convert model features to audio waveform (simplified implementation)"""
-        import numpy as np
-        
-        # This is a simplified conversion - real Kokoro-82M would have a proper vocoder
-        # For now, generate a sine wave pattern that represents the speech
-        duration = features.shape[1] * 0.05 / speed  # Rough duration estimate
-        sample_rate = 22050
-        t = np.linspace(0, duration, int(sample_rate * duration))
-        
-        # Create a more complex waveform that varies based on the features
-        feature_means = features.mean(dim=-1).squeeze().cpu().numpy()
-        
-        # Generate audio with varying frequency based on features
-        audio = np.zeros_like(t)
-        for i, feature_val in enumerate(feature_means[:min(len(feature_means), len(t)//100)]):
-            start_idx = i * (len(t) // len(feature_means))
-            end_idx = min((i + 1) * (len(t) // len(feature_means)), len(t))
+    def clone_voice(self, reference_audio_path: str, target_language: str = 'en') -> bool:
+        """Clone voice from reference audio using Chatterbox's prepare_conditionals"""
+        try:
+            if not self._load_chatterbox_model():
+                return False
             
-            # Map feature to frequency (200-800 Hz range)
-            freq = 200 + (abs(float(feature_val)) * 600)
-            audio[start_idx:end_idx] = 0.3 * np.sin(2 * np.pi * freq * t[start_idx:end_idx])
-        
-        # Add some envelope and variation to make it more speech-like
-        envelope = np.exp(-t / (duration * 0.8))  # Fade out
-        audio = audio * envelope * 0.8  # Normalize
-        
-        return audio.astype(np.float32)
+            # Use appropriate model based on language
+            if target_language == 'en':
+                model = self.tts
+            else:
+                model = self.mtl_tts
+            
+            # Prepare conditionals from reference audio (this is how Chatterbox does voice cloning)
+            model.prepare_conditionals(reference_audio_path, exaggeration=0.5)
+            
+            logger.info(f"✅ Voice conditionals prepared from: {reference_audio_path}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"❌ Voice cloning error: {str(e)}")
+            return False
 
-    def _enhance_text_for_speech(self, text: str, voice_config: Dict) -> str:
-        """Enhance text with natural speech patterns for better podcast delivery"""
+    def _enhance_text_for_multilingual_speech(self, text: str, voice_config: Dict) -> str:
+        """Enhance text with natural speech patterns for multilingual delivery"""
         import re
         
         enhanced_text = text
-        pause_style = voice_config.get('pause_style', 'natural')
-        intonation = voice_config.get('intonation', 'conversational')
+        language = voice_config.get('language', 'en')
+        characteristics = voice_config.get('characteristics', [])
         
-        # Define pause length based on voice style
-        pause_lengths = {
-            'dramatic': '... ... ',   # Longer pauses for dramatic effect
-            'confident': '... ',      # Medium pauses for authority
-            'thoughtful': '.. ',      # Shorter pauses for contemplation
-            'natural': '... ',        # Standard pauses
-            'clear': '. ',           # Minimal pauses for clarity
-            'engaging': '... '        # Standard engaging pauses
-        }
+        # Language-specific enhancements
+        if language == 'es':
+            # Spanish-specific enhancements
+            enhanced_text = re.sub(r'(\bpero\b)', r'... \1', enhanced_text, flags=re.IGNORECASE)
+            enhanced_text = re.sub(r'(\bsin embargo\b)', r'... \1', enhanced_text, flags=re.IGNORECASE)
+            
+        elif language == 'fr':
+            # French-specific enhancements
+            enhanced_text = re.sub(r'(\bcependant\b)', r'... \1', enhanced_text, flags=re.IGNORECASE)
+            enhanced_text = re.sub(r'(\btoutefois\b)', r'... \1', enhanced_text, flags=re.IGNORECASE)
+            
+        elif language == 'de':
+            # German-specific enhancements
+            enhanced_text = re.sub(r'(\bjedoch\b)', r'... \1', enhanced_text, flags=re.IGNORECASE)
+            enhanced_text = re.sub(r'(\ballerdigs\b)', r'... \1', enhanced_text, flags=re.IGNORECASE)
         
-        pause_marker = pause_lengths.get(pause_style, '... ')
-        
-        # Add dramatic pauses after powerful statements
-        dramatic_patterns = [
-            r'(\bThis is crucial\b)',
-            r'(\bThis changes everything\b)',
-            r'(\bHere\'s the thing\b)',
-            r'(\bHere\'s what\'s interesting\b)',
-            r'(\bNow here\'s where it gets interesting\b)',
-            r'(\bBut here\'s the twist\b)',
-            r'(\bThe key insight is\b)',
-            r'(\bThe bottom line is\b)'
-        ]
-        
-        for pattern in dramatic_patterns:
-            if pause_style in ['dramatic', 'narrative']:
-                enhanced_text = re.sub(pattern, r'\1... ... ', enhanced_text, flags=re.IGNORECASE)
-            else:
-                enhanced_text = re.sub(pattern, r'\1' + pause_marker, enhanced_text, flags=re.IGNORECASE)
-        
-        # Add emphasis and pauses around numbers and statistics
-        number_patterns = [
-            r'(\b\d+(?:\.\d+)?\s*(?:percent|%|million|billion|thousand))',
-            r'(\b\d{4}\b)',  # Years
-            r'(\$\d+(?:,\d+)*(?:\.\d+)?)',  # Money
-            r'(\b\d+(?:,\d+)+\b)'  # Large numbers with commas
-        ]
-        
-        for pattern in number_patterns:
-            if intonation in ['authoritative', 'professional']:
-                # More emphasis for authoritative voices
-                enhanced_text = re.sub(pattern, r'... \1 ... ', enhanced_text)
-            elif pause_style == 'clear':
-                # Less emphasis for clear delivery
-                enhanced_text = re.sub(pattern, r'. \1 .', enhanced_text)
-            else:
-                enhanced_text = re.sub(pattern, r'... \1 ...', enhanced_text)
-        
-        # Add pauses before important transitions
-        transition_patterns = [
-            r'(\bHowever\b)',
-            r'(\bMoreover\b)', 
-            r'(\bFurthermore\b)',
-            r'(\bIn contrast\b)',
-            r'(\bOn the other hand\b)',
-            r'(\bMeanwhile\b)',
-            r'(\bNevertheless\b)',
-            r'(\bConsequently\b)'
-        ]
-        
-        for pattern in transition_patterns:
-            enhanced_text = re.sub(pattern, r'... \1,', enhanced_text, flags=re.IGNORECASE)
-        
-        # Add emphasis to superlatives and strong adjectives
-        emphasis_patterns = [
-            r'(\bextraordinary\b|\bincredible\b|\bremarkable\b|\bphenomenal\b)',
-            r'(\bcrucial\b|\bessential\b|\bvital\b|\bcritical\b)',
-            r'(\bgroundbreaking\b|\brevolutionary\b|\binnovative\b)',
-            r'(\bfascinati(ng|on)\b|\bamazing\b|\bastounding\b)'
-        ]
-        
-        for pattern in emphasis_patterns:
-            # For Windows SAPI, we can't use SSML, but we can add strategic pauses
-            enhanced_text = re.sub(pattern, r'... \1', enhanced_text, flags=re.IGNORECASE)
-        
-        # Add natural pauses after introductory phrases
-        intro_patterns = [
-            r'(\bLet me tell you\b)',
-            r'(\bImagine this\b)',
-            r'(\bPicture this\b)',
-            r'(\bConsider this\b)',
-            r'(\bThink about it\b)',
-            r'(\bHere\'s something\b)'
-        ]
-        
-        for pattern in intro_patterns:
-            enhanced_text = re.sub(pattern, r'\1...', enhanced_text, flags=re.IGNORECASE)
-        
-        # Add pauses around quotes and important statements
-        enhanced_text = re.sub(r'(\s)"([^"]+)"(\s)', r'\1... "\2" ...\3', enhanced_text)
-        
-        # Clean up multiple consecutive pauses
-        enhanced_text = re.sub(r'\.{4,}', '...', enhanced_text)
-        enhanced_text = re.sub(r'(\.\.\. ){2,}', '... ', enhanced_text)
-        
-        # Add strategic pauses at paragraph breaks
-        enhanced_text = re.sub(r'\n\n', '\n\n... ', enhanced_text)
-        
-        # Add natural breathing pauses in long sentences (every 15-20 words)
-        sentences = enhanced_text.split('. ')
-        processed_sentences = []
-        
-        for sentence in sentences:
-            if len(sentence.split()) > 20:  # Long sentences need breathing room
-                words = sentence.split()
-                chunks = [words[i:i+15] for i in range(0, len(words), 15)]
-                breathing_sentence = (' ' + pause_marker + ' ').join([' '.join(chunk) for chunk in chunks])
-                processed_sentences.append(breathing_sentence)
-            else:
-                processed_sentences.append(sentence)
-        
-        enhanced_text = '. '.join(processed_sentences)
+        # Add emphasis based on characteristics
+        if 'dramatic' in characteristics:
+            enhanced_text = re.sub(r'(\!)', r'\1... ', enhanced_text)
+            
+        if 'professional' in characteristics:
+            enhanced_text = re.sub(r'(\bimportant\b|\bcrucial\b|\bessential\b)', r'... \1', enhanced_text, flags=re.IGNORECASE)
         
         return enhanced_text
 
-    def check_dependencies(self) -> Dict[str, Any]:
-        """Check if required dependencies are available"""
-        status = {
-            'kokoro_available': False,
-            'ffmpeg_available': False,
-            'dependencies_ok': False,
-            'device': self.device
-        }
+    def _chunk_text(self, text: str, max_chunk_size: int = 500) -> List[str]:
+        """Split text into smaller chunks for processing long documents"""
+        import re
         
-        try:
-            # Check for Kokoro library and its dependencies
-            from kokoro import KPipeline
-            import soundfile as sf
-            import numpy as np
-            
-            status['kokoro_available'] = True
-            logger.info(f"✅ Kokoro-82M dependencies found (device: {self.device})")
-        except ImportError as e:
-            logger.warning(f"⚠️  Kokoro-82M dependencies missing: {str(e)}")
-            logger.warning("⚠️  Using Windows SAPI fallback")
-            status['kokoro_available'] = False
+        # Split by sentences first
+        sentences = re.split(r'(?<=[.!?])\s+', text)
+        chunks = []
+        current_chunk = ""
         
-        try:
-            # Check FFmpeg for audio processing
-            subprocess.run(['ffmpeg', '-version'], capture_output=True, check=True)
-            status['ffmpeg_available'] = True
-            logger.info("✅ FFmpeg found")
-        except (subprocess.CalledProcessError, FileNotFoundError):
-            logger.warning("⚠️  FFmpeg not found, audio processing limited")
-            status['ffmpeg_available'] = False
+        for sentence in sentences:
+            # If adding this sentence would exceed the limit, save current chunk
+            if len(current_chunk) + len(sentence) > max_chunk_size and current_chunk:
+                chunks.append(current_chunk.strip())
+                current_chunk = sentence
+            else:
+                current_chunk += (" " if current_chunk else "") + sentence
         
-        status['dependencies_ok'] = status['kokoro_available'] or status['ffmpeg_available']
-        return status
+        # Add the last chunk
+        if current_chunk:
+            chunks.append(current_chunk.strip())
+        
+        return chunks
 
-    def generate_audio(self, text: str, voice: str = 'emma', speed: float = 1.0, 
-                      output_file: str = None) -> Dict[str, Any]:
-        """Generate audio from text using Kokoro-82M TTS with natural speech patterns"""
+    def _combine_audio_files(self, audio_files: List[str], output_path: str) -> bool:
+        """Combine multiple audio files into one"""
+        try:
+            # Try using ffmpeg if available
+            import subprocess
+            
+            if subprocess.run(['which', 'ffmpeg'], capture_output=True).returncode == 0:
+                # Create filter_complex for concatenation
+                filter_parts = []
+                for i in range(len(audio_files)):
+                    filter_parts.append(f"[{i}:0]")
+                
+                filter_complex = "".join(filter_parts) + f"concat=n={len(audio_files)}:v=0:a=1[out]"
+                
+                cmd = ['ffmpeg', '-y']  # -y to overwrite output
+                for audio_file in audio_files:
+                    cmd.extend(['-i', audio_file])
+                
+                cmd.extend([
+                    '-filter_complex', filter_complex,
+                    '-map', '[out]',
+                    '-c:a', 'pcm_s16le',  # WAV format
+                    output_path
+                ])
+                
+                result = subprocess.run(cmd, capture_output=True, text=True)
+                
+                if result.returncode == 0:
+                    logger.info(f"✅ Audio files combined successfully using ffmpeg")
+                    return True
+                else:
+                    logger.error(f"❌ ffmpeg combination failed: {result.stderr}")
+            
+            # Fallback: simple concatenation using soundfile
+            try:
+                import soundfile as sf
+                import numpy as np
+                
+                combined_audio = []
+                sample_rate = None
+                
+                for audio_file in audio_files:
+                    audio_data, sr = sf.read(audio_file)
+                    if sample_rate is None:
+                        sample_rate = sr
+                    elif sr != sample_rate:
+                        # Resample if needed
+                        import librosa
+                        audio_data = librosa.resample(audio_data, orig_sr=sr, target_sr=sample_rate)
+                    
+                    combined_audio.append(audio_data)
+                
+                # Concatenate all audio
+                final_audio = np.concatenate(combined_audio, axis=0)
+                
+                # Save combined audio
+                sf.write(output_path, final_audio, sample_rate)
+                logger.info(f"✅ Audio files combined successfully using soundfile")
+                return True
+                
+            except Exception as e:
+                logger.error(f"❌ Soundfile combination failed: {str(e)}")
+                return False
+            
+        except Exception as e:
+            logger.error(f"❌ Audio combination error: {str(e)}")
+            return False
+
+    def generate_audio(self, text: str, voice: str = 'default_en', speed: float = 1.0, 
+                      output_file: str = None, auto_detect_language: bool = True,
+                      emotion: float = None, exaggeration: float = None, temperature: float = 0.8,
+                      cfg_weight: float = 0.5, min_p: float = 0.05, top_p: float = 1.0,
+                      repetition_penalty: float = 1.2, seed: int = 0,
+                      reference_audio: str = None) -> Dict[str, Any]:
+        """Generate audio from text using Chatterbox multilingual TTS with advanced customization"""
         
         try:
+            # Auto-detect language if enabled
+            if auto_detect_language:
+                detected_lang = self.detect_language(text)
+                
+                # If voice doesn't match detected language, suggest better voice
+                if voice not in self.voices or self.voices[voice]['language'] != detected_lang:
+                    # Get appropriate voice for detected language
+                    suggested_voice = self.get_voice_for_language(detected_lang)
+                    logger.info(f"🌍 Language detected: {detected_lang}, suggesting voice: {suggested_voice}")
+                    voice = suggested_voice
+            
             # Get voice configuration
-            voice_config = self.voices.get(voice, self.voices['emma'])
-            effective_speed = voice_config['speed'] * speed
+            voice_config = self.voices.get(voice, self.voices['default_en'])
+            
+            # Use custom exaggeration if provided, otherwise use voice default
+            final_exaggeration = exaggeration if exaggeration is not None else (emotion if emotion is not None else voice_config.get('exaggeration', 0.5))
             
             # Generate unique filename if not provided
             if not output_file:
                 import uuid
-                output_file = f"narration_{uuid.uuid4().hex[:8]}.wav"
+                lang = voice_config['language']
+                output_file = f"chatterbox_{lang}_{uuid.uuid4().hex[:8]}.wav"
             
             output_path = self.audio_dir / output_file
             
-            logger.info(f"🎤 Generating audio for voice '{voice}' at {effective_speed}x speed")
+            logger.info(f"🎤 Generating audio: voice='{voice}', lang={voice_config['language']}, exaggeration={final_exaggeration}, temp={temperature}, cfg={cfg_weight}")
             
-            # Store current voice for Kokoro generation
-            self._current_voice = voice
-            
-            # Process text to add natural speech patterns based on voice characteristics
-            enhanced_text = self._enhance_text_for_speech(text, voice_config)
-            
-            # Try Kokoro-82M first, then fall back to Windows SAPI
-            logger.info("🎯 Attempting Kokoro-82M TTS generation...")
-            success = self._generate_with_kokoro(enhanced_text, voice_config, effective_speed, str(output_path))
-            
-            if not success:
-                logger.info("🔄 Kokoro-82M failed, falling back to Windows SAPI...")
-                success = self._generate_with_fallback_tts(enhanced_text, str(output_path), voice_config, effective_speed)
-            
-            if success:
-                # Get audio metadata
-                duration = self._get_audio_duration(str(output_path))
-                file_size = output_path.stat().st_size if output_path.exists() else 0
+            # Check if text is very long and needs chunking
+            if len(text) > 800:  # Chunk for texts longer than 800 characters
+                logger.info(f"📄 Long text detected ({len(text)} chars), using chunked processing")
+                chunks = self._chunk_text(text, max_chunk_size=600)
+                logger.info(f"📊 Split into {len(chunks)} chunks")
                 
-                return {
-                    'success': True,
-                    'file_path': str(output_path),
-                    'file_name': output_file,
-                    'duration': duration,
-                    'file_size': file_size,
-                    'voice': voice,
-                    'speed': effective_speed,
-                    'text_length': len(text),
-                    'model': 'Kokoro-82M' if success and hasattr(self, 'model') and self.model is not None else 'Windows-SAPI'
-                }
+                # Generate audio for each chunk
+                chunk_files = []
+                total_duration = 0
+                
+                for i, chunk in enumerate(chunks):
+                    chunk_file = f"chunk_{i}_{uuid.uuid4().hex[:6]}.wav"
+                    chunk_path = self.audio_dir / chunk_file
+                    
+                    # Process chunk text for multilingual speech patterns
+                    enhanced_chunk = self._enhance_text_for_multilingual_speech(chunk, voice_config)
+                    
+                    logger.info(f"🎯 Generating chunk {i+1}/{len(chunks)} with Chatterbox TTS...")
+                    success = self._generate_with_chatterbox_advanced(
+                        enhanced_chunk, voice_config, str(chunk_path),
+                        final_exaggeration, temperature, cfg_weight, min_p, top_p, 
+                        repetition_penalty, seed, reference_audio
+                    )
+                    
+                    if success:
+                        chunk_files.append(str(chunk_path))
+                        chunk_duration = self._get_audio_duration(str(chunk_path))
+                        total_duration += chunk_duration
+                        logger.info(f"✅ Chunk {i+1} generated: {chunk_duration:.2f}s")
+                    else:
+                        logger.error(f"❌ Failed to generate chunk {i+1}")
+                        # Clean up partial files
+                        for f in chunk_files:
+                            try:
+                                Path(f).unlink()
+                            except:
+                                pass
+                        return {
+                            'success': False,
+                            'error': f'Chunk {i+1} generation failed'
+                        }
+                
+                # Combine all chunks into final audio file
+                if len(chunk_files) > 1:
+                    logger.info(f"🔗 Combining {len(chunk_files)} audio chunks...")
+                    success = self._combine_audio_files(chunk_files, str(output_path))
+                    
+                    # Clean up chunk files
+                    for chunk_file in chunk_files:
+                        try:
+                            Path(chunk_file).unlink()
+                        except:
+                            pass
+                    
+                    if not success:
+                        return {
+                            'success': False,
+                            'error': 'Failed to combine audio chunks'
+                        }
+                else:
+                    # Only one chunk, just move it
+                    import shutil
+                    shutil.move(chunk_files[0], str(output_path))
+                
+                logger.info(f"✅ Complete audio generated: {total_duration:.2f}s from {len(chunks)} chunks")
+                duration = total_duration
+                
             else:
-                return {
-                    'success': False,
-                    'error': 'Failed to generate audio'
-                }
+                # Process text for multilingual speech patterns
+                enhanced_text = self._enhance_text_for_multilingual_speech(text, voice_config)
+                
+                # Use Chatterbox TTS with advanced parameters
+                logger.info("🎯 Generating with Chatterbox TTS (advanced mode)...")
+                success = self._generate_with_chatterbox_advanced(
+                    enhanced_text, voice_config, str(output_path),
+                    final_exaggeration, temperature, cfg_weight, min_p, top_p, 
+                    repetition_penalty, seed, reference_audio
+                )
+                
+                if not success:
+                    return {
+                        'success': False,
+                        'error': 'Chatterbox TTS generation failed - no alternative TTS available'
+                    }
+                
+                duration = self._get_audio_duration(str(output_path))
+            
+            # Get final audio metadata
+            file_size = output_path.stat().st_size if output_path.exists() else 0
+            
+            return {
+                'success': True,
+                'file_path': str(output_path),
+                'file_name': output_file,
+                'duration': duration,
+                'file_size': file_size,
+                'voice': voice,
+                'language': voice_config['language'],
+                'emotion': final_exaggeration,
+                'exaggeration': final_exaggeration,
+                'temperature': temperature,
+                'cfg_weight': cfg_weight,
+                'min_p': min_p,
+                'top_p': top_p,
+                'repetition_penalty': repetition_penalty,
+                'speed': speed,
+                'text_length': len(text),
+                'model': 'Chatterbox-Multilingual-Advanced',
+                'voice_characteristics': voice_config,
+                'chunks_used': len(text) > 800
+            }
                 
         except Exception as e:
             logger.error(f"❌ TTS generation error: {str(e)}")
@@ -480,129 +620,12 @@ class KokoroTTSService:
                 'error': str(e)
             }
 
-    def _generate_with_fallback_tts(self, text: str, output_path: str, 
-                                  voice_config: Dict, speed: float) -> bool:
-        """Generate TTS using fallback method (for development)"""
-        
-        try:
-            # For now, we'll use Windows built-in TTS as a fallback
-            # In production, this would be replaced with Kokoro-82M
-            
-            if sys.platform == "win32":
-                return self._generate_with_windows_tts(text, output_path, speed)
-            else:
-                # For other platforms, create a placeholder audio file
-                return self._create_placeholder_audio(text, output_path, speed)
-                
-        except Exception as e:
-            logger.error(f"❌ Fallback TTS error: {str(e)}")
-            return False
-
-    def _generate_with_windows_tts(self, text: str, output_path: str, speed: float) -> bool:
-        """Generate TTS using Windows SAPI with enhanced speech patterns"""
-        
-        try:
-            # Enhanced PowerShell script for better speech quality
-            escaped_text = text.replace('"', '""').replace('`', '``')
-            
-            # Map speed to SAPI rate (-10 to 10 range)
-            sapi_rate = max(-10, min(10, int((speed - 1) * 8)))
-            
-            powershell_script = f"""
-            Add-Type -AssemblyName System.Speech
-            $synth = New-Object System.Speech.Synthesis.SpeechSynthesizer
-            
-            # Set speech parameters for natural podcast delivery
-            $synth.Rate = {sapi_rate}
-            $synth.Volume = 100
-            
-            # Try to select a better voice if available
-            $voices = $synth.GetInstalledVoices()
-            foreach ($voice in $voices) {{
-                if ($voice.VoiceInfo.Name -like "*Zira*" -or $voice.VoiceInfo.Name -like "*David*" -or $voice.VoiceInfo.Name -like "*Mark*") {{
-                    $synth.SelectVoice($voice.VoiceInfo.Name)
-                    break
-                }}
-            }}
-            
-            $synth.SetOutputToWaveFile("{output_path}")
-            
-            # Process text with natural speech patterns
-            $enhancedText = @"
-{escaped_text}
-"@
-            
-            # Convert ellipses to natural pauses (SAPI interprets periods as pauses)
-            $enhancedText = $enhancedText -replace '\.\.\.', '. . .'
-            
-            $synth.Speak($enhancedText)
-            $synth.Dispose()
-            """
-            
-            with tempfile.NamedTemporaryFile(mode='w', suffix='.ps1', delete=False) as f:
-                f.write(powershell_script)
-                ps_file = f.name
-            
-            try:
-                result = subprocess.run([
-                    'powershell', '-ExecutionPolicy', 'Bypass', '-File', ps_file
-                ], capture_output=True, text=True, timeout=30)
-                
-                success = result.returncode == 0 and os.path.exists(output_path)
-                
-                if success:
-                    logger.info(f"✅ Audio generated: {output_path}")
-                else:
-                    logger.error(f"❌ Windows TTS failed: {result.stderr}")
-                
-                return success
-                
-            finally:
-                try:
-                    os.unlink(ps_file)
-                except:
-                    pass
-                    
-        except Exception as e:
-            logger.error(f"❌ Windows TTS error: {str(e)}")
-            return False
-
-    def _create_placeholder_audio(self, text: str, output_path: str, speed: float) -> bool:
-        """Create a placeholder audio file (for non-Windows development)"""
-        
-        try:
-            # Generate a simple tone-based audio file using FFmpeg if available
-            duration = len(text.split()) * 0.5 / speed  # Rough estimate
-            
-            if subprocess.run(['which', 'ffmpeg'], capture_output=True).returncode == 0:
-                cmd = [
-                    'ffmpeg', '-f', 'lavfi', '-i', f'sine=frequency=440:duration={duration}',
-                    '-ar', '22050', '-ac', '1', output_path, '-y'
-                ]
-                
-                result = subprocess.run(cmd, capture_output=True)
-                return result.returncode == 0
-            else:
-                # Create a minimal WAV file header
-                import wave
-                with wave.open(output_path, 'wb') as wav:
-                    wav.setnchannels(1)
-                    wav.setsampwidth(2)
-                    wav.setframerate(22050)
-                    # Write silence
-                    silence_duration = int(22050 * duration)
-                    wav.writeframes(b'\x00\x00' * silence_duration)
-                
-                return True
-                
-        except Exception as e:
-            logger.error(f"❌ Placeholder audio error: {str(e)}")
-            return False
 
     def _get_audio_duration(self, audio_path: str) -> float:
         """Get duration of audio file"""
         
         try:
+            # Try ffprobe first
             if subprocess.run(['which', 'ffprobe'], capture_output=True).returncode == 0:
                 cmd = [
                     'ffprobe', '-v', 'quiet', '-print_format', 'json', 
@@ -614,64 +637,196 @@ class KokoroTTSService:
                     data = json.loads(result.stdout)
                     return float(data['format']['duration'])
             
-            # Fallback: estimate based on file size
+            # Fallback estimation
             file_size = os.path.getsize(audio_path)
-            # Rough estimate: 22050 Hz, 16-bit, mono = ~44KB per second
             estimated_duration = file_size / 44100
             return estimated_duration
             
         except Exception as e:
             logger.error(f"❌ Duration calculation error: {str(e)}")
-            # Very rough fallback estimate
             return len(open(audio_path, 'rb').read()) / 44100
 
+    def check_dependencies(self) -> Dict[str, Any]:
+        """Check if required Chatterbox dependencies are available"""
+        status = {
+            'chatterbox_available': False,
+            'ffmpeg_available': False,
+            'dependencies_ok': False,
+            'device': self.device,
+            'multilingual_support': False,
+            'exclusive_chatterbox_mode': True
+        }
+        
+        try:
+            import sys
+            chatterbox_path = str(Path(__file__).parent.parent / "chatterbox" / "src")
+            if chatterbox_path not in sys.path:
+                sys.path.insert(0, chatterbox_path)
+            
+            from chatterbox.tts import ChatterboxTTS
+            from chatterbox.mtl_tts import ChatterboxMultilingualTTS
+            import torchaudio as ta
+            import torch
+            
+            status['chatterbox_available'] = True
+            status['multilingual_support'] = True
+            logger.info(f"✅ Chatterbox TTS dependencies found (device: {self.device})")
+        except ImportError as e:
+            logger.error(f"❌ Chatterbox TTS dependencies missing: {str(e)}")
+            logger.error("🚫 Chatterbox TTS is required - system cannot function without it")
+            status['chatterbox_available'] = False
+        
+        try:
+            subprocess.run(['ffmpeg', '-version'], capture_output=True, check=True)
+            status['ffmpeg_available'] = True
+            logger.info("✅ FFmpeg found")
+        except (subprocess.CalledProcessError, FileNotFoundError):
+            logger.warning("⚠️  FFmpeg not found, audio processing limited")
+            status['ffmpeg_available'] = False
+        
+        # Only consider dependencies OK if Chatterbox is available (no fallbacks)
+        status['dependencies_ok'] = status['chatterbox_available']
+        return status
+
+    def get_available_voices(self) -> Dict[str, Any]:
+        """Get all available voices organized by language"""
+        voices_by_language = {}
+        
+        for voice_id, config in self.voices.items():
+            lang = config['language']
+            if lang not in voices_by_language:
+                voices_by_language[lang] = []
+            
+            voices_by_language[lang].append({
+                'id': voice_id,
+                'name': voice_id.split('_')[0].title(),
+                **config
+            })
+        
+        return {
+            'voices_by_language': voices_by_language,
+            'total_voices': len(self.voices),
+            'supported_languages': list(self.language_patterns.keys()),
+            'features': [
+                'Multilingual support',
+                'Emotion control (0-1 scale)',
+                '5-second voice cloning',
+                'Sub-200ms latency',
+                'Cross-language consistency'
+            ]
+        }
+
     def health_check(self) -> Dict[str, Any]:
-        """Check TTS service health"""
+        """Check Chatterbox TTS service health"""
         
         dependencies = self.check_dependencies()
         
-        # Test generation with a short phrase
-        test_result = self.generate_audio("Test audio generation.", voice='emma', speed=1.0)
+        # Only proceed with tests if Chatterbox is available
+        if not dependencies['chatterbox_available']:
+            return {
+                'status': 'unhealthy',
+                'error': 'Chatterbox TTS is not available - exclusive mode requires Chatterbox',
+                'dependencies': dependencies,
+                'voices_available': len(self.voices),
+                'languages_supported': len(self.language_patterns),
+                'audio_directory': str(self.audio_dir),
+                'test_generation_en': False,
+                'test_generation_es': False,
+                'features': {
+                    'multilingual': True,
+                    'emotion_control': True,
+                    'voice_cloning': True,
+                    'low_latency': True,
+                    'exclusive_chatterbox_mode': True
+                }
+            }
+        
+        # Test generation with different languages (only if Chatterbox is available)
+        test_result_en = self.generate_audio("Test English audio with Chatterbox.", voice='default_en', speed=1.0)
+        test_result_es = self.generate_audio("Prueba de audio en español con Chatterbox.", voice='default_es', speed=1.0)
         
         return {
-            'status': 'healthy' if test_result['success'] else 'unhealthy',
+            'status': 'healthy' if (test_result_en['success'] and test_result_es['success']) else 'unhealthy',
             'dependencies': dependencies,
             'voices_available': len(self.voices),
+            'languages_supported': len(self.language_patterns),
             'audio_directory': str(self.audio_dir),
-            'test_generation': test_result['success'],
-            'timestamp': str(pd.Timestamp.now()) if 'pd' in globals() else 'N/A'
+            'test_generation_en': test_result_en['success'],
+            'test_generation_es': test_result_es['success'],
+            'model': 'Chatterbox-Only',
+            'features': {
+                'multilingual': True,
+                'emotion_control': True,
+                'voice_cloning': True,
+                'low_latency': True,
+                'exclusive_chatterbox_mode': True
+            }
         }
 
 def main():
-    """CLI interface for TTS service"""
+    """CLI interface for Chatterbox TTS service"""
     
-    parser = argparse.ArgumentParser(description='Kokoro-82M TTS Service')
+    parser = argparse.ArgumentParser(description='Exclusive Chatterbox TTS Service (Chatterbox-only mode)')
     parser.add_argument('--text', help='Text to convert to speech')
-    parser.add_argument('--voice', default='emma', choices=['emma', 'james', 'sophia', 'michael', 'olivia', 'david'],
-                       help='Voice to use for TTS')
+    parser.add_argument('--voice', default='default_en', help='Voice to use for TTS')
     parser.add_argument('--speed', type=float, default=1.0, help='Speech speed (0.5 - 2.0)')
+    parser.add_argument('--emotion', type=float, help='Emotion level (0.0 - 1.0) - legacy parameter')
+    parser.add_argument('--exaggeration', type=float, help='Exaggeration level (0.25 - 2.0, default: 0.5)')
+    parser.add_argument('--temperature', type=float, default=0.8, help='Temperature for generation (0.05 - 5.0)')
+    parser.add_argument('--cfg-weight', type=float, default=0.5, help='CFG weight/pace (0.0 - 1.0)')
+    parser.add_argument('--min-p', type=float, default=0.05, help='Min-p sampling (0.0 - 1.0)')
+    parser.add_argument('--top-p', type=float, default=1.0, help='Top-p sampling (0.0 - 1.0)')
+    parser.add_argument('--repetition-penalty', type=float, default=1.2, help='Repetition penalty (1.0 - 2.0)')
+    parser.add_argument('--seed', type=int, default=0, help='Random seed (0 for random)')
+    parser.add_argument('--reference-audio', help='Reference audio file for voice cloning')
     parser.add_argument('--output', help='Output file path')
     parser.add_argument('--health-check', action='store_true', help='Run health check')
+    parser.add_argument('--list-voices', action='store_true', help='List available voices')
+    parser.add_argument('--auto-detect', action='store_true', default=True, help='Auto-detect language')
+    parser.add_argument('--clone-voice', help='Reference audio for voice cloning')
     
     args = parser.parse_args()
     
     # Initialize service
-    tts_service = KokoroTTSService()
+    tts_service = ChatterboxTTSService()
     
     if args.health_check:
         health = tts_service.health_check()
         print(json.dumps(health, indent=2))
         return
     
+    if args.list_voices:
+        voices = tts_service.get_available_voices()
+        print(json.dumps(voices, indent=2))
+        return
+    
+    if args.clone_voice and not args.text:
+        cloned_voice = tts_service.clone_voice(args.clone_voice)
+        if cloned_voice:
+            print(f"Voice cloned successfully: {cloned_voice}")
+        else:
+            print("Voice cloning failed")
+        return
+    
     if not args.text:
-        parser.error("--text is required when not using --health-check")
+        parser.error("--text is required")
     
     # Generate audio
     result = tts_service.generate_audio(
         text=args.text,
         voice=args.voice,
         speed=args.speed,
-        output_file=args.output
+        emotion=args.emotion,
+        exaggeration=args.exaggeration,
+        temperature=args.temperature,
+        cfg_weight=args.cfg_weight,
+        min_p=args.min_p,
+        top_p=args.top_p,
+        repetition_penalty=args.repetition_penalty,
+        seed=args.seed,
+        reference_audio=args.reference_audio,
+        output_file=args.output,
+        auto_detect_language=args.auto_detect
     )
     
     print(json.dumps(result, indent=2))

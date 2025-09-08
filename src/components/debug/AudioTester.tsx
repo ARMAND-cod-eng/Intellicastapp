@@ -22,8 +22,8 @@ const AudioTester: React.FC = () => {
       return;
     }
 
-    // Test with latest generated Kokoro audio file
-    const audioUrl = 'http://localhost:3003/audio/kokoro_preview_af_nova_4707.wav';
+    // Test with latest generated Chatterbox audio file
+    const audioUrl = 'http://localhost:3003/audio/chatterbox_en_test.wav';
     addLog(`Creating audio element with URL: ${audioUrl}`);
 
     const newAudio = new Audio(audioUrl);
@@ -69,7 +69,7 @@ const AudioTester: React.FC = () => {
 
   return (
     <div className="p-6 bg-white border rounded-lg">
-      <h3 className="text-lg font-semibold mb-4">🔧 Kokoro Audio Tester</h3>
+      <h3 className="text-lg font-semibold mb-4">🔧 Chatterbox Audio Tester</h3>
       
       <div className="flex space-x-4 mb-4">
         <button
@@ -81,7 +81,7 @@ const AudioTester: React.FC = () => {
           }`}
         >
           {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
-          <span>{isPlaying ? 'Stop Test Audio' : 'Test Kokoro Audio'}</span>
+          <span>{isPlaying ? 'Stop Test Audio' : 'Test Chatterbox Audio'}</span>
         </button>
 
         <button
@@ -95,7 +95,7 @@ const AudioTester: React.FC = () => {
       <div className="bg-gray-100 p-4 rounded-lg max-h-64 overflow-y-auto">
         <h4 className="font-medium mb-2">Debug Logs:</h4>
         {logs.length === 0 ? (
-          <p className="text-gray-500">No logs yet. Click "Test Kokoro Audio" to start.</p>
+          <p className="text-gray-500">No logs yet. Click "Test Chatterbox Audio" to start.</p>
         ) : (
           <div className="space-y-1">
             {logs.map((log, index) => (
@@ -108,7 +108,7 @@ const AudioTester: React.FC = () => {
       </div>
 
       <div className="mt-4 text-sm text-gray-600">
-        <p><strong>Test File:</strong> kokoro_preview_af_nova_4707.wav</p>
+        <p><strong>Test File:</strong> chatterbox_en_test.wav</p>
         <p><strong>Purpose:</strong> Direct browser audio compatibility test</p>
         <p><strong>Expected:</strong> Audio should load and play Nova's voice saying the preview text</p>
       </div>

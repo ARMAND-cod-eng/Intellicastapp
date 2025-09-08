@@ -114,7 +114,16 @@ router.post('/generate', async (req, res) => {
       voice: requestedVoice = 'emma',
       speed = 1.0,
       backgroundMusic = false,
-      musicType = 'none'
+      musicType = 'none',
+      // Advanced voice customization parameters
+      exaggeration = null,
+      temperature = 0.8,
+      cfg_weight = 0.5,
+      min_p = 0.05,
+      top_p = 1.0,
+      repetition_penalty = 1.2,
+      seed = 0,
+      reference_audio = null
     } = req.body;
 
     if (!documentContent) {
@@ -140,20 +149,30 @@ router.post('/generate', async (req, res) => {
     // Generate unique ID for narration
     const narrationId = uuidv4();
     
-    // Validate that voice is a Kokoro voice ID and get the final voice to use
+    // Validate that voice is a Chatterbox voice ID and get the final voice to use
     let voice = requestedVoice;
-    if (!voice.startsWith('af_') && !voice.startsWith('am_') && !voice.startsWith('bf_') && !voice.startsWith('bm_')) {
-      console.warn(`⚠️  Invalid voice ID: ${requestedVoice}, defaulting to af_heart (Kokoro-82M only)`);
-      voice = 'af_heart';
+    // Check if voice has a valid language suffix for any of the 23 supported languages
+    const validLanguages = ['_en', '_es', '_fr', '_de', '_ar', '_da', '_el', '_fi', '_he', '_hi', '_it', '_ja', '_ko', '_ms', '_nl', '_no', '_pl', '_pt', '_ru', '_sv', '_sw', '_tr', '_zh'];
+    if (!validLanguages.some(lang => voice.includes(lang))) {
+      console.warn(`⚠️  Invalid voice ID: ${requestedVoice}, defaulting to default_en (Chatterbox multilingual)`);
+      voice = 'default_en';
     }
     
-    // Generate TTS audio with Kokoro-82M ONLY
+    // Generate TTS audio with Chatterbox multilingual TTS
     let audioResult = null;
     if (narrationType !== 'document-summary') {
-      console.log(`🎧 Generating TTS audio with Kokoro-82M ONLY...`);
+      console.log(`🎧 Generating TTS audio with Chatterbox multilingual TTS (Advanced)...`);
       audioResult = await ttsService.generateAudio(scriptResult.response, { 
         voice: voice, 
-        speed 
+        speed,
+        exaggeration,
+        temperature,
+        cfg_weight,
+        min_p,
+        top_p,
+        repetition_penalty,
+        seed,
+        reference_audio
       });
       
       if (!audioResult.success) {

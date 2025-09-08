@@ -3,16 +3,16 @@ import TTSWrapper from '../services/TTSWrapper.js';
 
 const router = express.Router();
 
-// Initialize Kokoro-ONLY TTS service
+// Initialize Chatterbox Multilingual TTS service
 const ttsService = new TTSWrapper();
 
 /**
  * GET /api/voices
- * Get all available Kokoro voices with their characteristics
+ * Get all available Chatterbox multilingual voices with their characteristics
  */
 router.get('/', async (req, res) => {
   try {
-    console.log('📋 Fetching all available Kokoro voices...');
+    console.log('📋 Fetching all available Chatterbox multilingual voices...');
     
     const voicesData = await ttsService.getAvailableVoices();
     
@@ -187,14 +187,24 @@ router.get('/:voiceId', async (req, res) => {
     
     const voicesData = await ttsService.getAvailableVoices();
     
-    if (!voicesData || !voicesData.voices[voiceId]) {
+    // Look for voice in voices_by_language structure
+    let voiceDetails = null;
+    if (voicesData && voicesData.voices_by_language) {
+      for (const [lang, voices] of Object.entries(voicesData.voices_by_language)) {
+        const voice = voices.find(v => v.id === voiceId);
+        if (voice) {
+          voiceDetails = voice;
+          break;
+        }
+      }
+    }
+    
+    if (!voiceDetails) {
       return res.status(404).json({
         error: 'Voice not found',
         voiceId
       });
     }
-    
-    const voiceDetails = voicesData.voices[voiceId];
     
     res.json({
       success: true,
@@ -280,10 +290,12 @@ router.post('/compare', async (req, res) => {
         if (previewResult.success) {
           comparisons.push({
             voiceId,
-            voiceName: previewResult.voiceName,
+            language: previewResult.language,
             audioUrl: previewResult.audioUrl,
             duration: previewResult.duration,
             characteristics: previewResult.voiceCharacteristics,
+            emotion: previewResult.emotion,
+            model: previewResult.model,
             success: true
           });
         } else {
