@@ -5,7 +5,8 @@ class OllamaService {
     this.baseUrl = options.baseUrl || 'http://localhost:11434';
     this.primaryModel = options.primaryModel || 'qwen2.5:7b';
     this.fallbackModel = options.fallbackModel || 'llama3.1:8b';
-    this.timeout = options.timeout || 120000; // 120 seconds for larger documents
+    this.fastModel = options.fastModel || 'llama3.1:8b'; // Faster model for quick tasks
+    this.timeout = options.timeout || 120000; // 2 minutes - back to original speed
     this.cache = new Map(); // Simple in-memory cache
   }
 
@@ -134,8 +135,12 @@ class OllamaService {
       clearTimeout(timeoutId);
       
       if (error.name === 'AbortError') {
+        console.error(`⏱️  Ollama request timed out after ${this.timeout / 1000} seconds for model: ${model}`);
         throw new Error(`Request timeout after ${this.timeout / 1000} seconds`);
       }
+      
+      console.error(`❌ Ollama API error:`, error.message);
+      console.error(`❌ Model: ${model}, URL: ${this.baseUrl}/api/generate`);
       
       throw new Error(`Ollama API error: ${error.message}`);
     }
@@ -180,16 +185,17 @@ class OllamaService {
     const prompts = this.getNarrationPrompts(contentAnalysis);
     const prompt = prompts[type] || prompts.summary;
     
-    // For very large documents, use a more focused approach for summaries
-    if (type === 'document-summary' && text.length > 8000) {
-      const truncatedText = text.substring(0, 8000) + '...\n\n[Note: This is a large document - summary based on first section]';
+    // Only use truncation for extremely large documents (25KB+)
+    if (text.length > 25000) {
+      console.log(`📏 Extremely large document detected (${text.length} chars), using truncated approach`);
+      const truncatedText = text.substring(0, 8000) + '...\n\n[Note: This is a very large document - summary based on key sections]';
       const fullPrompt = `${prompt}\n\nContent to summarize:\n${truncatedText}`;
       
       console.log(`📝 Generating ${type} narration script for large document...`);
       
       const result = await this.generateText(fullPrompt, {
-        temperature: 0.6,
-        maxTokens: 800 // More focused for large documents
+        temperature: 0.7,
+        maxTokens: this.calculateMaxTokens(type, 8000)
       });
 
       // Clean the generated script

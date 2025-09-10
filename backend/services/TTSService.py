@@ -172,6 +172,7 @@ class ChatterboxTTSService:
         try:
             # Import the actual Chatterbox TTS modules
             import sys
+            import os
             chatterbox_path = str(Path(__file__).parent.parent / "chatterbox" / "src")
             if chatterbox_path not in sys.path:
                 sys.path.insert(0, chatterbox_path)
@@ -181,15 +182,23 @@ class ChatterboxTTSService:
             
             logger.info(f"📥 Loading latest Chatterbox TTS models...")
             
-            # Load English TTS model
-            self.tts = ChatterboxTTS.from_pretrained(device=self.device)
-            logger.info(f"✅ English Chatterbox TTS model loaded")
+            # Redirect stdout temporarily to avoid interfering with JSON output
+            original_stdout = sys.stdout
+            sys.stdout = sys.stderr
             
-            # Load Multilingual TTS model (supports 23 languages)
-            self.mtl_tts = ChatterboxMultilingualTTS.from_pretrained(device=self.device)
-            supported_languages = ChatterboxMultilingualTTS.get_supported_languages()
-            logger.info(f"✅ Multilingual Chatterbox TTS model loaded ({len(supported_languages)} languages)")
-            logger.info(f"🌍 Supported languages: {list(supported_languages.keys())}")
+            try:
+                # Load English TTS model
+                self.tts = ChatterboxTTS.from_pretrained(device=self.device)
+                logger.info(f"✅ English Chatterbox TTS model loaded")
+                
+                # Load Multilingual TTS model (supports 23 languages)
+                self.mtl_tts = ChatterboxMultilingualTTS.from_pretrained(device=self.device)
+                supported_languages = ChatterboxMultilingualTTS.get_supported_languages()
+                logger.info(f"✅ Multilingual Chatterbox TTS model loaded ({len(supported_languages)} languages)")
+                logger.info(f"🌍 Supported languages: {list(supported_languages.keys())}")
+            finally:
+                # Restore stdout
+                sys.stdout = original_stdout
             
             return True
             
@@ -276,34 +285,43 @@ class ChatterboxTTSService:
             
             logger.info(f"🎤 Generating with Chatterbox: lang={language}, exag={exaggeration}, temp={temperature}, cfg={cfg_weight}, seed={seed}")
             
-            # Use multilingual model for non-English or English model for English
-            if language == 'en':
-                # Use English model
-                model = self.tts
-                wav = model.generate(
-                    text=text,
-                    audio_prompt_path=reference_audio,
-                    exaggeration=exaggeration,
-                    temperature=temperature,
-                    cfg_weight=cfg_weight,
-                    min_p=min_p,
-                    top_p=top_p,
-                    repetition_penalty=repetition_penalty
-                )
-            else:
-                # Use multilingual model
-                model = self.mtl_tts
-                wav = model.generate(
-                    text=text,
-                    language_id=language,
-                    audio_prompt_path=reference_audio,
-                    exaggeration=exaggeration,
-                    temperature=temperature,
-                    cfg_weight=cfg_weight,
-                    min_p=min_p,
-                    top_p=top_p,
-                    repetition_penalty=repetition_penalty
-                )
+            # Redirect stdout during generation to prevent interference with JSON output
+            import sys
+            original_stdout = sys.stdout
+            sys.stdout = sys.stderr
+            
+            try:
+                # Use multilingual model for non-English or English model for English
+                if language == 'en':
+                    # Use English model
+                    model = self.tts
+                    wav = model.generate(
+                        text=text,
+                        audio_prompt_path=reference_audio,
+                        exaggeration=exaggeration,
+                        temperature=temperature,
+                        cfg_weight=cfg_weight,
+                        min_p=min_p,
+                        top_p=top_p,
+                        repetition_penalty=repetition_penalty
+                    )
+                else:
+                    # Use multilingual model
+                    model = self.mtl_tts
+                    wav = model.generate(
+                        text=text,
+                        language_id=language,
+                        audio_prompt_path=reference_audio,
+                        exaggeration=exaggeration,
+                        temperature=temperature,
+                        cfg_weight=cfg_weight,
+                        min_p=min_p,
+                        top_p=top_p,
+                        repetition_penalty=repetition_penalty
+                    )
+            finally:
+                # Restore stdout
+                sys.stdout = original_stdout
             
             # Save audio using torchaudio
             ta.save(output_path, wav, model.sr)

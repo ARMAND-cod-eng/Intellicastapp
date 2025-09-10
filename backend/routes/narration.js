@@ -149,37 +149,64 @@ router.post('/generate', async (req, res) => {
     // Generate unique ID for narration
     const narrationId = uuidv4();
     
-    // Validate that voice is a Chatterbox voice ID and get the final voice to use
-    let voice = requestedVoice;
-    // Check if voice has a valid language suffix for any of the 23 supported languages
-    const validLanguages = ['_en', '_es', '_fr', '_de', '_ar', '_da', '_el', '_fi', '_he', '_hi', '_it', '_ja', '_ko', '_ms', '_nl', '_no', '_pl', '_pt', '_ru', '_sv', '_sw', '_tr', '_zh'];
-    if (!validLanguages.some(lang => voice.includes(lang))) {
-      console.warn(`⚠️  Invalid voice ID: ${requestedVoice}, defaulting to default_en (Chatterbox multilingual)`);
-      voice = 'default_en';
+    // Map frontend voice IDs to backend Chatterbox voice IDs
+    const voiceMapping = {
+      // Frontend voices -> Backend Chatterbox voices
+      'emma_en': 'default_en',
+      'james_en': 'default_en', 
+      'sophia_es': 'default_es',
+      'am_adam': 'default_en',
+      'bf_heart': 'default_en',
+      'am_david': 'default_en',
+      // Direct Chatterbox voice IDs (passthrough)
+      'default_en': 'default_en',
+      'default_es': 'default_es',
+      'default_fr': 'default_fr',
+      'default_de': 'default_de',
+      'default_ar': 'default_ar',
+      'default_zh': 'default_zh',
+      'default_ja': 'default_ja',
+      'default_ko': 'default_ko',
+      'default_it': 'default_it',
+      'default_pt': 'default_pt',
+      'default_ru': 'default_ru',
+      'default_hi': 'default_hi'
+    };
+    
+    let voice = voiceMapping[requestedVoice] || voiceMapping['default_en'];
+    
+    if (voice !== requestedVoice) {
+      console.log(`🔄 Mapped frontend voice '${requestedVoice}' -> backend voice '${voice}'`);
     }
     
+    console.log(`🎙️  Using Chatterbox voice: ${voice}`);
+    
     // Generate TTS audio with Chatterbox multilingual TTS
-    let audioResult = null;
-    if (narrationType !== 'document-summary') {
-      console.log(`🎧 Generating TTS audio with Chatterbox multilingual TTS (Advanced)...`);
-      audioResult = await ttsService.generateAudio(scriptResult.response, { 
-        voice: voice, 
-        speed,
-        exaggeration,
-        temperature,
-        cfg_weight,
-        min_p,
-        top_p,
-        repetition_penalty,
-        seed,
-        reference_audio
-      });
-      
-      if (!audioResult.success) {
-        console.warn('⚠️  TTS generation failed, proceeding without audio');
-        audioResult = null;
-      }
+    // ALWAYS generate audio for all narration types - user expects audio output
+    console.log(`🎧 Generating TTS audio with Chatterbox multilingual TTS (Advanced)...`);
+    console.log(`📝 Text length: ${scriptResult.response.length} chars, Voice: ${voice}`);
+    
+    let audioResult = await ttsService.generateAudio(scriptResult.response, { 
+      voice: voice, 
+      speed,
+      exaggeration,
+      temperature,
+      cfg_weight,
+      min_p,
+      top_p,
+      repetition_penalty,
+      seed,
+      reference_audio
+    });
+    
+    if (!audioResult || !audioResult.success) {
+      console.error('❌ TTS generation failed:', audioResult ? audioResult.error : 'No result returned');
+      // Don't proceed without audio - user expects audio output
+      throw new Error(`Audio generation failed: ${audioResult ? audioResult.error : 'TTS service returned no result'}`);
     }
+    
+    console.log(`✅ TTS audio generated successfully: ${audioResult.fileName} (${audioResult.duration}s)`);
+    // Remove the null assignment - we should always have audio
     
     // Cache the complete narration data
     const cacheData = {
@@ -190,13 +217,13 @@ router.post('/generate', async (req, res) => {
       backgroundMusic,
       musicType,
       analysis,
-      audio: audioResult ? {
+      audio: {
         audioId: audioResult.fileName.replace('.wav', ''),
         audioUrl: audioResult.audioUrl,
         duration: audioResult.duration,
         fileSize: audioResult.fileSize,
         model: audioResult.model
-      } : null,
+      },
       createdAt: new Date().toISOString()
     };
 
@@ -210,11 +237,11 @@ router.post('/generate', async (req, res) => {
       analysis,
       model: scriptResult.model,
       tokensGenerated: scriptResult.tokensGenerated,
-      // TTS integration complete!
-      audioUrl: audioResult ? audioResult.audioUrl : null,
-      duration: audioResult ? audioResult.duration : null,
-      audioId: audioResult ? audioResult.fileName.replace('.wav', '') : null,
-      hasAudio: !!audioResult
+      // TTS integration complete - audio always generated!
+      audioUrl: audioResult.audioUrl,
+      duration: audioResult.duration,
+      audioId: audioResult.fileName.replace('.wav', ''),
+      hasAudio: true
     });
 
   } catch (error) {

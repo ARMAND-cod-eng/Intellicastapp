@@ -176,7 +176,11 @@ class TTSWrapper {
         autoDetect = true
       } = options;
 
-      console.log(`🎤 Generating TTS audio: voice=${voice}, exaggeration=${exaggeration}, temp=${temperature}, cfg=${cfg_weight}`);
+      // Use custom exaggeration if provided, otherwise use emotion if provided, otherwise use default
+      const final_exaggeration = exaggeration !== null ? exaggeration : (emotion !== null ? emotion : 0.5);
+
+      console.log(`🎤 Generating TTS audio: voice='${voice}', exag=${final_exaggeration}, temp=${temperature}, cfg=${cfg_weight}`);
+      console.log(`📄 Text to synthesize (${text.length} chars): "${text.substring(0, 100)}..."`);
 
       const args = [
         '--text', text,
@@ -227,6 +231,7 @@ class TTSWrapper {
         args.push('--auto-detect');
       }
 
+      console.log(`🐍 Calling Python TTS service with ${args.length} arguments`);
       const result = await this.runPythonScript(args);
 
       if (result.success) {
@@ -276,9 +281,11 @@ class TTSWrapper {
         };
       } else {
         console.error('❌ Chatterbox TTS generation failed:', result.error);
+        console.error('❌ Full TTS result:', JSON.stringify(result, null, 2));
+        console.error('❌ TTS args used:', args);
         return {
           success: false,
-          error: `Chatterbox TTS failed: ${result.error}`
+          error: `Chatterbox TTS failed: ${result.error || 'Unknown TTS error'}`
         };
       }
     } catch (error) {
