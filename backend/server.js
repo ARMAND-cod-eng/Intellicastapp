@@ -17,7 +17,7 @@ const PORT = process.env.PORT || 3003;
 
 // Middleware
 app.use(cors({
-  origin: ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175'], // Vite dev server
+  origin: ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175', 'http://localhost:5176', 'http://localhost:5177', 'http://localhost:5178', 'http://localhost:5179', 'http://localhost:5180', 'http://localhost:5181', 'http://localhost:5182'], // Vite dev server
   credentials: true
 }));
 app.use(express.json({ limit: '50mb' }));
@@ -43,15 +43,47 @@ app.use('/api/audio', audioRoutes);
 app.use('/api/voices', voicesRoutes);
 
 // Health check
-app.get('/health', (req, res) => {
-  res.json({ 
-    status: 'ok', 
-    timestamp: new Date().toISOString(),
-    services: {
-      server: 'running',
-      ollama: 'checking...'
+app.get('/health', async (req, res) => {
+  try {
+    // Test Ollama connection
+    let ollamaStatus = 'healthy';
+    let models = [];
+    
+    try {
+      const ollamaResponse = await fetch('http://localhost:11434/api/tags');
+      if (ollamaResponse.ok) {
+        const data = await ollamaResponse.json();
+        models = data.models?.map(m => m.name) || [];
+        if (models.length === 0) {
+          ollamaStatus = 'no_models';
+        }
+      } else {
+        ollamaStatus = 'unreachable';
+      }
+    } catch (error) {
+      ollamaStatus = 'unreachable';
     }
-  });
+
+    res.json({ 
+      status: ollamaStatus === 'healthy' ? 'ok' : 'degraded',
+      timestamp: new Date().toISOString(),
+      services: {
+        server: 'running',
+        ollama: ollamaStatus,
+        models: models
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: 'error',
+      timestamp: new Date().toISOString(),
+      services: {
+        server: 'running',
+        ollama: 'error',
+        error: error.message
+      }
+    });
+  }
 });
 
 // Error handling middleware
