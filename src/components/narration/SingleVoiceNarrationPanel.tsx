@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { X, Play, Pause, Volume2, VolumeX, Music, ChevronDown, Upload, FileText, Settings, Download, Square, MessageCircle, RotateCcw, Mic2, Grid3X3 } from 'lucide-react';
+import { X, Play, Pause, Volume2, VolumeX, Music, ChevronDown, Upload, FileText, Settings, Download, Square, MessageCircle, RotateCcw, Mic2, Grid3X3, Minimize2 } from 'lucide-react';
 import type { DocumentContent } from '../../types/document';
 import { NarrationAPI } from '../../services/narrationApi';
 import ChatterboxVoiceSelector from '../voice/ChatterboxVoiceSelector';
@@ -24,13 +24,24 @@ interface SingleVoiceNarrationPanelProps {
   onClose: () => void;
   uploadedContent?: DocumentContent[] | null;
   uploadedFiles?: File[] | null; // Add original files for backend processing
+  onMinimize?: () => void;
+  isMinimized?: boolean;
+  onAudioGenerated?: (audioData: {
+    id: string;
+    audioUrl: string;
+    trackData: any;
+    title: string;
+  }) => void;
 }
 
 const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
   isOpen,
   onClose,
   uploadedContent,
-  uploadedFiles
+  uploadedFiles,
+  onMinimize,
+  isMinimized = false,
+  onAudioGenerated
 }) => {
   const [selectedVoice, setSelectedVoice] = useState('emma_en');
   const [narrationType, setNarrationType] = useState('summary');
@@ -291,6 +302,16 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
           setCurrentTrackData(trackData);
           setShowModernPlayer(true);
           setIsPodcastPlaying(false); // Let the player control playback
+          
+          // Notify parent component about audio generation
+          if (onAudioGenerated) {
+            onAudioGenerated({
+              id: response.audioId || 'narration',
+              audioUrl: response.audioUrl,
+              trackData: trackData,
+              title: getDocumentTitle()
+            });
+          }
           
           // Create and configure audio element for fallback
           const audio = new Audio(`http://localhost:3004${response.audioUrl}`);
@@ -597,6 +618,74 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
 
   if (!isOpen) return null;
 
+  // Minimized panel view
+  if (isMinimized) {
+    return (
+      <div className="fixed right-4 top-1/2 transform -translate-y-1/2 z-50">
+        <div className="w-16 h-48 bg-dark-900/95 backdrop-blur-3xl border border-white/10 shadow-2xl rounded-xl overflow-hidden flex flex-col">
+          {/* Minimized Header */}
+          <div className="p-3 bg-white/5 backdrop-blur-md border-b border-white/10 flex flex-col items-center space-y-2">
+            <div className="w-6 h-6 rounded-full bg-gradient-to-br from-primary-500 to-secondary-500 flex items-center justify-center">
+              <Mic2 className="w-3 h-3 text-white" />
+            </div>
+            <div className="flex flex-col items-center space-y-1">
+              <button
+                onClick={onMinimize}
+                className="p-1 hover:bg-white/10 rounded transition-colors text-white/70 hover:text-white"
+                title="Expand Panel"
+              >
+                <ChevronDown className="w-4 h-4 transform rotate-90" />
+              </button>
+              <button
+                onClick={onClose}
+                className="p-1 hover:bg-white/10 rounded transition-colors text-white/70 hover:text-white"
+                title="Close Panel"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+          
+          {/* Minimized Audio Controls */}
+          {showModernPlayer && currentTrackData && (
+            <div className="flex-1 flex flex-col items-center justify-center p-2 space-y-2">
+              {/* Play/Pause Button */}
+              <button
+                onClick={() => {
+                  if (audioElement && currentNarration) {
+                    if (isPodcastPlaying) {
+                      audioElement.pause();
+                      setIsPodcastPlaying(false);
+                    } else {
+                      audioElement.play().then(() => {
+                        setIsPodcastPlaying(true);
+                      }).catch(err => console.error('Play failed:', err));
+                    }
+                  }
+                }}
+                className="w-8 h-8 bg-primary-600 hover:bg-primary-700 text-white rounded-full flex items-center justify-center transition-colors"
+              >
+                {isPodcastPlaying ? <Pause className="w-3 h-3" /> : <Play className="w-3 h-3 ml-0.5" />}
+              </button>
+              
+              {/* Progress indicator */}
+              <div className="w-1 h-16 bg-white/20 rounded-full overflow-hidden">
+                <div 
+                  className="w-full bg-primary-500 rounded-full transition-all duration-300"
+                  style={{ 
+                    height: isPodcastPlaying ? `${audioLevel * 100}%` : '20%',
+                    transform: 'translateY(100%)',
+                    animation: isPodcastPlaying ? 'none' : 'pulse 2s infinite'
+                  }}
+                />
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <>
       <style>
@@ -629,6 +718,25 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
         {/* Animated Background */}
         <div className="absolute inset-0 mesh-gradient opacity-20" />
         <div className="absolute inset-0 bg-gradient-to-br from-primary-900/20 to-secondary-900/20" />
+        
+        {/* Top Control Bar */}
+        <div className="absolute top-6 left-6 z-[100] flex items-center space-x-3">
+          <button
+            onClick={onMinimize || (() => console.log('Minimize clicked'))}
+            className="p-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors shadow-xl border-2 border-blue-500"
+            title="Minimize Panel"
+          >
+            <Minimize2 className="w-6 h-6" />
+          </button>
+          <button
+            onClick={onClose}
+            className="p-3 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors shadow-xl border-2 border-red-500"
+            title="Close Panel"
+          >
+            <X className="w-6 h-6" />
+          </button>
+        </div>
+        
         {/* Header */}
         <div className="relative flex items-center justify-between p-6 bg-white/5 backdrop-blur-md border-b border-white/10">
           <h1 className="text-2xl font-bold text-white flex items-center space-x-3">
@@ -637,12 +745,6 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
             </div>
             <span>Single Voice Narration</span>
           </h1>
-          <button
-            onClick={onClose}
-            className="p-2 hover:bg-white/10 rounded-lg transition-colors text-white/70 hover:text-white"
-          >
-            <X className="w-6 h-6" />
-          </button>
         </div>
 
         {/* Main Content */}
@@ -957,44 +1059,6 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
           </div>
         </div>
 
-        {/* Bottom Section - How It Works */}
-        <div className="p-6 bg-white/5 backdrop-blur-md border-t border-white/10">
-          <h2 className="text-xl font-bold text-white mb-6">How It Works</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Step 1 */}
-            <div className="text-center">
-              <div className="w-12 h-12 bg-gradient-to-br from-primary-500 to-primary-600 text-white rounded-full flex items-center justify-center text-xl font-bold mb-3 mx-auto shadow-lg shadow-primary-500/25">
-                1
-              </div>
-              <h3 className="text-white font-medium mb-2">Upload Document</h3>
-              <p className="text-white/70 text-sm">
-                Upload your PDF, DOCX, or text file. Our AI analyzes and processes the content for optimal podcast conversion.
-              </p>
-            </div>
-
-            {/* Step 2 */}
-            <div className="text-center">
-              <div className="w-12 h-12 bg-gradient-to-br from-secondary-500 to-secondary-600 text-white rounded-full flex items-center justify-center text-xl font-bold mb-3 mx-auto shadow-lg shadow-secondary-500/25">
-                2
-              </div>
-              <h3 className="text-white font-medium mb-2">Customize Settings</h3>
-              <p className="text-white/70 text-sm">
-                Choose your preferred voice, narration style, and background music to create the perfect audio experience.
-              </p>
-            </div>
-
-            {/* Step 3 */}
-            <div className="text-center">
-              <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-emerald-600 text-white rounded-full flex items-center justify-center text-xl font-bold mb-3 mx-auto shadow-lg shadow-emerald-500/25">
-                3
-              </div>
-              <h3 className="text-white font-medium mb-2">Generate & Listen</h3>
-              <p className="text-white/70 text-sm">
-                Our AI generates your personalized podcast in minutes. Download or stream your content immediately.
-              </p>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
     </>

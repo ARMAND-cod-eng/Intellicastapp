@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { FileText, Link, Sparkles, Check } from 'lucide-react';
 import type { DocumentContent } from '../../types/document';
 import SingleVoiceNarrationPanel from '../narration/SingleVoiceNarrationPanel';
+import ModernAudioPlayer from '../audio/ModernAudioPlayer';
 
 interface NewViewProps {
   currentView: string;
@@ -12,6 +13,14 @@ interface NewViewProps {
 
 const NewView: React.FC<NewViewProps> = ({ currentView, onOpenUpload, uploadedContent, uploadedFiles }) => {
   const [isSingleVoicePanelOpen, setIsSingleVoicePanelOpen] = useState(false);
+  const [isSingleVoicePanelMinimized, setIsSingleVoicePanelMinimized] = useState(false);
+  const [persistentAudioData, setPersistentAudioData] = useState<{
+    id: string;
+    audioUrl: string;
+    trackData: any;
+    title: string;
+  } | null>(null);
+  const [showPersistentPlayer, setShowPersistentPlayer] = useState(false);
   
   if (currentView !== 'new') return null;
 
@@ -45,7 +54,10 @@ const NewView: React.FC<NewViewProps> = ({ currentView, onOpenUpload, uploadedCo
       description: 'Professional narrator reading your content with adjustable speed',
       features: ['Natural speech patterns', 'Customizable pace', 'Clear pronunciation'],
       recommended: false,
-      action: () => setIsSingleVoicePanelOpen(true),
+      action: () => {
+        setIsSingleVoicePanelOpen(true);
+        setIsSingleVoicePanelMinimized(false);
+      },
     },
     {
       title: 'Multi-Voice Conversation',
@@ -66,7 +78,7 @@ const NewView: React.FC<NewViewProps> = ({ currentView, onOpenUpload, uploadedCo
   return (
     <>
       <div className={`p-8 space-y-8 transition-all duration-300 ${
-        isSingleVoicePanelOpen ? 'mr-1/2' : ''
+        isSingleVoicePanelOpen && !isSingleVoicePanelMinimized ? 'mr-1/2' : ''
       }`}>
       {/* Hero Section */}
       <section className="text-center mb-12">
@@ -175,10 +187,46 @@ const NewView: React.FC<NewViewProps> = ({ currentView, onOpenUpload, uploadedCo
       {/* Single Voice Narration Panel */}
       <SingleVoiceNarrationPanel
         isOpen={isSingleVoicePanelOpen}
-        onClose={() => setIsSingleVoicePanelOpen(false)}
+        isMinimized={isSingleVoicePanelMinimized}
+        onClose={() => {
+          setIsSingleVoicePanelOpen(false);
+          setIsSingleVoicePanelMinimized(false);
+          // Show persistent player if audio was generated
+          if (persistentAudioData) {
+            setShowPersistentPlayer(true);
+          }
+        }}
+        onMinimize={() => setIsSingleVoicePanelMinimized(!isSingleVoicePanelMinimized)}
+        onAudioGenerated={(audioData) => {
+          setPersistentAudioData(audioData);
+          setShowPersistentPlayer(false); // Hide persistent player when panel is open
+        }}
         uploadedContent={uploadedContent}
         uploadedFiles={uploadedFiles}
       />
+
+      {/* Persistent Audio Player */}
+      {showPersistentPlayer && persistentAudioData && (
+        <div className="fixed bottom-4 right-4 z-40">
+          <div className="bg-white rounded-lg shadow-2xl border border-gray-200 p-4 max-w-sm">
+            <ModernAudioPlayer
+              audioUrl={`http://localhost:3004${persistentAudioData.audioUrl}`}
+              trackData={persistentAudioData.trackData}
+              isMinimized={true}
+              onClose={() => {
+                setShowPersistentPlayer(false);
+                setPersistentAudioData(null);
+              }}
+              onToggleMinimize={() => {
+                // Reopen the main panel
+                setIsSingleVoicePanelOpen(true);
+                setIsSingleVoicePanelMinimized(false);
+                setShowPersistentPlayer(false);
+              }}
+            />
+          </div>
+        </div>
+      )}
     </>
   );
 };
