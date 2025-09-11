@@ -31,6 +31,7 @@ interface SingleVoiceNarrationPanelProps {
     audioUrl: string;
     trackData: any;
     title: string;
+    shouldShowExternal?: boolean;
   }) => void;
 }
 
@@ -1016,8 +1017,20 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
                         <ModernAudioPlayer
                           audioUrl={currentNarration ? `http://localhost:3004${currentNarration.audioUrl}` : undefined}
                           trackData={currentTrackData}
-                          isMinimized={playerMinimized}
-                          onToggleMinimize={() => setPlayerMinimized(!playerMinimized)}
+                          isMinimized={false}
+                          onToggleMinimize={() => {
+                            // Notify parent to show external audio player
+                            if (onAudioGenerated) {
+                              onAudioGenerated({
+                                id: currentNarration?.id || 'narration',
+                                audioUrl: currentNarration?.audioUrl || '',
+                                trackData: currentTrackData,
+                                title: getDocumentTitle(),
+                                shouldShowExternal: true
+                              });
+                            }
+                            setShowModernPlayer(false);
+                          }}
                           onClose={() => {
                             setShowModernPlayer(false);
                             setCurrentTrackData(null);

@@ -21,6 +21,14 @@ const NewView: React.FC<NewViewProps> = ({ currentView, onOpenUpload, uploadedCo
     title: string;
   } | null>(null);
   const [showPersistentPlayer, setShowPersistentPlayer] = useState(false);
+  const [externalAudioPlayer, setExternalAudioPlayer] = useState<{
+    id: string;
+    audioUrl: string;
+    trackData: any;
+    title: string;
+  } | null>(null);
+  const [showExternalPlayer, setShowExternalPlayer] = useState(false);
+  const [externalPlayerMinimized, setExternalPlayerMinimized] = useState(false);
   
   if (currentView !== 'new') return null;
 
@@ -191,21 +199,72 @@ const NewView: React.FC<NewViewProps> = ({ currentView, onOpenUpload, uploadedCo
         onClose={() => {
           setIsSingleVoicePanelOpen(false);
           setIsSingleVoicePanelMinimized(false);
-          // Show persistent player if audio was generated
-          if (persistentAudioData) {
+          // Show persistent player if audio was generated but no external player is shown
+          if (persistentAudioData && !showExternalPlayer) {
             setShowPersistentPlayer(true);
           }
         }}
-        onMinimize={() => setIsSingleVoicePanelMinimized(!isSingleVoicePanelMinimized)}
+        onMinimize={() => {
+          const willBeMinimized = !isSingleVoicePanelMinimized;
+          setIsSingleVoicePanelMinimized(willBeMinimized);
+          
+          // If minimizing and there's audio data but no external player shown yet, show external player
+          if (willBeMinimized && persistentAudioData && !showExternalPlayer) {
+            setExternalAudioPlayer(persistentAudioData);
+            setShowExternalPlayer(true);
+            setExternalPlayerMinimized(false);
+          }
+          
+          // If expanding and external player is shown, hide it (audio will be in panel)
+          if (!willBeMinimized && showExternalPlayer) {
+            setShowExternalPlayer(false);
+            setExternalAudioPlayer(null);
+          }
+        }}
         onAudioGenerated={(audioData) => {
-          setPersistentAudioData(audioData);
-          setShowPersistentPlayer(false); // Hide persistent player when panel is open
+          if (audioData.shouldShowExternal) {
+            // Show external floating audio player
+            setExternalAudioPlayer(audioData);
+            setShowExternalPlayer(true);
+            setExternalPlayerMinimized(false);
+          } else {
+            // Store for persistent player when panel closes
+            setPersistentAudioData(audioData);
+            setShowPersistentPlayer(false); // Hide persistent player when panel is open
+            setShowExternalPlayer(false); // Hide external player when panel is open
+          }
         }}
         uploadedContent={uploadedContent}
         uploadedFiles={uploadedFiles}
       />
 
-      {/* Persistent Audio Player */}
+      {/* External Floating Audio Player - Always visible when minimized from panel */}
+      {showExternalPlayer && externalAudioPlayer && (
+        <div className={`fixed z-50 transition-all duration-300 ${
+          externalPlayerMinimized 
+            ? 'bottom-4 right-4' 
+            : 'top-4 left-4'
+        }`}>
+          <div className={`bg-white rounded-lg shadow-2xl border border-gray-200 transition-all duration-300 ${
+            externalPlayerMinimized ? 'p-2 max-w-xs' : 'p-4 w-96'
+          }`}>
+            <ModernAudioPlayer
+              audioUrl={`http://localhost:3004${externalAudioPlayer.audioUrl}`}
+              trackData={externalAudioPlayer.trackData}
+              isMinimized={externalPlayerMinimized}
+              onClose={() => {
+                setShowExternalPlayer(false);
+                setExternalAudioPlayer(null);
+              }}
+              onToggleMinimize={() => {
+                setExternalPlayerMinimized(!externalPlayerMinimized);
+              }}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Persistent Audio Player - Shows when panel is fully closed */}
       {showPersistentPlayer && persistentAudioData && (
         <div className="fixed bottom-4 right-4 z-40">
           <div className="bg-white rounded-lg shadow-2xl border border-gray-200 p-4 max-w-sm">
