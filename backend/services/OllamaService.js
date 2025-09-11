@@ -6,7 +6,7 @@ class OllamaService {
     this.primaryModel = options.primaryModel || 'qwen2.5:7b';
     this.fallbackModel = options.fallbackModel || 'llama3.1:8b';
     this.fastModel = options.fastModel || 'llama3.1:8b'; // Faster model for quick tasks
-    this.timeout = options.timeout || 300000; // 5 minutes for stable AI generation
+    this.timeout = options.timeout || 600000; // 10 minutes for stable AI generation
     this.cache = new Map(); // Simple in-memory cache
   }
 
@@ -185,14 +185,16 @@ class OllamaService {
     const prompts = this.getNarrationPrompts(contentAnalysis);
     const prompt = prompts[type] || prompts.summary;
     
-    // Use faster model for simple summaries
-    const shouldUseFastModel = type === 'summary' || type === 'document-summary' || text.length < 5000;
+    // Use faster model for large documents to avoid timeouts
+    const shouldUseFastModel = type === 'summary' || type === 'document-summary' || text.length > 10000;
     const modelToUse = shouldUseFastModel ? this.fastModel : this.primaryModel;
     
-    // Only use truncation for extremely large documents (25KB+)
-    if (text.length > 25000) {
-      console.log(`📏 Extremely large document detected (${text.length} chars), using truncated approach`);
-      const truncatedText = text.substring(0, 8000) + '...\n\n[Note: This is a very large document - summary based on key sections]';
+    console.log(`🎯 Using model: ${modelToUse} for ${type} (content length: ${text.length})`);
+    
+    // Use truncation for large documents (15KB+) to improve performance
+    if (text.length > 15000) {
+      console.log(`📏 Large document detected (${text.length} chars), using truncated approach`);
+      const truncatedText = text.substring(0, 10000) + '...\n\n[Note: This is a large document - summary based on key sections]';
       const fullPrompt = `${prompt}\n\nContent to summarize:\n${truncatedText}`;
       
       console.log(`📝 Generating ${type} narration script for large document...`);
@@ -200,7 +202,7 @@ class OllamaService {
       const result = await this.generateText(fullPrompt, {
         model: modelToUse,
         temperature: 0.7,
-        maxTokens: this.calculateMaxTokens(type, 8000)
+        maxTokens: this.calculateMaxTokens(type, 10000)
       });
 
       // Clean the generated script
@@ -318,19 +320,19 @@ Requirements:
    * Calculate appropriate max tokens based on narration type and content length
    */
   calculateMaxTokens(type, contentLength) {
-    // More conservative calculation for better performance
-    const baseTokens = Math.min(Math.ceil(contentLength / 4), 1000); // Even more conservative
+    // Even more conservative calculation for better performance with large documents
+    const baseTokens = Math.min(Math.ceil(contentLength / 6), 800); // More conservative for stability
     
     const multipliers = {
-      summary: 0.6,      // Shorter output for faster generation
-      full: 1.0,         // Standard output
-      explanatory: 1.2,  // Slightly more detailed
-      briefing: 0.7,     // Concise
-      interactive: 0.9,  // Shorter with questions
-      'document-summary': 0.5 // Very concise for document summaries
+      summary: 0.5,      // Shorter output for faster generation
+      full: 0.8,         // Reduced for better performance
+      explanatory: 1.0,  // Standard
+      briefing: 0.6,     // Concise
+      interactive: 0.7,  // Shorter with questions
+      'document-summary': 0.4 // Very concise for document summaries
     };
     
-    const result = Math.ceil(baseTokens * (multipliers[type] || 0.8));
+    const result = Math.ceil(baseTokens * (multipliers[type] || 0.6));
     console.log(`🧮 Calculated max tokens for ${type}: ${result} (content length: ${contentLength})`);
     return result;
   }

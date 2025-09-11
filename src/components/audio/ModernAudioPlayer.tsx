@@ -62,19 +62,65 @@ const ModernAudioPlayer: React.FC<ModernAudioPlayerProps> = ({
     description: "An in-depth analysis of modern business strategies powered by artificial intelligence."
   };
 
-  // Simulate time progression when playing
+  // Initialize audio element when audioUrl changes
   useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (isPlaying) {
-      interval = setInterval(() => {
-        setCurrentTime(prev => {
-          const next = prev + 1;
-          return next >= duration ? 0 : next;
-        });
-      }, 1000);
+    if (audioUrl && audioRef.current) {
+      const audio = audioRef.current;
+      audio.src = audioUrl;
+      audio.volume = volume;
+      audio.muted = isMuted;
+
+      const handleLoadedMetadata = () => {
+        setDuration(audio.duration);
+      };
+
+      const handleTimeUpdate = () => {
+        setCurrentTime(audio.currentTime);
+      };
+
+      const handleEnded = () => {
+        setIsPlaying(false);
+        if (isRepeat) {
+          audio.currentTime = 0;
+          audio.play();
+          setIsPlaying(true);
+        } else {
+          setCurrentTime(0);
+        }
+      };
+
+      const handleError = (e: Event) => {
+        console.error('Audio playback error:', e);
+        setIsPlaying(false);
+      };
+
+      audio.addEventListener('loadedmetadata', handleLoadedMetadata);
+      audio.addEventListener('timeupdate', handleTimeUpdate);
+      audio.addEventListener('ended', handleEnded);
+      audio.addEventListener('error', handleError);
+
+      return () => {
+        audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
+        audio.removeEventListener('timeupdate', handleTimeUpdate);
+        audio.removeEventListener('ended', handleEnded);
+        audio.removeEventListener('error', handleError);
+      };
     }
-    return () => clearInterval(interval);
-  }, [isPlaying, duration]);
+  }, [audioUrl, volume, isMuted, isRepeat]);
+
+  // Update audio playback state
+  useEffect(() => {
+    if (audioRef.current) {
+      if (isPlaying) {
+        audioRef.current.play().catch(error => {
+          console.error('Failed to play audio:', error);
+          setIsPlaying(false);
+        });
+      } else {
+        audioRef.current.pause();
+      }
+    }
+  }, [isPlaying]);
 
   const formatTime = (time: number) => {
     const minutes = Math.floor(time / 60);
@@ -83,6 +129,7 @@ const ModernAudioPlayer: React.FC<ModernAudioPlayerProps> = ({
   };
 
   const handlePlayPause = () => {
+    if (!audioUrl) return;
     setIsPlaying(!isPlaying);
   };
 
@@ -167,6 +214,13 @@ const ModernAudioPlayer: React.FC<ModernAudioPlayerProps> = ({
             />
           </div>
         </GlassCard>
+        
+        {/* Hidden audio element */}
+        <audio
+          ref={audioRef}
+          preload="metadata"
+          style={{ display: 'none' }}
+        />
       </motion.div>
     );
   }
@@ -473,6 +527,13 @@ const ModernAudioPlayer: React.FC<ModernAudioPlayerProps> = ({
             </motion.div>
           </div>
         </GlassCard>
+        
+        {/* Hidden audio element */}
+        <audio
+          ref={audioRef}
+          preload="metadata"
+          style={{ display: 'none' }}
+        />
       </motion.div>
     </AnimatePresence>
   );
