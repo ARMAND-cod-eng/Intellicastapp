@@ -29,7 +29,7 @@ const AIHealthCheck: React.FC = () => {
     setHealthStatus({ status: 'checking' });
     
     try {
-      const response = await fetch('http://localhost:3003/api/narration/health');
+      const response = await fetch('http://localhost:3004/api/narration/health');
       
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -54,7 +54,7 @@ const AIHealthCheck: React.FC = () => {
     setTestSummary('');
     
     try {
-      const response = await fetch('http://localhost:3003/api/narration/generate', {
+      const response = await fetch('http://localhost:3004/api/narration/generate', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

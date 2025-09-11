@@ -4,6 +4,8 @@ import { X, Play, Pause, Volume2, VolumeX, Music, ChevronDown, Upload, FileText,
 import type { DocumentContent } from '../../types/document';
 import { NarrationAPI } from '../../services/narrationApi';
 import ChatterboxVoiceSelector from '../voice/ChatterboxVoiceSelector';
+import ModernAudioPlayer from '../audio/ModernAudioPlayer';
+import GlassCard from '../ui/GlassCard';
 
 // Voice settings interface
 interface VoiceSettings {
@@ -64,6 +66,9 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
     seed: 0,
     reference_audio: null
   });
+  const [showModernPlayer, setShowModernPlayer] = useState(false);
+  const [currentTrackData, setCurrentTrackData] = useState<any>(null);
+  const [playerMinimized, setPlayerMinimized] = useState(false);
 
   // Popular Chatterbox voices for simple selection mode
   const popularChatterboxVoices = [
@@ -211,6 +216,26 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
     return "Click 'Generate Summary' to see an AI-generated summary of your document.";
   };
 
+  // Get document title for player
+  const getDocumentTitle = () => {
+    if (uploadedContent && uploadedContent.length > 0) {
+      return uploadedContent[0].metadata?.fileName || uploadedContent[0].title || 'Document';
+    }
+    if (internalUploadedFiles && internalUploadedFiles.length > 0) {
+      return internalUploadedFiles[0].name.replace(/\.[^/.]+$/, '') || 'Document';
+    }
+    if (uploadedFiles && uploadedFiles.length > 0) {
+      return uploadedFiles[0].name.replace(/\.[^/.]+$/, '') || 'Document';
+    }
+    return 'AI Generated Podcast';
+  };
+
+  // Get voice name for display
+  const getSelectedVoiceName = () => {
+    const voice = popularChatterboxVoices.find(v => v.id === selectedVoice);
+    return voice ? voice.name : 'AI Voice';
+  };
+
   const handleGenerate = async () => {
     let content = '';
 
@@ -254,15 +279,24 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
           });
           setAudioUrl(response.audioUrl);
           
-          // Create and configure audio element
-          const audio = new Audio(`http://localhost:3003${response.audioUrl}`);
+          // Create track data for the modern audio player
+          const trackData = {
+            title: getDocumentTitle(),
+            artist: `${getSelectedVoiceName()} • IntelliCast AI`,
+            duration: response.duration ? `${Math.floor(response.duration / 60)}:${Math.floor(response.duration % 60).toString().padStart(2, '0')}` : "Unknown",
+            artwork: "https://images.unsplash.com/photo-1478737270239-2f02b77fc618?w=400&h=400&fit=crop&crop=center",
+            description: documentSummary || `AI-generated ${narrationType} narration of your document using advanced voice synthesis.`
+          };
+          
+          setCurrentTrackData(trackData);
+          setShowModernPlayer(true);
+          setIsPodcastPlaying(false); // Let the player control playback
+          
+          // Create and configure audio element for fallback
+          const audio = new Audio(`http://localhost:3004${response.audioUrl}`);
           audio.onloadeddata = () => {
             console.log('Audio loaded successfully');
             setAudioElement(audio);
-            // Auto-play the generated narration
-            audio.play().then(() => {
-              setIsPodcastPlaying(true);
-            }).catch(err => console.error('Auto-play failed:', err));
           };
           audio.onended = () => {
             setIsPodcastPlaying(false);
@@ -324,7 +358,7 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
   const handleDownload = () => {
     if (currentNarration && audioUrl) {
       const link = document.createElement('a');
-      link.href = `http://localhost:3003${audioUrl}`;
+      link.href = `http://localhost:3004${audioUrl}`;
       link.download = `narration_${currentNarration.id}.wav`;
       document.body.appendChild(link);
       link.click();
@@ -588,18 +622,26 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
       </style>
       <div className="fixed inset-0 z-50 flex">
         {/* Backdrop for the left side */}
-        <div className="flex-1 bg-black/20" onClick={onClose} />
+        <div className="flex-1 bg-black/30 backdrop-blur-sm" onClick={onClose} />
       
       {/* Main Panel Container - Half Screen */}
-      <div className="w-1/2 bg-white shadow-2xl overflow-hidden flex flex-col">
+      <div className="w-1/2 bg-dark-900/95 backdrop-blur-3xl border-l border-white/10 shadow-2xl overflow-hidden flex flex-col relative">
+        {/* Animated Background */}
+        <div className="absolute inset-0 mesh-gradient opacity-20" />
+        <div className="absolute inset-0 bg-gradient-to-br from-primary-900/20 to-secondary-900/20" />
         {/* Header */}
-        <div className="flex items-center justify-between p-6 bg-gray-50 border-b border-gray-200">
-          <h1 className="text-2xl font-bold text-gray-900">Single Voice Narration</h1>
+        <div className="relative flex items-center justify-between p-6 bg-white/5 backdrop-blur-md border-b border-white/10">
+          <h1 className="text-2xl font-bold text-white flex items-center space-x-3">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary-500 to-secondary-500 flex items-center justify-center">
+              <Mic2 className="w-4 h-4 text-white" />
+            </div>
+            <span>Single Voice Narration</span>
+          </h1>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-gray-200 rounded-lg transition-colors"
+            className="p-2 hover:bg-white/10 rounded-lg transition-colors text-white/70 hover:text-white"
           >
-            <X className="w-6 h-6 text-gray-500" />
+            <X className="w-6 h-6" />
           </button>
         </div>
 
@@ -609,16 +651,16 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
           <div className="flex p-6 space-x-6">
             {/* Left Side - Document Summary Section */}
             <div className="flex-1">
-              <div className="bg-white rounded-xl border-2 border-blue-500/50 p-6 shadow-sm h-full">
+              <GlassCard variant="medium" className="p-6 h-full" glow>
                 {(uploadedContent && uploadedContent.length > 0) || 
                  (uploadedFiles && uploadedFiles.length > 0) || 
                  (internalUploadedFiles && internalUploadedFiles.length > 0) ? (
                   <>
-                    <h2 className="text-xl font-bold text-gray-900 mb-2">Document Summary</h2>
+                    <h2 className="text-xl font-bold text-white mb-2">Document Summary</h2>
                     <div className="mb-4">
                       <div className="flex items-center space-x-2 mb-3">
-                        <FileText className="w-5 h-5 text-blue-600" />
-                        <span className="text-sm font-medium text-gray-700">
+                        <FileText className="w-5 h-5 text-primary-400" />
+                        <span className="text-sm font-medium text-white/90">
                           {uploadedContent && uploadedContent.length > 0 
                             ? uploadedContent[0].metadata?.fileName || uploadedContent[0].title
                             : internalUploadedFiles && internalUploadedFiles.length > 0
@@ -631,15 +673,15 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
                     </div>
                     
                     {/* Document Summary Content */}
-                    <div className="bg-gray-50 rounded-lg p-4 mb-4">
+                    <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 mb-4 border border-white/20">
                       <div className="flex items-start justify-between mb-3">
-                        <p className="text-gray-700 text-sm leading-relaxed flex-1">
+                        <p className="text-white/80 text-sm leading-relaxed flex-1">
                           {getDocumentSummary()}
                         </p>
                         {!documentSummary && !isLoadingSummary && (
                           <button
                             onClick={generateDocumentSummary}
-                            className="ml-3 px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-xs whitespace-nowrap"
+                            className="ml-3 px-3 py-1 bg-gradient-to-r from-primary-600 to-secondary-600 text-white rounded-lg hover:from-primary-500 hover:to-secondary-500 transition-all duration-300 text-xs whitespace-nowrap shadow-lg hover:shadow-primary-500/25"
                           >
                             Generate Summary
                           </button>
@@ -648,7 +690,7 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
                       {isLoadingSummary && (
                         <div className="flex items-center space-x-2 mt-2">
                           <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-                          <span className="text-xs text-blue-600">AI is analyzing your document...</span>
+                          <span className="text-xs text-primary-400">AI is analyzing your document...</span>
                         </div>
                       )}
                     </div>
@@ -656,21 +698,21 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
                     {/* Document Stats */}
                     {uploadedContent && uploadedContent.length > 0 && (
                       <div className="grid grid-cols-2 gap-4 text-sm">
-                        <div className="bg-blue-50 rounded-lg p-3">
-                          <div className="text-blue-600 font-medium">Word Count</div>
-                          <div className="text-gray-700">{uploadedContent[0].metadata?.wordCount || uploadedContent[0].content.split(' ').length} words</div>
+                        <div className="bg-primary-500/20 backdrop-blur-sm rounded-lg p-3 border border-primary-500/30">
+                          <div className="text-primary-300 font-medium">Word Count</div>
+                          <div className="text-white/90">{uploadedContent[0].metadata?.wordCount || uploadedContent[0].content.split(' ').length} words</div>
                         </div>
-                        <div className="bg-green-50 rounded-lg p-3">
-                          <div className="text-green-600 font-medium">Est. Reading Time</div>
-                          <div className="text-gray-700">{Math.ceil((uploadedContent[0].metadata?.wordCount || uploadedContent[0].content.split(' ').length) / 250)} min</div>
+                        <div className="bg-secondary-500/20 backdrop-blur-sm rounded-lg p-3 border border-secondary-500/30">
+                          <div className="text-secondary-300 font-medium">Est. Reading Time</div>
+                          <div className="text-white/90">{Math.ceil((uploadedContent[0].metadata?.wordCount || uploadedContent[0].content.split(' ').length) / 250)} min</div>
                         </div>
                       </div>
                     )}
                   </>
                 ) : (
                   <>
-                    <h2 className="text-xl font-bold text-gray-900 mb-2">Upload Your Document</h2>
-                    <p className="text-gray-600 text-sm mb-6">
+                    <h2 className="text-xl font-bold text-white mb-2">Upload Your Document</h2>
+                    <p className="text-white/70 text-sm mb-6">
                       We support PDF, EPUB, DOCX, and TXT formats. Maximum file size is 50MB.
                     </p>
                     
@@ -679,18 +721,18 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
                       {...getRootProps()} 
                       className={`border-2 border-dashed rounded-lg p-6 text-center mb-4 transition-colors cursor-pointer ${
                         isDragActive 
-                          ? 'border-blue-500 bg-blue-50' 
-                          : 'border-gray-300 bg-gray-50 hover:border-blue-500/50'
+                          ? 'border-primary-400 bg-primary-500/20 backdrop-blur-sm' 
+                          : 'border-white/30 bg-white/10 backdrop-blur-sm hover:border-primary-400/50'
                       }`}
                     >
                       <input {...getInputProps()} />
-                      <FileText className="w-10 h-10 text-gray-400 mx-auto mb-3" />
+                      <FileText className="w-10 h-10 text-white/60 mx-auto mb-3" />
                       {isDragActive ? (
-                        <p className="text-blue-600 text-sm mb-3">Drop your file here</p>
+                        <p className="text-primary-300 text-sm mb-3">Drop your file here</p>
                       ) : (
                         <>
-                          <p className="text-gray-600 text-sm mb-3">Drag and drop your file here or click to browse</p>
-                          <div className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors inline-block">
+                          <p className="text-white/70 text-sm mb-3">Drag and drop your file here or click to browse</p>
+                          <div className="px-4 py-2 bg-gradient-to-r from-primary-600 to-secondary-600 text-white rounded-lg text-sm font-medium hover:from-primary-500 hover:to-secondary-500 transition-all duration-300 inline-block shadow-lg hover:shadow-primary-500/25">
                             Choose File
                           </div>
                         </>
@@ -698,14 +740,14 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
                     </div>
                   </>
                 )}
-              </div>
+              </GlassCard>
             </div>
 
             {/* Right Side - Customize Options */}
             <div className="flex-1">
-              <div className="bg-white rounded-xl border-2 border-yellow-500/50 p-6 shadow-sm h-full">
-              <h2 className="text-xl font-bold text-gray-900 mb-2">Customize Your Podcast</h2>
-              <p className="text-gray-600 text-sm mb-6">
+              <GlassCard variant="medium" className="p-6 h-full" glow>
+              <h2 className="text-xl font-bold text-white mb-2">Customize Your Podcast</h2>
+              <p className="text-white/70 text-sm mb-6">
                 Personalize your audio experience with our customization options.
               </p>
 
@@ -713,13 +755,13 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
                 <div className="mb-6">
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center space-x-2">
-                      <Volume2 className="w-4 h-4 text-gray-700" />
-                      <h3 className="text-gray-900 font-medium text-sm">Voice Selection</h3>
-                      <span className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded-full">Chatterbox Multilingual</span>
+                      <Volume2 className="w-4 h-4 text-white/90" />
+                      <h3 className="text-white font-medium text-sm">Voice Selection</h3>
+                      <span className="text-xs bg-secondary-500/30 text-secondary-200 px-2 py-1 rounded-full backdrop-blur-sm border border-secondary-400/30">Chatterbox Multilingual</span>
                     </div>
                     <button
                       onClick={() => setShowAdvancedVoiceSelector(!showAdvancedVoiceSelector)}
-                      className="flex items-center space-x-1 text-xs text-blue-600 hover:text-blue-800 transition-colors"
+                      className="flex items-center space-x-1 text-xs text-primary-300 hover:text-primary-200 transition-colors"
                       title={showAdvancedVoiceSelector ? 'Switch to simple selection' : 'Browse all Chatterbox multilingual voices'}
                     >
                       {showAdvancedVoiceSelector ? (
@@ -737,7 +779,7 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
                   </div>
                   
                   {showAdvancedVoiceSelector ? (
-                    <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                    <div className="border border-white/20 rounded-lg p-4 bg-white/10 backdrop-blur-sm">
                       <ChatterboxVoiceSelector
                         selectedVoice={selectedVoice}
                         onVoiceChange={setSelectedVoice}
@@ -748,13 +790,13 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
                     </div>
                   ) : (
                     <div>
-                      <label className="text-xs text-gray-600 block mb-1">Primary Narrator</label>
-                      <p className="text-xs text-gray-500 mb-2">Popular Chatterbox multilingual voices (click "All Voices" for full selection)</p>
+                      <label className="text-xs text-white/80 block mb-1">Primary Narrator</label>
+                      <p className="text-xs text-white/60 mb-2">Popular Chatterbox multilingual voices (click "All Voices" for full selection)</p>
                       <div className="relative">
                         <select
                           value={selectedVoice}
                           onChange={(e) => setSelectedVoice(e.target.value)}
-                          className="w-full px-3 py-2 text-sm bg-white border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none"
+                          className="w-full px-3 py-2 text-sm bg-white/10 backdrop-blur-sm border border-white/30 rounded-lg text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 appearance-none"
                         >
                           {popularChatterboxVoices.map((voice) => (
                             <option key={voice.id} value={voice.id}>
@@ -762,7 +804,7 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
                             </option>
                           ))}
                         </select>
-                        <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                        <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-white/60 pointer-events-none" />
                       </div>
                     </div>
                   )}
@@ -770,12 +812,12 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
 
                 {/* Voice Customization */}
                 <div className="mb-6">
-                  <div className="p-3 bg-blue-50 rounded-lg">
-                    <h4 className="text-sm font-medium text-gray-700 mb-2">Voice Customization (Advanced)</h4>
+                  <div className="p-3 bg-primary-500/20 backdrop-blur-sm rounded-lg border border-primary-500/30">
+                    <h4 className="text-sm font-medium text-white/90 mb-2">Voice Customization (Advanced)</h4>
                     
                     <div className="space-y-3">
                       <div>
-                        <label className="text-xs text-gray-600 block mb-1">Exaggeration</label>
+                        <label className="text-xs text-white/80 block mb-1">Exaggeration</label>
                         <input
                           type="range"
                           min="0.25"
@@ -783,13 +825,13 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
                           step="0.05"
                           value={voiceSettings.exaggeration}
                           onChange={(e) => setVoiceSettings(prev => ({...prev, exaggeration: parseFloat(e.target.value)}))}
-                          className="w-full accent-blue-600"
+                          className="w-full accent-primary-500"
                         />
-                        <span className="text-xs text-gray-500">{voiceSettings.exaggeration.toFixed(2)}</span>
+                        <span className="text-xs text-white/60">{voiceSettings.exaggeration.toFixed(2)}</span>
                       </div>
                       
                       <div>
-                        <label className="text-xs text-gray-600 block mb-1">Temperature</label>
+                        <label className="text-xs text-white/80 block mb-1">Temperature</label>
                         <input
                           type="range"
                           min="0.05"
@@ -797,9 +839,9 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
                           step="0.05"
                           value={voiceSettings.temperature}
                           onChange={(e) => setVoiceSettings(prev => ({...prev, temperature: parseFloat(e.target.value)}))}
-                          className="w-full accent-blue-600"
+                          className="w-full accent-primary-500"
                         />
-                        <span className="text-xs text-gray-500">{voiceSettings.temperature.toFixed(2)}</span>
+                        <span className="text-xs text-white/60">{voiceSettings.temperature.toFixed(2)}</span>
                       </div>
                     </div>
                   </div>
@@ -808,18 +850,18 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
                 {/* Format Options */}
                 <div className="mb-6">
                   <div className="flex items-center space-x-2 mb-3">
-                    <Settings className="w-4 h-4 text-gray-700" />
-                    <h3 className="text-gray-900 font-medium text-sm">Format Options</h3>
+                    <Settings className="w-4 h-4 text-white/90" />
+                    <h3 className="text-white font-medium text-sm">Format Options</h3>
                   </div>
                   
                   <div className="mb-4">
-                    <label className="text-xs text-gray-600 block mb-1">Podcast Style</label>
-                    <p className="text-xs text-gray-500 mb-2">Choose your preferred style</p>
+                    <label className="text-xs text-white/80 block mb-1">Podcast Style</label>
+                    <p className="text-xs text-white/60 mb-2">Choose your preferred style</p>
                     <div className="relative">
                       <select
                         value={narrationType}
                         onChange={(e) => setNarrationType(e.target.value)}
-                        className="w-full px-3 py-2 text-sm bg-white border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none"
+                        className="w-full px-3 py-2 text-sm bg-white/10 backdrop-blur-sm border border-white/30 rounded-lg text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 appearance-none"
                       >
                         <option value="conversational">Conversational Podcast</option>
                         {narrationTypes.map((type) => (
@@ -828,13 +870,13 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
                           </option>
                         ))}
                       </select>
-                      <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                      <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-white/60 pointer-events-none" />
                     </div>
                   </div>
 
                   <div>
-                    <label className="text-xs text-gray-600 block mb-1">Background Music</label>
-                    <p className="text-xs text-gray-500 mb-2">Add ambient background music</p>
+                    <label className="text-xs text-white/80 block mb-1">Background Music</label>
+                    <p className="text-xs text-white/60 mb-2">Add ambient background music</p>
                     <div className="relative">
                       <select
                         value={backgroundMusicEnabled ? selectedMusic : 'none'}
@@ -847,7 +889,7 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
                             setSelectedMusic(value);
                           }
                         }}
-                        className="w-full px-3 py-2 text-sm bg-white border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none"
+                        className="w-full px-3 py-2 text-sm bg-white/10 backdrop-blur-sm border border-white/30 rounded-lg text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 appearance-none"
                       >
                         {musicOptions.map((music) => (
                           <option key={music.id} value={music.id}>
@@ -855,13 +897,39 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
                           </option>
                         ))}
                       </select>
-                      <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                      <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-white/60 pointer-events-none" />
                     </div>
                   </div>
                 </div>
 
-                {/* Convert Button or Voice Animation */}
-                {isPodcastPlaying ? (
+                {/* Convert Button or Modern Audio Player */}
+                {showModernPlayer && currentTrackData ? (
+                  <div className="py-6">
+                    <GlassCard variant="dark" className="p-6" glow>
+                      <div className="text-center mb-4">
+                        <h3 className="text-white font-semibold mb-2">🎧 Your Podcast is Ready!</h3>
+                        <p className="text-white/70 text-sm">Enjoy your AI-generated audio experience</p>
+                      </div>
+                      <div className="bg-gradient-to-br from-primary-600/20 to-secondary-600/20 rounded-2xl p-4 backdrop-blur-sm border border-white/10">
+                        <ModernAudioPlayer
+                          audioUrl={currentNarration ? `http://localhost:3004${currentNarration.audioUrl}` : undefined}
+                          trackData={currentTrackData}
+                          isMinimized={playerMinimized}
+                          onToggleMinimize={() => setPlayerMinimized(!playerMinimized)}
+                          onClose={() => {
+                            setShowModernPlayer(false);
+                            setCurrentTrackData(null);
+                            if (audioElement) {
+                              audioElement.pause();
+                              audioElement.currentTime = 0;
+                            }
+                            setIsPodcastPlaying(false);
+                          }}
+                        />
+                      </div>
+                    </GlassCard>
+                  </div>
+                ) : isPodcastPlaying ? (
                   <div className="py-6">
                     <VoiceResponsiveAnimation />
                   </div>
@@ -872,7 +940,7 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
                               (!uploadedFiles || uploadedFiles.length === 0) && 
                               (!internalUploadedFiles || internalUploadedFiles.length === 0)) || 
                               isGenerating}
-                    className="w-full px-4 py-3 bg-blue-600 text-white rounded-lg font-semibold text-sm hover:bg-blue-700 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed transition-colors"
+                    className="w-full px-4 py-3 bg-gradient-to-r from-primary-600 to-secondary-600 text-white rounded-xl font-semibold text-sm hover:from-primary-500 hover:to-secondary-500 disabled:from-gray-300 disabled:to-gray-400 disabled:text-gray-500 disabled:cursor-not-allowed transition-all duration-300 shadow-lg hover:shadow-primary-500/25"
                   >
                     {isGenerating ? (
                       <div className="flex items-center justify-center space-x-3">
@@ -880,48 +948,48 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
                         <VoiceAnimation />
                       </div>
                     ) : (
-                      'Convert to Podcast'
+                      '🎙️ Convert to Podcast'
                     )}
                   </button>
                 )}
-              </div>
+              </GlassCard>
             </div>
           </div>
         </div>
 
         {/* Bottom Section - How It Works */}
-        <div className="p-6 bg-gray-50 border-t border-gray-200">
-          <h2 className="text-xl font-bold text-gray-900 mb-6">How It Works</h2>
+        <div className="p-6 bg-white/5 backdrop-blur-md border-t border-white/10">
+          <h2 className="text-xl font-bold text-white mb-6">How It Works</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* Step 1 */}
             <div className="text-center">
-              <div className="w-12 h-12 bg-blue-500 text-white rounded-full flex items-center justify-center text-xl font-bold mb-3 mx-auto">
+              <div className="w-12 h-12 bg-gradient-to-br from-primary-500 to-primary-600 text-white rounded-full flex items-center justify-center text-xl font-bold mb-3 mx-auto shadow-lg shadow-primary-500/25">
                 1
               </div>
-              <h3 className="text-gray-900 font-medium mb-2">Upload Document</h3>
-              <p className="text-gray-600 text-sm">
+              <h3 className="text-white font-medium mb-2">Upload Document</h3>
+              <p className="text-white/70 text-sm">
                 Upload your PDF, DOCX, or text file. Our AI analyzes and processes the content for optimal podcast conversion.
               </p>
             </div>
 
             {/* Step 2 */}
             <div className="text-center">
-              <div className="w-12 h-12 bg-yellow-500 text-white rounded-full flex items-center justify-center text-xl font-bold mb-3 mx-auto">
+              <div className="w-12 h-12 bg-gradient-to-br from-secondary-500 to-secondary-600 text-white rounded-full flex items-center justify-center text-xl font-bold mb-3 mx-auto shadow-lg shadow-secondary-500/25">
                 2
               </div>
-              <h3 className="text-gray-900 font-medium mb-2">Customize Settings</h3>
-              <p className="text-gray-600 text-sm">
+              <h3 className="text-white font-medium mb-2">Customize Settings</h3>
+              <p className="text-white/70 text-sm">
                 Choose your preferred voice, narration style, and background music to create the perfect audio experience.
               </p>
             </div>
 
             {/* Step 3 */}
             <div className="text-center">
-              <div className="w-12 h-12 bg-green-500 text-white rounded-full flex items-center justify-center text-xl font-bold mb-3 mx-auto">
+              <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-emerald-600 text-white rounded-full flex items-center justify-center text-xl font-bold mb-3 mx-auto shadow-lg shadow-emerald-500/25">
                 3
               </div>
-              <h3 className="text-gray-900 font-medium mb-2">Generate & Listen</h3>
-              <p className="text-gray-600 text-sm">
+              <h3 className="text-white font-medium mb-2">Generate & Listen</h3>
+              <p className="text-white/70 text-sm">
                 Our AI generates your personalized podcast in minutes. Download or stream your content immediately.
               </p>
             </div>

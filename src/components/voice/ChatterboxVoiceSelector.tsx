@@ -61,7 +61,7 @@ const ChatterboxVoiceSelector: React.FC<ChatterboxVoiceSelectorProps> = ({
   const fetchVoices = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/voices');
+      const response = await fetch('http://localhost:3004/api/voices');
       const data = await response.json();
       
       if (data.success && data.voices_by_language) {

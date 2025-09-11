@@ -6,7 +6,7 @@ class OllamaService {
     this.primaryModel = options.primaryModel || 'qwen2.5:7b';
     this.fallbackModel = options.fallbackModel || 'llama3.1:8b';
     this.fastModel = options.fastModel || 'llama3.1:8b'; // Faster model for quick tasks
-    this.timeout = options.timeout || 120000; // 2 minutes - back to original speed
+    this.timeout = options.timeout || 300000; // 5 minutes for stable AI generation
     this.cache = new Map(); // Simple in-memory cache
   }
 
@@ -136,7 +136,7 @@ class OllamaService {
       
       if (error.name === 'AbortError') {
         console.error(`⏱️  Ollama request timed out after ${this.timeout / 1000} seconds for model: ${model}`);
-        throw new Error(`Request timeout after ${this.timeout / 1000} seconds`);
+        throw new Error(`AI model taking too long to respond. Please try again with shorter content or wait for the model to warm up.`);
       }
       
       console.error(`❌ Ollama API error:`, error.message);
@@ -185,6 +185,10 @@ class OllamaService {
     const prompts = this.getNarrationPrompts(contentAnalysis);
     const prompt = prompts[type] || prompts.summary;
     
+    // Use faster model for simple summaries
+    const shouldUseFastModel = type === 'summary' || type === 'document-summary' || text.length < 5000;
+    const modelToUse = shouldUseFastModel ? this.fastModel : this.primaryModel;
+    
     // Only use truncation for extremely large documents (25KB+)
     if (text.length > 25000) {
       console.log(`📏 Extremely large document detected (${text.length} chars), using truncated approach`);
@@ -194,6 +198,7 @@ class OllamaService {
       console.log(`📝 Generating ${type} narration script for large document...`);
       
       const result = await this.generateText(fullPrompt, {
+        model: modelToUse,
         temperature: 0.7,
         maxTokens: this.calculateMaxTokens(type, 8000)
       });
@@ -211,6 +216,7 @@ class OllamaService {
     console.log(`📝 Generating ${type} narration script...`);
     
     const result = await this.generateText(fullPrompt, {
+      model: modelToUse,
       temperature: 0.7,
       maxTokens: this.calculateMaxTokens(type, text.length)
     });
@@ -312,17 +318,21 @@ Requirements:
    * Calculate appropriate max tokens based on narration type and content length
    */
   calculateMaxTokens(type, contentLength) {
-    const baseTokens = Math.min(Math.ceil(contentLength / 3), 1500); // Conservative estimate
+    // More conservative calculation for better performance
+    const baseTokens = Math.min(Math.ceil(contentLength / 4), 1000); // Even more conservative
     
     const multipliers = {
-      summary: 0.8,      // Shorter output
-      full: 1.2,         // Longer, more detailed
-      explanatory: 1.5,  // Most detailed
-      briefing: 0.9,     // Concise
-      interactive: 1.1   // Slightly longer with questions
+      summary: 0.6,      // Shorter output for faster generation
+      full: 1.0,         // Standard output
+      explanatory: 1.2,  // Slightly more detailed
+      briefing: 0.7,     // Concise
+      interactive: 0.9,  // Shorter with questions
+      'document-summary': 0.5 // Very concise for document summaries
     };
     
-    return Math.ceil(baseTokens * (multipliers[type] || 1));
+    const result = Math.ceil(baseTokens * (multipliers[type] || 0.8));
+    console.log(`🧮 Calculated max tokens for ${type}: ${result} (content length: ${contentLength})`);
+    return result;
   }
 
   /**
