@@ -27,7 +27,14 @@ const GlassCard: React.FC<GlassCardProps> = ({
   const { theme } = useTheme();
 
   const getBaseClasses = () => {
-    if (theme === 'dark') {
+    if (theme === 'professional-dark') {
+      return {
+        light: 'backdrop-blur-sm',
+        medium: 'backdrop-blur-md',
+        strong: 'backdrop-blur-lg',
+        dark: 'backdrop-blur-md',
+      };
+    } else if (theme === 'dark') {
       return {
         light: 'bg-white/5 backdrop-blur-sm border-white/10',
         medium: 'bg-white/10 backdrop-blur-md border-white/20',
@@ -37,7 +44,7 @@ const GlassCard: React.FC<GlassCardProps> = ({
     } else {
       return {
         light: 'backdrop-blur-sm border-gray-300/20',
-        medium: 'backdrop-blur-md border-gray-300/30',  
+        medium: 'backdrop-blur-md border-gray-300/30',
         strong: 'backdrop-blur-lg border-gray-300/40',
         dark: 'backdrop-blur-md border-gray-400/50',
       };
@@ -46,7 +53,11 @@ const GlassCard: React.FC<GlassCardProps> = ({
 
   const getHoverClasses = () => {
     if (!hover) return '';
-    
+
+    if (theme === 'professional-dark') {
+      return 'hover:-translate-y-1 hover:shadow-xl';
+    }
+
     return theme === 'dark'
       ? 'hover:bg-white/20 hover:border-white/40 hover:-translate-y-1 hover:shadow-glass-lg'
       : 'hover:border-gray-400/60 hover:-translate-y-1 hover:shadow-lg';
@@ -80,7 +91,8 @@ const GlassCard: React.FC<GlassCardProps> = ({
         className
       )}
       style={{
-        backgroundColor: theme === 'light' ? '#FBF5F0' : undefined
+        backgroundColor: theme === 'professional-dark' ? '#252526' : theme === 'light' ? '#FBF5F0' : undefined,
+        border: theme === 'professional-dark' ? '1px solid #3C4043' : undefined
       }}
       onClick={onClick}
     >

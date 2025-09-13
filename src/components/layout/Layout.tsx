@@ -39,91 +39,33 @@ const Layout: React.FC = () => {
   };
 
   return (
-    <div className="h-screen flex flex-col overflow-hidden relative" 
+    <div className="h-screen flex overflow-hidden relative"
          style={{
-           background: theme === 'dark' ? '#0F0F23' : '#F8F9FA'
+           background: theme === 'professional-dark' ? '#202020' : theme === 'dark' ? '#0F0F23' : '#F8F9FA'
          }}>
-      {/* Animated Background */}
-      <div className={`absolute inset-0 ${theme === 'dark' ? 'mesh-gradient opacity-30' : 'opacity-20'}`} 
-           style={{
-             background: theme === 'light' 
-               ? 'linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%)'
-               : undefined
-           }} />
-      
-      {/* Floating Particles */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {particles.map((particle) => (
-          <motion.div
-            key={particle.id}
-            className="absolute rounded-full blur-sm"
-            style={{
-              background: theme === 'dark' 
-                ? 'linear-gradient(to right, rgba(139, 92, 246, 0.2), rgba(219, 39, 119, 0.2))'
-                : 'linear-gradient(to right, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.2))',
-              left: `${particle.x}%`,
-              top: `${particle.y}%`,
-              width: `${particle.size}px`,
-              height: `${particle.size}px`,
-            }}
-            animate={{
-              y: [-20, 20, -20],
-              opacity: [0.2, 0.8, 0.2],
-            }}
-            transition={{
-              duration: 4 + particle.delay,
-              repeat: Infinity,
-              ease: "easeInOut",
-              delay: particle.delay,
-            }}
-          />
-        ))}
-      </div>
-      
-      {/* Top Bar */}
+      {/* Sidebar */}
       <motion.div
-        initial={{ y: -100 }}
-        animate={{ y: 0 }}
-        transition={{ duration: 0.6, ease: "easeOut" }}
+        initial={{ x: -300 }}
+        animate={{ x: 0 }}
+        transition={{ duration: 0.6, ease: "easeOut", delay: 0.2 }}
+        className="relative z-10"
       >
-        <TopBar />
+        <Sidebar
+          currentView={currentView}
+          onViewChange={setCurrentView}
+          onOpenUpload={() => console.log('Upload modal would open')}
+        />
       </motion.div>
-      
+
       {/* Main Content */}
-      <div className="flex flex-1 overflow-hidden relative z-10">
-        {/* Sidebar */}
-        <motion.div
-          initial={{ x: -300 }}
-          animate={{ x: 0 }}
-          transition={{ duration: 0.6, ease: "easeOut", delay: 0.2 }}
-        >
-          <Sidebar 
-            currentView={currentView} 
-            onViewChange={setCurrentView}
-            onOpenUpload={() => console.log('Upload modal would open')}
-          />
-        </motion.div>
-        
-        {/* Main Content Area */}
-        <motion.main 
-          className="flex-1 overflow-auto custom-scrollbar relative"
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
+      <div className="flex-1 flex flex-col justify-center items-center relative">
+        <motion.main
+          className="w-full max-w-4xl px-8"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, ease: "easeOut", delay: 0.4 }}
         >
-          <div className="h-full relative">
-            {/* Content background blur overlay */}
-            <div className="absolute inset-0 backdrop-blur-sm" 
-                 style={{
-                   backgroundColor: theme === 'dark' 
-                     ? 'rgba(17, 24, 39, 0.2)' 
-                     : 'rgba(255, 255, 255, 0.1)'
-                 }} />
-            
-            <div className="relative z-10">
-              <MainContent currentView={currentView} />
-            </div>
-          </div>
+          <MainContent currentView={currentView} />
         </motion.main>
       </div>
       
@@ -151,7 +93,7 @@ const Layout: React.FC = () => {
       {/* Loading overlay for initial render */}
       <motion.div
         className="fixed inset-0 flex items-center justify-center z-50 pointer-events-none"
-        style={{backgroundColor: theme === 'dark' ? '#0F0F23' : '#FBF5F0'}}
+        style={{backgroundColor: theme === 'professional-dark' ? '#202020' : theme === 'dark' ? '#0F0F23' : '#FBF5F0'}}
         initial={{ opacity: 1 }}
         animate={{ opacity: 0 }}
         transition={{ duration: 1, delay: 1 }}
@@ -167,8 +109,8 @@ const Layout: React.FC = () => {
             animate={{ rotate: 360 }}
             transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
           />
-          <h2 className="text-xl font-bold mb-2" style={{color: theme === 'dark' ? '#FFFFFF' : '#BFC8D8'}}>IntelliCast</h2>
-          <p className="text-sm" style={{color: theme === 'dark' ? 'rgba(255,255,255,0.7)' : 'rgba(191,200,216,0.8)'}}>Initializing AI-powered audio experience...</p>
+          <h2 className="text-xl font-bold mb-2" style={{color: theme === 'professional-dark' ? '#E8EAED' : theme === 'dark' ? '#FFFFFF' : '#BFC8D8'}}>IntelliCast</h2>
+          <p className="text-sm" style={{color: theme === 'professional-dark' ? '#9AA0A6' : theme === 'dark' ? 'rgba(255,255,255,0.7)' : 'rgba(191,200,216,0.8)'}}>Initializing AI-powered audio experience...</p>
         </motion.div>
       </motion.div>
     </div>

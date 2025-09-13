@@ -1,5 +1,5 @@
-import React from 'react';
-import { Home, Plus, Headphones } from 'lucide-react';
+import React, { useState } from 'react';
+import { Home, Plus, Settings, User, Bell, MessageSquare, Compass } from 'lucide-react';
 import { useTheme } from '../../contexts/ThemeContext';
 
 interface SidebarProps {
@@ -9,79 +9,94 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange, onOpenUpload }) => {
-  const { theme } = useTheme();
+  const { theme, cycleTheme } = useTheme();
+
   const menuItems = [
     { id: 'home', icon: Home, label: 'Home' },
     { id: 'new', icon: Plus, label: 'New' },
+    { id: 'library', icon: Compass, label: 'Library' },
+    { id: 'discover', icon: MessageSquare, label: 'Discover' },
   ];
 
-  const libraryItems: any[] = [];
+  const bottomItems = [
+    { id: 'notifications', icon: Bell, label: 'Notifications' },
+    { id: 'settings', icon: Settings, label: 'Settings' },
+    { id: 'profile', icon: User, label: 'Profile' },
+  ];
 
   return (
-    <aside className="w-64 h-full flex flex-col" style={{backgroundColor: theme === 'dark' ? '#1E1B4B' : '#F8F9FA'}}>
-      {/* Logo */}
-      <div className="p-6">
-        <div className="flex items-center space-x-2">
-          <div className="w-8 h-8 bg-gradient-to-br from-accent-500 to-primary-600 rounded-lg flex items-center justify-center">
-            <Headphones className="w-5 h-5 text-white" />
-          </div>
-          <span className="text-xl font-semibold" style={{color: theme === 'dark' ? '#C7D2FE' : '#374151'}}>IntelliCast</span>
+    <aside className="w-16 h-full flex flex-col py-4" style={{backgroundColor: theme === 'professional-dark' ? '#202020' : theme === 'dark' ? '#1a1b3a' : '#F8F9FA'}}>
+
+      {/* Logo/Brand */}
+      <div className="flex justify-center mb-8">
+        <div className="w-8 h-8 rounded-lg flex items-center justify-center"
+             style={{backgroundColor: theme === 'professional-dark' ? '#20B2AA' : '#3B82F6'}}>
+          <span className="text-white font-bold text-sm">IC</span>
         </div>
       </div>
 
-      {/* Navigation */}
-      <nav className="flex-1 px-4 py-6 space-y-8">
-        {/* Main Navigation */}
-        <div>
-          <ul className="space-y-2">
-            {menuItems.map((item) => {
-              const Icon = item.icon;
-              return (
-                <li key={item.id}>
-                  <button
-                    onClick={() => onViewChange(item.id)}
-                    className={`w-full flex items-center space-x-3 px-4 py-2.5 rounded-lg text-left transition-all duration-200 ${
-                      currentView === item.id
-                        ? 'font-medium'
-                        : ''
-                    }`}
-                    style={{
-                      color: currentView === item.id 
-                        ? (theme === 'dark' ? '#FFFFFF' : '#3B82F6') 
-                        : (theme === 'dark' ? '#C7D2FE' : '#374151'),
-                      backgroundColor: currentView === item.id ? 'transparent' : 'transparent'
-                    }}
-                    onMouseEnter={(e) => {
-                      if (currentView !== item.id) {
-                        e.currentTarget.style.backgroundColor = theme === 'dark' ? '#3730A3' : 'rgba(59,130,246,0.1)';
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      if (currentView !== item.id) {
-                        e.currentTarget.style.backgroundColor = 'transparent';
-                      }
-                    }}
-                  >
-                    <Icon className="w-5 h-5" />
-                    <span>{item.label}</span>
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
-        </div>
-
+      {/* Main Navigation */}
+      <nav className="flex-1 flex flex-col items-center space-y-2">
+        {menuItems.map((item) => {
+          const Icon = item.icon;
+          return (
+            <button
+              key={item.id}
+              onClick={() => onViewChange(item.id)}
+              className="w-10 h-10 rounded-lg flex items-center justify-center transition-all duration-200 group relative"
+              style={{
+                color: currentView === item.id
+                  ? (theme === 'professional-dark' ? '#20B2AA' : '#3B82F6')
+                  : (theme === 'professional-dark' ? '#9AA0A6' : theme === 'dark' ? '#C7D2FE' : '#374151'),
+                backgroundColor: currentView === item.id
+                  ? (theme === 'professional-dark' ? 'rgba(32, 178, 170, 0.1)' : 'rgba(59, 130, 246, 0.1)')
+                  : 'transparent'
+              }}
+              onMouseEnter={(e) => {
+                if (currentView !== item.id) {
+                  e.currentTarget.style.backgroundColor = theme === 'professional-dark' ? '#2A2A2A' : theme === 'dark' ? '#3730A3' : 'rgba(59,130,246,0.1)';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (currentView !== item.id) {
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                }
+              }}
+              title={item.label}
+            >
+              <Icon className="w-5 h-5" />
+            </button>
+          );
+        })}
       </nav>
 
-      {/* Bottom Section */}
-      <div className="p-4 border-t" style={{borderColor: theme === 'dark' ? '#312E81' : '#E5E7EB'}}>
-        <button 
-          onClick={onOpenUpload}
-          className="w-full px-4 py-2 bg-gradient-to-r from-accent-500 to-primary-600 text-white rounded-lg font-medium hover:shadow-lg transition-all duration-200 transform hover:scale-105"
-        >
-          Upload Document
-        </button>
+      {/* Bottom Actions */}
+      <div className="flex flex-col items-center space-y-2">
+        {bottomItems.map((item) => {
+          const Icon = item.icon;
+          return (
+            <button
+              key={item.id}
+              onClick={() => item.id === 'settings' ? cycleTheme() : onViewChange(item.id)}
+              className="w-10 h-10 rounded-lg flex items-center justify-center transition-all duration-200"
+              style={{
+                color: theme === 'professional-dark' ? '#9AA0A6' : theme === 'dark' ? '#C7D2FE' : '#374151',
+                backgroundColor: 'transparent'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = theme === 'professional-dark' ? '#2A2A2A' : theme === 'dark' ? '#3730A3' : 'rgba(59,130,246,0.1)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'transparent';
+              }}
+              title={item.label}
+            >
+              <Icon className="w-4 h-4" />
+            </button>
+          );
+        })}
       </div>
+
     </aside>
   );
 };

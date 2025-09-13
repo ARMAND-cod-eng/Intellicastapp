@@ -35,7 +35,11 @@ const Button: React.FC<ButtonProps> = ({
   const buttonRef = React.useRef<HTMLButtonElement>(null);
 
   const getVariantClasses = () => {
-    const baseVariants = theme === 'dark' ? {
+    const baseVariants = theme === 'professional-dark' ? {
+      primary: 'text-white border-transparent hover:shadow-lg',
+      secondary: 'text-white border-transparent hover:shadow-lg',
+      gradient: 'bg-gradient-to-r from-blue-500 to-orange-500 text-white border-blue-400/20 hover:shadow-lg animated-gradient',
+    } : theme === 'dark' ? {
       primary: 'bg-gradient-to-r from-primary-600 to-primary-700 text-white border-primary-500/20 hover:from-primary-500 hover:to-primary-600 shadow-lg hover:shadow-primary-500/25',
       secondary: 'bg-gradient-to-r from-secondary-600 to-secondary-700 text-white border-secondary-500/20 hover:from-secondary-500 hover:to-secondary-600 shadow-lg hover:shadow-secondary-500/25',
       gradient: 'bg-gradient-to-r from-primary-600 via-secondary-600 to-primary-600 bg-size-200 text-white border-primary-500/20 hover:bg-pos-100 animated-gradient',
@@ -45,7 +49,10 @@ const Button: React.FC<ButtonProps> = ({
       gradient: 'bg-gradient-to-r from-blue-600 via-purple-600 to-blue-600 bg-size-200 text-white border-blue-500/20 hover:bg-pos-100 animated-gradient',
     };
 
-    const themeVariants = theme === 'dark' ? {
+    const themeVariants = theme === 'professional-dark' ? {
+      ghost: 'text-white border-transparent hover:shadow-lg',
+      glass: 'backdrop-blur-md text-white border-transparent hover:shadow-lg',
+    } : theme === 'dark' ? {
       ghost: 'bg-white/5 text-white border-white/20 hover:bg-white/10 hover:border-white/30',
       glass: 'bg-white/10 backdrop-blur-md text-white border-white/20 hover:bg-white/20 hover:border-white/40',
     } : {
@@ -153,9 +160,17 @@ const Button: React.FC<ButtonProps> = ({
         className
       )}
       style={{
-        backgroundColor: theme === 'light' && variant === 'primary' ? '#3B82F6' : 
+        backgroundColor: theme === 'professional-dark' && variant === 'primary' ? '#8AB4F8' :
+                        theme === 'professional-dark' && variant === 'secondary' ? 'transparent' :
+                        theme === 'professional-dark' && variant === 'ghost' ? '#3C4043' :
+                        theme === 'professional-dark' && variant === 'glass' ? '#2D2D30' :
+                        theme === 'light' && variant === 'primary' ? '#3B82F6' :
                         theme === 'light' && variant === 'secondary' ? 'transparent' : undefined,
-        color: theme === 'light' && variant === 'secondary' ? '#1F2937' : undefined
+        color: theme === 'professional-dark' && variant === 'primary' ? '#1F1F1F' :
+               theme === 'professional-dark' && variant === 'secondary' ? '#9AA0A6' :
+               theme === 'professional-dark' && (variant === 'ghost' || variant === 'glass') ? '#E8EAED' :
+               theme === 'light' && variant === 'secondary' ? '#1F2937' : undefined,
+        border: theme === 'professional-dark' && variant === 'secondary' ? '1px solid #5F6368' : undefined
       }}
       onClick={handleRippleClick}
       disabled={disabled || loading}
