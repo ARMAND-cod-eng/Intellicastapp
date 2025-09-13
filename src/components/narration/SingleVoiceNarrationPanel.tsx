@@ -713,23 +713,59 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
   if (isMinimized) {
     return (
       <div className="fixed right-4 top-1/2 transform -translate-y-1/2 z-50">
-        <div className="w-16 h-48 bg-dark-900/95 backdrop-blur-3xl border border-white/10 shadow-2xl rounded-xl overflow-hidden flex flex-col">
+        <div className="w-16 h-48 backdrop-blur-3xl border shadow-2xl rounded-xl overflow-hidden flex flex-col"
+             style={{
+               backgroundColor: theme === 'professional-dark' ? '#252526' : 'rgba(15, 15, 35, 0.95)',
+               borderColor: theme === 'professional-dark' ? '#3C4043' : 'rgba(255, 255, 255, 0.1)'
+             }}>
           {/* Minimized Header */}
-          <div className="p-3 bg-white/5 backdrop-blur-md border-b border-white/10 flex flex-col items-center space-y-2">
-            <div className="w-6 h-6 rounded-full bg-gradient-to-br from-primary-500 to-secondary-500 flex items-center justify-center">
+          <div className="p-3 backdrop-blur-md border-b flex flex-col items-center space-y-2"
+               style={{
+                 backgroundColor: theme === 'professional-dark' ? '#2A2A2A' : 'rgba(255, 255, 255, 0.05)',
+                 borderColor: theme === 'professional-dark' ? '#3C4043' : 'rgba(255, 255, 255, 0.1)'
+               }}>
+            <div className="w-6 h-6 rounded-full flex items-center justify-center"
+                 style={{
+                   backgroundColor: theme === 'professional-dark' ? '#20B2AA' : undefined
+                 }}
+                 className={theme === 'professional-dark' ? '' : 'bg-gradient-to-br from-primary-500 to-secondary-500'}>
               <Mic2 className="w-3 h-3 text-white" />
             </div>
             <div className="flex flex-col items-center space-y-1">
               <button
                 onClick={onMinimize}
-                className="p-1 hover:bg-white/10 rounded transition-colors text-white/70 hover:text-white"
+                className="p-1 rounded transition-colors"
+                style={{
+                  color: theme === 'professional-dark' ? '#9AA0A6' : 'rgba(255, 255, 255, 0.7)',
+                  backgroundColor: 'transparent'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = theme === 'professional-dark' ? '#3C4043' : 'rgba(255, 255, 255, 0.1)';
+                  e.currentTarget.style.color = theme === 'professional-dark' ? '#E8EAED' : 'white';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                  e.currentTarget.style.color = theme === 'professional-dark' ? '#9AA0A6' : 'rgba(255, 255, 255, 0.7)';
+                }}
                 title="Expand Panel"
               >
                 <ChevronDown className="w-4 h-4 transform rotate-90" />
               </button>
               <button
                 onClick={onClose}
-                className="p-1 hover:bg-white/10 rounded transition-colors text-white/70 hover:text-white"
+                className="p-1 rounded transition-colors"
+                style={{
+                  color: theme === 'professional-dark' ? '#9AA0A6' : 'rgba(255, 255, 255, 0.7)',
+                  backgroundColor: 'transparent'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = theme === 'professional-dark' ? '#3C4043' : 'rgba(255, 255, 255, 0.1)';
+                  e.currentTarget.style.color = theme === 'professional-dark' ? '#E8EAED' : 'white';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                  e.currentTarget.style.color = theme === 'professional-dark' ? '#9AA0A6' : 'rgba(255, 255, 255, 0.7)';
+                }}
                 title="Close Panel"
               >
                 <X className="w-4 h-4" />
@@ -806,8 +842,8 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
       
       {/* Main Panel Container - Half Screen */}
       <div className="w-1/2 backdrop-blur-3xl border-l shadow-2xl overflow-hidden flex flex-col relative" style={{
-        backgroundColor: theme === 'dark' ? 'rgba(15, 15, 35, 0.95)' : '#FFFFFF',
-        borderColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.1)' : '#E5E7EB'
+        backgroundColor: theme === 'professional-dark' ? '#202020' : theme === 'dark' ? 'rgba(15, 15, 35, 0.95)' : '#FFFFFF',
+        borderColor: theme === 'professional-dark' ? '#3C4043' : theme === 'dark' ? 'rgba(255, 255, 255, 0.1)' : '#E5E7EB'
       }}>
         {/* Animated Background */}
         {theme === 'dark' && (
@@ -821,7 +857,17 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
         <div className="absolute top-6 left-6 z-[100] flex items-center space-x-3">
           <button
             onClick={onMinimize || (() => console.log('Minimize clicked'))}
-            className="p-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors shadow-xl border-2 border-blue-500"
+            className="p-3 text-white rounded-lg transition-colors shadow-xl border-2"
+            style={{
+              backgroundColor: theme === 'professional-dark' ? '#20B2AA' : '#3B82F6',
+              borderColor: theme === 'professional-dark' ? '#20B2AA' : '#3B82F6'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = theme === 'professional-dark' ? '#1A9B96' : '#2563EB';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = theme === 'professional-dark' ? '#20B2AA' : '#3B82F6';
+            }}
             title="Minimize Panel"
           >
             <Minimize2 className="w-6 h-6" />
@@ -837,13 +883,17 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
         
         {/* Header */}
         <div className="relative flex items-center justify-between p-6 backdrop-blur-md border-b" style={{
-          backgroundColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.05)' : '#FFFFFF',
-          borderColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.1)' : '#E5E7EB'
+          backgroundColor: theme === 'professional-dark' ? '#252526' : theme === 'dark' ? 'rgba(255, 255, 255, 0.05)' : '#FFFFFF',
+          borderColor: theme === 'professional-dark' ? '#3C4043' : theme === 'dark' ? 'rgba(255, 255, 255, 0.1)' : '#E5E7EB'
         }}>
           <h1 className="text-2xl font-bold flex items-center space-x-3" style={{
-            color: theme === 'dark' ? '#FFFFFF' : '#1F2937'
+            color: theme === 'professional-dark' ? '#E8EAED' : theme === 'dark' ? '#FFFFFF' : '#1F2937'
           }}>
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary-500 to-secondary-500 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-full flex items-center justify-center"
+                 style={{
+                   backgroundColor: theme === 'professional-dark' ? '#20B2AA' : undefined
+                 }}
+                 className={theme === 'professional-dark' ? '' : 'bg-gradient-to-br from-primary-500 to-secondary-500'}>
               <Mic2 className="w-4 h-4 text-white" />
             </div>
             <span>Single Voice Narration</span>
@@ -862,13 +912,15 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
                  (internalUploadedFiles && internalUploadedFiles.length > 0) ? (
                   <>
                     <h2 className="text-xl font-bold mb-2" style={{
-                      color: theme === 'dark' ? '#FFFFFF' : '#1F2937'
+                      color: theme === 'professional-dark' ? '#E8EAED' : theme === 'dark' ? '#FFFFFF' : '#1F2937'
                     }}>Document Summary</h2>
                     <div className="mb-4">
                       <div className="flex items-center space-x-2 mb-3">
-                        <FileText className="w-5 h-5 text-primary-400" />
+                        <FileText className="w-5 h-5" style={{
+                          color: theme === 'professional-dark' ? '#20B2AA' : '#A5B4FC'
+                        }} />
                         <span className="text-sm font-medium" style={{
-                          color: theme === 'dark' ? 'rgba(255, 255, 255, 0.9)' : '#1F2937'
+                          color: theme === 'professional-dark' ? '#E8EAED' : theme === 'dark' ? 'rgba(255, 255, 255, 0.9)' : '#1F2937'
                         }}>
                           {uploadedContent && uploadedContent.length > 0 
                             ? uploadedContent[0].metadata?.fileName || uploadedContent[0].title
@@ -883,19 +935,22 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
                     
                     {/* Document Summary Content */}
                     <div className="backdrop-blur-sm rounded-lg p-4 mb-4 border" style={{
-                      backgroundColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.1)' : '#FFFFFF',
-                      borderColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.2)' : 'rgba(156, 163, 175, 0.2)'
+                      backgroundColor: theme === 'professional-dark' ? '#2A2A2A' : theme === 'dark' ? 'rgba(255, 255, 255, 0.1)' : '#FFFFFF',
+                      borderColor: theme === 'professional-dark' ? '#3C4043' : theme === 'dark' ? 'rgba(255, 255, 255, 0.2)' : 'rgba(156, 163, 175, 0.2)'
                     }}>
                       <div className="flex items-start justify-between mb-3">
                         <p className="text-sm leading-relaxed flex-1" style={{
-                          color: theme === 'dark' ? 'rgba(255, 255, 255, 0.8)' : '#4B5563'
+                          color: theme === 'professional-dark' ? '#9AA0A6' : theme === 'dark' ? 'rgba(255, 255, 255, 0.8)' : '#4B5563'
                         }}>
                           {getDocumentSummary()}
                         </p>
                         {!documentSummary && !isLoadingSummary && (
                           <button
                             onClick={generateDocumentSummary}
-                            className="ml-3 px-3 py-1 bg-gradient-to-r from-primary-600 to-secondary-600 text-white rounded-lg hover:from-primary-500 hover:to-secondary-500 transition-all duration-300 text-xs whitespace-nowrap shadow-lg hover:shadow-primary-500/25"
+                            className={theme === 'professional-dark' ? 'ml-3 px-3 py-1 text-white rounded-lg transition-all duration-300 text-xs whitespace-nowrap shadow-lg' : 'ml-3 px-3 py-1 bg-gradient-to-r from-primary-600 to-secondary-600 text-white rounded-lg hover:from-primary-500 hover:to-secondary-500 transition-all duration-300 text-xs whitespace-nowrap shadow-lg hover:shadow-primary-500/25'}
+                            style={{
+                              backgroundColor: theme === 'professional-dark' ? '#20B2AA' : undefined
+                            }}
                           >
                             Generate Summary
                           </button>
@@ -983,10 +1038,10 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
             <div className="flex-1">
               <GlassCard variant="medium" className="p-6 h-full" glow>
               <h2 className="text-xl font-bold mb-2" style={{
-                color: theme === 'dark' ? '#FFFFFF' : '#1F2937'
+                color: theme === 'professional-dark' ? '#E8EAED' : theme === 'dark' ? '#FFFFFF' : '#1F2937'
               }}>Customize Your Podcast</h2>
               <p className="text-sm mb-6" style={{
-                color: theme === 'dark' ? 'rgba(255, 255, 255, 0.7)' : '#4B5563'
+                color: theme === 'professional-dark' ? '#9AA0A6' : theme === 'dark' ? 'rgba(255, 255, 255, 0.7)' : '#4B5563'
               }}>Personalize your audio experience with our customization options.</p>
 
                 {/* Voice Selection */}
@@ -994,16 +1049,32 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center space-x-2">
                       <Volume2 className="w-4 h-4" style={{
-                        color: theme === 'dark' ? 'rgba(255, 255, 255, 0.9)' : '#1F2937'
+                        color: theme === 'professional-dark' ? '#20B2AA' : theme === 'dark' ? 'rgba(255, 255, 255, 0.9)' : '#1F2937'
                       }} />
                       <h3 className="font-medium text-sm" style={{
-                        color: theme === 'dark' ? '#FFFFFF' : '#1F2937'
+                        color: theme === 'professional-dark' ? '#E8EAED' : theme === 'dark' ? '#FFFFFF' : '#1F2937'
                       }}>Voice Selection</h3>
-                      <span className="text-xs bg-secondary-500/30 text-secondary-200 px-2 py-1 rounded-full backdrop-blur-sm border border-secondary-400/30">Chatterbox Multilingual</span>
+                      <span className="text-xs px-2 py-1 rounded-full backdrop-blur-sm border"
+                            style={{
+                              backgroundColor: theme === 'professional-dark' ? 'rgba(32, 178, 170, 0.2)' : 'rgba(139, 92, 246, 0.3)',
+                              color: theme === 'professional-dark' ? '#20B2AA' : '#C7D2FE',
+                              borderColor: theme === 'professional-dark' ? '#20B2AA' : 'rgba(139, 92, 246, 0.4)'
+                            }}>
+                        Chatterbox Multilingual
+                      </span>
                     </div>
                     <button
                       onClick={() => setShowAdvancedVoiceSelector(!showAdvancedVoiceSelector)}
-                      className="flex items-center space-x-1 text-xs text-primary-300 hover:text-primary-200 transition-colors"
+                      className="flex items-center space-x-1 text-xs transition-colors"
+                      style={{
+                        color: theme === 'professional-dark' ? '#20B2AA' : '#A5B4FC'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.color = theme === 'professional-dark' ? '#1A9B96' : '#C7D2FE';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.color = theme === 'professional-dark' ? '#20B2AA' : '#A5B4FC';
+                      }}
                       title={showAdvancedVoiceSelector ? 'Switch to simple selection' : 'Browse all Chatterbox multilingual voices'}
                     >
                       {showAdvancedVoiceSelector ? (
@@ -1022,8 +1093,8 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
                   
                   {showAdvancedVoiceSelector ? (
                     <div className="border rounded-lg p-4 backdrop-blur-sm" style={{
-                      backgroundColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.1)' : '#FFFFFF',
-                      borderColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.2)' : 'rgba(156, 163, 175, 0.2)'
+                      backgroundColor: theme === 'professional-dark' ? '#2A2A2A' : theme === 'dark' ? 'rgba(255, 255, 255, 0.1)' : '#FFFFFF',
+                      borderColor: theme === 'professional-dark' ? '#3C4043' : theme === 'dark' ? 'rgba(255, 255, 255, 0.2)' : 'rgba(156, 163, 175, 0.2)'
                     }}>
                       <ChatterboxVoiceSelector
                         selectedVoice={selectedVoice}
@@ -1251,7 +1322,20 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
                               (!uploadedFiles || uploadedFiles.length === 0) && 
                               (!internalUploadedFiles || internalUploadedFiles.length === 0)) || 
                               isGenerating}
-                    className="w-full px-4 py-3 bg-gradient-to-r from-primary-600 to-secondary-600 text-white rounded-xl font-semibold text-sm hover:from-primary-500 hover:to-secondary-500 disabled:from-gray-300 disabled:to-gray-400 disabled:text-gray-500 disabled:cursor-not-allowed transition-all duration-300 shadow-lg hover:shadow-primary-500/25"
+                    className={theme === 'professional-dark' ? 'w-full px-4 py-3 text-white rounded-xl font-semibold text-sm disabled:text-gray-500 disabled:cursor-not-allowed transition-all duration-300 shadow-lg' : 'w-full px-4 py-3 bg-gradient-to-r from-primary-600 to-secondary-600 text-white rounded-xl font-semibold text-sm hover:from-primary-500 hover:to-secondary-500 disabled:from-gray-300 disabled:to-gray-400 disabled:text-gray-500 disabled:cursor-not-allowed transition-all duration-300 shadow-lg hover:shadow-primary-500/25'}
+                    style={{
+                      backgroundColor: theme === 'professional-dark' ? '#20B2AA' : undefined
+                    }}
+                    onMouseEnter={(e) => {
+                      if (theme === 'professional-dark' && !isGenerating) {
+                        e.currentTarget.style.backgroundColor = '#1A9B96';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (theme === 'professional-dark' && !isGenerating) {
+                        e.currentTarget.style.backgroundColor = '#20B2AA';
+                      }
+                    }}
                   >
                     {isGenerating ? (
                       <div className="flex items-center justify-center space-x-3">
