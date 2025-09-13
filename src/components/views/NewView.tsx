@@ -132,7 +132,7 @@ const NewView: React.FC<NewViewProps> = ({ currentView, onOpenUpload, uploadedCo
                     theme === 'professional-dark' ? '' : `bg-gradient-to-br ${option.color}`
                   }`}
                        style={{
-                         backgroundColor: theme === 'professional-dark' ? '#20B2AA' : undefined
+                         backgroundColor: theme === 'light' ? '#60A5FA' : theme === 'professional-dark' ? '#2563EB' : '#6366F1'
                        }}>
                     <Icon className="w-8 h-8 text-white" />
                   </div>
@@ -172,7 +172,7 @@ const NewView: React.FC<NewViewProps> = ({ currentView, onOpenUpload, uploadedCo
               }`}
               style={{
                 backgroundColor: theme === 'professional-dark' ? (style.recommended ? 'rgba(32, 178, 170, 0.1)' : '#252526') : theme === 'light' && !style.recommended ? '#FFFFFF' : undefined,
-                borderColor: theme === 'professional-dark' ? (style.recommended ? '#20B2AA' : '#3C4043') : theme === 'light' ? 'rgba(156,163,175,0.2)' : undefined
+                borderColor: theme === 'professional-dark' ? (style.recommended ? '#2563EB' : '#3C4043') : theme === 'light' ? (style.recommended ? '#60A5FA' : 'rgba(156,163,175,0.2)') : (style.recommended ? '#6366F1' : undefined)
               }}
             >
               {style.recommended && (
@@ -195,7 +195,7 @@ const NewView: React.FC<NewViewProps> = ({ currentView, onOpenUpload, uploadedCo
                   <ul className="space-y-3">
                     {style.features.map((feature, featureIndex) => (
                       <li key={featureIndex} className="flex items-center text-sm" style={{color: theme === 'professional-dark' ? '#80868B' : theme === 'dark' ? '#9CA3AF' : '#6B7280'}}>
-                        <div className="w-2 h-2 rounded-full mr-3 flex-shrink-0" style={{backgroundColor: theme === 'professional-dark' ? '#20B2AA' : theme === 'dark' ? '#A5B4FC' : '#3B82F6'}}></div>
+                        <div className="w-2 h-2 rounded-full mr-3 flex-shrink-0" style={{backgroundColor: theme === 'light' ? '#60A5FA' : theme === 'professional-dark' ? '#2563EB' : '#6366F1'}}></div>
                         {feature}
                       </li>
                     ))}

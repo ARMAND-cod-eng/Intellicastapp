@@ -160,11 +160,12 @@ const Button: React.FC<ButtonProps> = ({
         className
       )}
       style={{
-        backgroundColor: theme === 'professional-dark' && variant === 'primary' ? '#8AB4F8' :
+        backgroundColor: theme === 'professional-dark' && variant === 'primary' ? '#2563EB' :
                         theme === 'professional-dark' && variant === 'secondary' ? 'transparent' :
                         theme === 'professional-dark' && variant === 'ghost' ? '#3C4043' :
                         theme === 'professional-dark' && variant === 'glass' ? '#2D2D30' :
-                        theme === 'light' && variant === 'primary' ? '#3B82F6' :
+                        theme === 'light' && variant === 'primary' ? '#60A5FA' :
+                        theme === 'dark' && variant === 'primary' ? '#6366F1' :
                         theme === 'light' && variant === 'secondary' ? 'transparent' : undefined,
         color: theme === 'professional-dark' && variant === 'primary' ? '#1F1F1F' :
                theme === 'professional-dark' && variant === 'secondary' ? '#9AA0A6' :

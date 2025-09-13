@@ -30,7 +30,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange, onOpenUplo
       {/* Logo/Brand */}
       <div className="flex justify-center mb-8">
         <div className="w-8 h-8 rounded-lg flex items-center justify-center"
-             style={{backgroundColor: theme === 'professional-dark' ? '#20B2AA' : '#3B82F6'}}>
+             style={{backgroundColor: theme === 'light' ? '#60A5FA' : theme === 'professional-dark' ? '#2563EB' : '#6366F1'}}>
           <span className="text-white font-bold text-sm">IC</span>
         </div>
       </div>
@@ -46,10 +46,10 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange, onOpenUplo
               className="w-10 h-10 rounded-lg flex items-center justify-center transition-all duration-200 group relative"
               style={{
                 color: currentView === item.id
-                  ? (theme === 'professional-dark' ? '#20B2AA' : '#3B82F6')
+                  ? (theme === 'light' ? '#60A5FA' : theme === 'professional-dark' ? '#2563EB' : '#6366F1')
                   : (theme === 'professional-dark' ? '#9AA0A6' : theme === 'dark' ? '#C7D2FE' : '#374151'),
                 backgroundColor: currentView === item.id
-                  ? (theme === 'professional-dark' ? 'rgba(32, 178, 170, 0.1)' : 'rgba(59, 130, 246, 0.1)')
+                  ? (theme === 'light' ? 'rgba(96, 165, 250, 0.1)' : theme === 'professional-dark' ? 'rgba(37, 99, 235, 0.1)' : 'rgba(99, 102, 241, 0.1)')
                   : 'transparent'
               }}
               onMouseEnter={(e) => {

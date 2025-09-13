@@ -57,7 +57,7 @@ const HomeView: React.FC<HomeViewProps> = ({ currentView, onOpenUpload, uploaded
               backgroundColor: theme === 'professional-dark' ? '#2A2A2A' : '#F9FAFB',
               border: theme === 'professional-dark' ? '1px solid #3C4043' : '1px solid #E5E7EB',
               color: theme === 'professional-dark' ? '#E8EAED' : '#1F2937',
-              borderColor: isSearchFocused ? (theme === 'professional-dark' ? '#20B2AA' : '#3B82F6') : undefined
+              borderColor: isSearchFocused ? (theme === 'light' ? '#60A5FA' : theme === 'professional-dark' ? '#2563EB' : '#6366F1') : undefined
             }}
           />
 
@@ -85,7 +85,7 @@ const HomeView: React.FC<HomeViewProps> = ({ currentView, onOpenUpload, uploaded
 
             <button className="p-2 rounded-lg transition-all duration-200"
                     style={{
-                      backgroundColor: theme === 'professional-dark' ? '#20B2AA' : '#3B82F6',
+                      backgroundColor: theme === 'light' ? '#60A5FA' : theme === 'professional-dark' ? '#2563EB' : '#6366F1',
                       color: 'white'
                     }}>
               <ArrowRight className="w-4 h-4" />
@@ -120,7 +120,7 @@ const HomeView: React.FC<HomeViewProps> = ({ currentView, onOpenUpload, uploaded
           onClick={onOpenUpload}
           className="flex items-center space-x-2 px-6 py-3 rounded-xl transition-all duration-200 hover:scale-105"
           style={{
-            backgroundColor: theme === 'professional-dark' ? '#20B2AA' : '#3B82F6',
+            backgroundColor: theme === 'light' ? '#60A5FA' : theme === 'professional-dark' ? '#2563EB' : '#6366F1',
             color: 'white'
           }}
         >
