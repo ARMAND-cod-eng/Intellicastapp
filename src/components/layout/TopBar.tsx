@@ -72,7 +72,7 @@ const TopBar: React.FC = () => {
         className="h-full !border-0 !border-b-0 !shadow-none rounded-none backdrop-blur-3xl"
       >
         {/* Background gradient */}
-        <div className="absolute inset-0" style={{backgroundColor: theme === 'dark' ? '#1E1B4B' : '#FBF5F0'}} />
+        <div className="absolute inset-0" style={{backgroundColor: theme === 'dark' ? '#1E1B4B' : '#FFFFFF'}} />
         
         <div className="relative z-10 flex items-center justify-between px-6 pr-32 h-full">
           {/* Left Section - Navigation & Search */}

@@ -117,7 +117,7 @@ const NewView: React.FC<NewViewProps> = ({ currentView, onOpenUpload, uploadedCo
                 }`}
                 style={{
                   backgroundColor: theme === 'light' ? '#FFFFFF' : undefined,
-                  borderColor: theme === 'light' ? 'rgba(156,163,175,0.2)' : undefined
+                  borderColor: theme === 'light' ? '#E5E7EB' : undefined
                 }}
               >
                 {option.title === 'Upload Document' && uploadedContent && uploadedContent.length > 0 && (

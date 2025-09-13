@@ -161,8 +161,8 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ onFilesUploaded, onDocu
   const getDropzoneStyle = () => {
     if (theme === 'light') {
       return {
-        backgroundColor: '#FBF5F0',
-        borderColor: 'rgba(191,200,216,0.5)'
+        backgroundColor: '#FFFFFF',
+        borderColor: '#E5E7EB'
       };
     }
     return {};
@@ -172,11 +172,11 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ onFilesUploaded, onDocu
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md">
       <div className="rounded-2xl shadow-2xl w-full max-w-2xl mx-4 max-h-[80vh] overflow-hidden border" 
            style={{
-             backgroundColor: theme === 'dark' ? '#1E1B4B' : '#FBF5F0',
-             borderColor: theme === 'dark' ? 'rgba(75, 85, 99, 0.3)' : 'rgba(191,200,216,0.3)'
+             backgroundColor: theme === 'dark' ? '#1E1B4B' : '#FFFFFF',
+             borderColor: theme === 'dark' ? 'rgba(75, 85, 99, 0.3)' : '#E5E7EB'
            }}>
         {/* Header */}
-        <div className="p-6 border-b" style={{borderColor: theme === 'dark' ? 'rgba(75, 85, 99, 0.3)' : 'rgba(191,200,216,0.3)'}}>
+        <div className="p-6 border-b" style={{borderColor: theme === 'dark' ? 'rgba(75, 85, 99, 0.3)' : '#E5E7EB'}}>
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <div className="w-12 h-12 bg-gradient-to-br from-accent-500 to-primary-600 rounded-xl flex items-center justify-center shadow-lg">
@@ -236,7 +236,7 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ onFilesUploaded, onDocu
               <h3 className="text-lg font-medium mb-4" style={{color: theme === 'dark' ? '#FFFFFF' : '#1F2937'}}>Uploaded Files</h3>
               <div className="space-y-3">
                 {uploadedFiles.map((uploadFile) => (
-                  <div key={uploadFile.id} className={`rounded-lg p-4 border ${theme === 'dark' ? 'bg-gray-800/30 border-gray-600/30' : 'bg-white border-gray-200'}`} style={{backgroundColor: theme === 'light' ? '#FFFFFF' : undefined, borderColor: theme === 'light' ? 'rgba(156,163,175,0.2)' : undefined}}>
+                  <div key={uploadFile.id} className={`rounded-lg p-4 border ${theme === 'dark' ? 'bg-gray-800/30 border-gray-600/30' : 'bg-white border-gray-200'}`} style={{backgroundColor: theme === 'light' ? '#FFFFFF' : undefined, borderColor: theme === 'light' ? '#E5E7EB' : undefined}}>
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center space-x-3">
                         <File className={`w-5 h-5 ${theme === 'dark' ? 'text-white/60' : 'text-gray-500'}`} />
@@ -316,7 +316,7 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ onFilesUploaded, onDocu
 
         {/* Footer */}
         {uploadedFiles.some(f => f.status === 'completed') && (
-          <div className="p-6 border-t" style={{borderColor: theme === 'dark' ? 'rgba(75, 85, 99, 0.3)' : 'rgba(191,200,216,0.3)', backgroundColor: theme === 'dark' ? 'rgba(55, 65, 81, 0.2)' : 'rgba(251, 245, 240, 0.5)'}}>
+          <div className="p-6 border-t" style={{borderColor: theme === 'dark' ? 'rgba(75, 85, 99, 0.3)' : '#E5E7EB', backgroundColor: theme === 'dark' ? 'rgba(55, 65, 81, 0.2)' : 'rgba(248, 249, 250, 0.5)'}}>
             <div className="flex items-center justify-between">
               <div className="text-sm" style={{color: theme === 'dark' ? '#C7D2FE' : '#1F2937'}}>
                 <p>{uploadedFiles.filter(f => f.status === 'completed').length} document(s) processed</p>

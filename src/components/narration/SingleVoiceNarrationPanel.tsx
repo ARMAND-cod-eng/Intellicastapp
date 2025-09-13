@@ -806,8 +806,8 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
       
       {/* Main Panel Container - Half Screen */}
       <div className="w-1/2 backdrop-blur-3xl border-l shadow-2xl overflow-hidden flex flex-col relative" style={{
-        backgroundColor: theme === 'dark' ? 'rgba(15, 15, 35, 0.95)' : '#FBF5F0',
-        borderColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(156, 163, 175, 0.2)'
+        backgroundColor: theme === 'dark' ? 'rgba(15, 15, 35, 0.95)' : '#FFFFFF',
+        borderColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.1)' : '#E5E7EB'
       }}>
         {/* Animated Background */}
         {theme === 'dark' && (
@@ -837,8 +837,8 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
         
         {/* Header */}
         <div className="relative flex items-center justify-between p-6 backdrop-blur-md border-b" style={{
-          backgroundColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(255, 255, 255, 0.8)',
-          borderColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(156, 163, 175, 0.2)'
+          backgroundColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.05)' : '#FFFFFF',
+          borderColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.1)' : '#E5E7EB'
         }}>
           <h1 className="text-2xl font-bold flex items-center space-x-3" style={{
             color: theme === 'dark' ? '#FFFFFF' : '#1F2937'

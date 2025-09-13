@@ -41,7 +41,7 @@ const Layout: React.FC = () => {
   return (
     <div className="h-screen flex flex-col overflow-hidden relative" 
          style={{
-           background: theme === 'dark' ? '#0F0F23' : 'linear-gradient(135deg, #FBF5F0 0%, #BFC8D8 100%)'
+           background: theme === 'dark' ? '#0F0F23' : '#F8F9FA'
          }}>
       {/* Animated Background */}
       <div className={`absolute inset-0 ${theme === 'dark' ? 'mesh-gradient opacity-30' : 'opacity-20'}`} 
