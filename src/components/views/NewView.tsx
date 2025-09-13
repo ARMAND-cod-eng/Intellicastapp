@@ -92,17 +92,17 @@ const NewView: React.FC<NewViewProps> = ({ currentView, onOpenUpload, uploadedCo
       }`}>
       {/* Hero Section */}
       <section className="text-center mb-12">
-        <h1 className="text-4xl font-bold mb-4" style={{color: theme === 'dark' ? '#FFFFFF' : '#1F2937'}}>
+        <h1 className="text-4xl font-bold mb-4" style={{color: theme === 'professional-dark' ? '#E8EAED' : theme === 'dark' ? '#FFFFFF' : '#1F2937'}}>
           Create Your Next Podcast
         </h1>
-        <p className="text-xl max-w-3xl mx-auto" style={{color: theme === 'dark' ? '#C7D2FE' : '#4B5563'}}>
+        <p className="text-xl max-w-3xl mx-auto" style={{color: theme === 'professional-dark' ? '#9AA0A6' : theme === 'dark' ? '#C7D2FE' : '#4B5563'}}>
           Transform any content into engaging audio experiences with AI-powered narration and conversation
         </p>
       </section>
 
       {/* Upload Options */}
       <section>
-        <h2 className="text-2xl font-bold mb-6" style={{color: theme === 'dark' ? '#FFFFFF' : '#1F2937'}}>Choose Your Content Source</h2>
+        <h2 className="text-2xl font-bold mb-6" style={{color: theme === 'professional-dark' ? '#E8EAED' : theme === 'dark' ? '#FFFFFF' : '#1F2937'}}>Choose Your Content Source</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {uploadOptions.map((option, index) => {
             const Icon = option.icon;
@@ -111,13 +111,15 @@ const NewView: React.FC<NewViewProps> = ({ currentView, onOpenUpload, uploadedCo
                 key={index}
                 onClick={option.action}
                 className={`group relative p-8 rounded-2xl border-2 backdrop-blur-sm cursor-pointer transition-all duration-300 hover:-translate-y-1 ${
-                  theme === 'dark' 
+                  theme === 'professional-dark'
+                    ? 'hover:shadow-lg'
+                    : theme === 'dark'
                     ? 'border-gray-600/30 bg-gradient-to-br from-gray-800/20 to-gray-900/20 hover:border-purple-400/50 hover:shadow-lg hover:shadow-purple-500/10'
                     : 'border-gray-200 bg-gradient-to-br from-white to-gray-50 hover:border-blue-300 hover:shadow-lg hover:shadow-blue-500/10'
                 }`}
                 style={{
-                  backgroundColor: theme === 'light' ? '#FFFFFF' : undefined,
-                  borderColor: theme === 'light' ? '#E5E7EB' : undefined
+                  backgroundColor: theme === 'professional-dark' ? '#252526' : theme === 'light' ? '#FFFFFF' : undefined,
+                  borderColor: theme === 'professional-dark' ? '#3C4043' : theme === 'light' ? '#E5E7EB' : undefined
                 }}
               >
                 {option.title === 'Upload Document' && uploadedContent && uploadedContent.length > 0 && (
@@ -126,13 +128,18 @@ const NewView: React.FC<NewViewProps> = ({ currentView, onOpenUpload, uploadedCo
                   </div>
                 )}
                 <div className="flex flex-col items-center text-center">
-                  <div className={`w-16 h-16 bg-gradient-to-br ${option.color} rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300 shadow-lg`}>
+                  <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300 shadow-lg ${
+                    theme === 'professional-dark' ? '' : `bg-gradient-to-br ${option.color}`
+                  }`}
+                       style={{
+                         backgroundColor: theme === 'professional-dark' ? '#20B2AA' : undefined
+                       }}>
                     <Icon className="w-8 h-8 text-white" />
                   </div>
-                  <h3 className="text-xl font-bold mb-3" style={{color: theme === 'dark' ? '#FFFFFF' : '#1F2937'}}>
+                  <h3 className="text-xl font-bold mb-3" style={{color: theme === 'professional-dark' ? '#E8EAED' : theme === 'dark' ? '#FFFFFF' : '#1F2937'}}>
                     {option.title}
                   </h3>
-                  <p className="text-sm leading-relaxed" style={{color: theme === 'dark' ? '#C7D2FE' : '#4B5563'}}>
+                  <p className="text-sm leading-relaxed" style={{color: theme === 'professional-dark' ? '#9AA0A6' : theme === 'dark' ? '#C7D2FE' : '#4B5563'}}>
                     {option.description}
                   </p>
                 </div>
@@ -144,7 +151,7 @@ const NewView: React.FC<NewViewProps> = ({ currentView, onOpenUpload, uploadedCo
 
       {/* Generation Styles */}
       <section>
-        <h2 className="text-2xl font-bold mb-6" style={{color: theme === 'dark' ? '#FFFFFF' : '#1F2937'}}>Choose Your Podcast Style</h2>
+        <h2 className="text-2xl font-bold mb-6" style={{color: theme === 'professional-dark' ? '#E8EAED' : theme === 'dark' ? '#FFFFFF' : '#1F2937'}}>Choose Your Podcast Style</h2>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {generationStyles.map((style, index) => (
             <div
@@ -152,16 +159,20 @@ const NewView: React.FC<NewViewProps> = ({ currentView, onOpenUpload, uploadedCo
               onClick={style.action}
               className={`relative p-8 rounded-2xl border-2 cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-lg ${
                 style.recommended
-                  ? (theme === 'dark' 
+                  ? (theme === 'professional-dark'
+                      ? 'hover:shadow-lg'
+                      : theme === 'dark'
                       ? 'border-purple-400/60 bg-gradient-to-br from-purple-500/10 to-purple-600/10 hover:border-purple-300/80 hover:shadow-purple-500/20'
                       : 'border-blue-300 bg-gradient-to-br from-blue-50 to-blue-100 hover:border-blue-400 hover:shadow-blue-500/20')
-                  : (theme === 'dark'
+                  : (theme === 'professional-dark'
+                      ? 'hover:shadow-lg'
+                      : theme === 'dark'
                       ? 'border-gray-600/30 bg-gradient-to-br from-gray-800/20 to-gray-900/20 hover:border-purple-400/50 hover:shadow-purple-500/10'
                       : 'border-gray-200 bg-gradient-to-br from-white to-gray-50 hover:border-blue-300 hover:shadow-blue-500/10')
               }`}
               style={{
-                backgroundColor: theme === 'light' && !style.recommended ? '#FFFFFF' : undefined,
-                borderColor: theme === 'light' ? 'rgba(156,163,175,0.2)' : undefined
+                backgroundColor: theme === 'professional-dark' ? (style.recommended ? 'rgba(32, 178, 170, 0.1)' : '#252526') : theme === 'light' && !style.recommended ? '#FFFFFF' : undefined,
+                borderColor: theme === 'professional-dark' ? (style.recommended ? '#20B2AA' : '#3C4043') : theme === 'light' ? 'rgba(156,163,175,0.2)' : undefined
               }}
             >
               {style.recommended && (
@@ -173,18 +184,18 @@ const NewView: React.FC<NewViewProps> = ({ currentView, onOpenUpload, uploadedCo
               )}
               
               <div className="space-y-4">
-                <h3 className="text-xl font-bold" style={{color: theme === 'dark' ? '#FFFFFF' : '#1F2937'}}>
+                <h3 className="text-xl font-bold" style={{color: theme === 'professional-dark' ? '#E8EAED' : theme === 'dark' ? '#FFFFFF' : '#1F2937'}}>
                   {style.title}
                 </h3>
-                <p className="text-sm leading-relaxed" style={{color: theme === 'dark' ? '#C7D2FE' : '#4B5563'}}>
+                <p className="text-sm leading-relaxed" style={{color: theme === 'professional-dark' ? '#9AA0A6' : theme === 'dark' ? '#C7D2FE' : '#4B5563'}}>
                   {style.description}
                 </p>
-                
-                <div className="pt-4 border-t" style={{borderColor: theme === 'dark' ? 'rgba(75, 85, 99, 0.3)' : 'rgba(191,200,216,0.3)'}}>
+
+                <div className="pt-4 border-t" style={{borderColor: theme === 'professional-dark' ? '#3C4043' : theme === 'dark' ? 'rgba(75, 85, 99, 0.3)' : 'rgba(191,200,216,0.3)'}}>
                   <ul className="space-y-3">
                     {style.features.map((feature, featureIndex) => (
-                      <li key={featureIndex} className="flex items-center text-sm" style={{color: theme === 'dark' ? '#9CA3AF' : '#6B7280'}}>
-                        <div className="w-2 h-2 rounded-full mr-3 flex-shrink-0" style={{backgroundColor: theme === 'dark' ? '#A5B4FC' : '#3B82F6'}}></div>
+                      <li key={featureIndex} className="flex items-center text-sm" style={{color: theme === 'professional-dark' ? '#80868B' : theme === 'dark' ? '#9CA3AF' : '#6B7280'}}>
+                        <div className="w-2 h-2 rounded-full mr-3 flex-shrink-0" style={{backgroundColor: theme === 'professional-dark' ? '#20B2AA' : theme === 'dark' ? '#A5B4FC' : '#3B82F6'}}></div>
                         {feature}
                       </li>
                     ))}
@@ -196,45 +207,6 @@ const NewView: React.FC<NewViewProps> = ({ currentView, onOpenUpload, uploadedCo
         </div>
       </section>
 
-      {/* Recent Templates */}
-      <section>
-        <h2 className="text-2xl font-bold mb-6" style={{color: theme === 'dark' ? '#FFFFFF' : '#1F2937'}}>Quick Start Templates</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {[
-            { name: 'News Summary', duration: '5 min', style: 'Single Voice', icon: '📰' },
-            { name: 'Research Discussion', duration: '15 min', style: 'Multi-Voice', icon: '🔬' },
-            { name: 'Tutorial Walkthrough', duration: '10 min', style: 'Single Voice', icon: '📚' },
-            { name: 'Expert Interview', duration: '20 min', style: 'Expert Panel', icon: '🎙️' },
-          ].map((template, index) => (
-            <div 
-              key={index} 
-              className={`group p-6 rounded-2xl border-2 backdrop-blur-sm cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-lg ${
-                theme === 'dark'
-                  ? 'border-gray-600/30 bg-gradient-to-br from-gray-800/20 to-gray-900/20 hover:border-purple-400/50 hover:shadow-purple-500/10'
-                  : 'border-gray-200 bg-gradient-to-br from-white to-gray-50 hover:border-blue-300 hover:shadow-blue-500/10'
-              }`}
-              style={{
-                backgroundColor: theme === 'light' ? '#FFFFFF' : undefined,
-                borderColor: theme === 'light' ? 'rgba(156,163,175,0.2)' : undefined
-              }}
-            >
-              <div className="flex flex-col items-center text-center space-y-3">
-                <div className="text-2xl group-hover:scale-110 transition-transform duration-300">
-                  {template.icon}
-                </div>
-                <h3 className="font-bold text-lg" style={{color: theme === 'dark' ? '#FFFFFF' : '#1F2937'}}>{template.name}</h3>
-                <p className="text-sm" style={{color: theme === 'dark' ? '#9CA3AF' : '#6B7280'}}>{template.style}</p>
-                <div className="mt-2 px-3 py-1 rounded-full text-xs font-bold" style={{
-                  backgroundColor: theme === 'dark' ? '#A5B4FC' : '#3B82F6', 
-                  color: '#FFFFFF'
-                }}>
-                  {template.duration}
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
       </div>
 
       {/* Single Voice Narration Panel */}
