@@ -57,19 +57,20 @@ const TopBar: React.FC = () => {
 
   return (
     <motion.header 
-      className={`sticky top-0 z-40 transition-all duration-300 ${
+      className={`sticky top-0 z-30 transition-all duration-300 ${
         scrolled ? 'h-14' : 'h-16'
       }`}
       layout
+      style={{ WebkitAppRegion: 'no-drag' }}
     >
       <GlassCard 
         variant="dark" 
-        className="h-full border-0 rounded-none backdrop-blur-3xl"
+        className="h-full !border-0 !border-b-0 !shadow-none rounded-none backdrop-blur-3xl"
       >
         {/* Background gradient */}
-        <div className="absolute inset-0 bg-gradient-to-r from-dark-900/95 via-dark-800/90 to-dark-900/95" />
+        <div className="absolute inset-0" style={{backgroundColor: '#1E1B4B'}} />
         
-        <div className="relative z-10 flex items-center justify-between px-6 h-full">
+        <div className="relative z-10 flex items-center justify-between px-6 pr-32 h-full">
           {/* Left Section - Navigation & Search */}
           <div className="flex items-center space-x-4 flex-1">
             {/* Navigation Controls */}
@@ -98,7 +99,7 @@ const TopBar: React.FC = () => {
               <div className="w-8 h-8 bg-gradient-to-br from-primary-500 to-secondary-600 rounded-xl flex items-center justify-center shadow-lg">
                 <Sparkles size={16} className="text-white" />
               </div>
-              <span className="font-bold text-lg gradient-text hidden md:block">
+              <span className="font-bold text-lg hidden md:block" style={{color: '#FFFFFF'}}>
                 IntelliCast
               </span>
             </motion.div>
@@ -127,7 +128,7 @@ const TopBar: React.FC = () => {
                         <Zap size={16} className="text-primary-400" />
                       </motion.div>
                     ) : (
-                      <Search size={16} className="text-white/50" />
+                      <Search size={16} style={{color: '#9CA3AF'}} />
                     )}
                   </div>
                   
@@ -138,9 +139,13 @@ const TopBar: React.FC = () => {
                     onChange={(e) => setSearchQuery(e.target.value)}
                     onFocus={() => setIsSearchFocused(true)}
                     onBlur={() => setIsSearchFocused(false)}
-                    className={`w-full pl-10 pr-10 py-2.5 bg-white/10 backdrop-blur-md border border-white/20 rounded-xl text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:border-primary-500/50 transition-all duration-200 ${
+                    className={`w-full pl-10 pr-10 py-2.5 bg-white/10 backdrop-blur-md border border-white/20 rounded-xl transition-all duration-200 ${
                       isSearchFocused ? 'bg-white/15 border-white/30' : ''
                     }`}
+                    style={{
+                      color: '#FFFFFF',
+                      '::placeholder': { color: '#C7D2FE' }
+                    }}
                   />
                   
                   {searchQuery && (
@@ -271,13 +276,6 @@ const TopBar: React.FC = () => {
           </div>
         </div>
         
-        {/* Progress indicator */}
-        <motion.div
-          className="absolute bottom-0 left-0 h-0.5 bg-gradient-to-r from-primary-500 to-secondary-500"
-          initial={{ width: 0 }}
-          animate={{ width: scrolled ? '100%' : '0%' }}
-          transition={{ duration: 0.3 }}
-        />
       </GlassCard>
     </motion.header>
   );

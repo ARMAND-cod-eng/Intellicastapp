@@ -90,17 +90,17 @@ const NewView: React.FC<NewViewProps> = ({ currentView, onOpenUpload, uploadedCo
       }`}>
       {/* Hero Section */}
       <section className="text-center mb-12">
-        <h1 className="text-4xl font-bold text-gray-900 mb-4">
+        <h1 className="text-4xl font-bold mb-4" style={{color: '#FFFFFF'}}>
           Create Your Next Podcast
         </h1>
-        <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+        <p className="text-xl max-w-3xl mx-auto" style={{color: '#C7D2FE'}}>
           Transform any content into engaging audio experiences with AI-powered narration and conversation
         </p>
       </section>
 
       {/* Upload Options */}
       <section>
-        <h2 className="text-2xl font-bold text-gray-900 mb-6">Choose Your Content Source</h2>
+        <h2 className="text-2xl font-bold mb-6" style={{color: '#FFFFFF'}}>Choose Your Content Source</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {uploadOptions.map((option, index) => {
             const Icon = option.icon;
@@ -108,22 +108,24 @@ const NewView: React.FC<NewViewProps> = ({ currentView, onOpenUpload, uploadedCo
               <div
                 key={index}
                 onClick={option.action}
-                className="group relative p-6 bg-white rounded-xl border border-gray-200 hover-lift cursor-pointer transition-all duration-200"
+                className="group relative p-8 rounded-2xl border-2 border-gray-600/30 bg-gradient-to-br from-gray-800/20 to-gray-900/20 backdrop-blur-sm cursor-pointer transition-all duration-300 hover:border-purple-400/50 hover:shadow-lg hover:shadow-purple-500/10 hover:-translate-y-1"
               >
                 {option.title === 'Upload Document' && uploadedContent && uploadedContent.length > 0 && (
-                  <div className="absolute -top-2 -right-2 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
-                    <Check size={14} className="text-white" />
+                  <div className="absolute -top-3 -right-3 w-8 h-8 rounded-full flex items-center justify-center" style={{backgroundColor: '#10B981'}}>
+                    <Check size={16} className="text-white" />
                   </div>
                 )}
-                <div className={`w-12 h-12 bg-gradient-to-br ${option.color} rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-200`}>
-                  <Icon className="w-6 h-6 text-white" />
+                <div className="flex flex-col items-center text-center">
+                  <div className={`w-16 h-16 bg-gradient-to-br ${option.color} rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300 shadow-lg`}>
+                    <Icon className="w-8 h-8 text-white" />
+                  </div>
+                  <h3 className="text-xl font-bold mb-3" style={{color: '#FFFFFF'}}>
+                    {option.title}
+                  </h3>
+                  <p className="text-sm leading-relaxed" style={{color: '#C7D2FE'}}>
+                    {option.description}
+                  </p>
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                  {option.title}
-                </h3>
-                <p className="text-gray-600 text-sm">
-                  {option.description}
-                </p>
               </div>
             );
           })}
@@ -132,41 +134,45 @@ const NewView: React.FC<NewViewProps> = ({ currentView, onOpenUpload, uploadedCo
 
       {/* Generation Styles */}
       <section>
-        <h2 className="text-2xl font-bold text-gray-900 mb-6">Choose Your Podcast Style</h2>
+        <h2 className="text-2xl font-bold mb-6" style={{color: '#FFFFFF'}}>Choose Your Podcast Style</h2>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {generationStyles.map((style, index) => (
             <div
               key={index}
               onClick={style.action}
-              className={`relative p-6 rounded-xl border-2 transition-all duration-200 hover-lift cursor-pointer ${
+              className={`relative p-8 rounded-2xl border-2 cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-lg ${
                 style.recommended
-                  ? 'border-accent-500 bg-accent-50'
-                  : 'border-gray-200 bg-white hover:border-accent-300'
+                  ? 'border-purple-400/60 bg-gradient-to-br from-purple-500/10 to-purple-600/10 hover:border-purple-300/80 hover:shadow-purple-500/20'
+                  : 'border-gray-600/30 bg-gradient-to-br from-gray-800/20 to-gray-900/20 hover:border-purple-400/50 hover:shadow-purple-500/10'
               }`}
             >
               {style.recommended && (
-                <div className="absolute -top-3 left-4">
-                  <span className="px-3 py-1 bg-accent-500 text-white text-sm font-medium rounded-full">
-                    Recommended
+                <div className="absolute -top-4 left-6">
+                  <span className="px-4 py-2 text-sm font-bold rounded-full text-white shadow-lg" style={{backgroundColor: '#F59E0B'}}>
+                    ⭐ Recommended
                   </span>
                 </div>
               )}
               
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                {style.title}
-              </h3>
-              <p className="text-gray-600 text-sm mb-4">
-                {style.description}
-              </p>
-              
-              <ul className="space-y-2">
-                {style.features.map((feature, featureIndex) => (
-                  <li key={featureIndex} className="flex items-center text-sm text-gray-600">
-                    <div className="w-1.5 h-1.5 bg-accent-500 rounded-full mr-2"></div>
-                    {feature}
-                  </li>
-                ))}
-              </ul>
+              <div className="space-y-4">
+                <h3 className="text-xl font-bold" style={{color: '#FFFFFF'}}>
+                  {style.title}
+                </h3>
+                <p className="text-sm leading-relaxed" style={{color: '#C7D2FE'}}>
+                  {style.description}
+                </p>
+                
+                <div className="pt-4 border-t border-gray-600/30">
+                  <ul className="space-y-3">
+                    {style.features.map((feature, featureIndex) => (
+                      <li key={featureIndex} className="flex items-center text-sm" style={{color: '#9CA3AF'}}>
+                        <div className="w-2 h-2 rounded-full mr-3 flex-shrink-0" style={{backgroundColor: '#A5B4FC'}}></div>
+                        {feature}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
             </div>
           ))}
         </div>
@@ -174,18 +180,28 @@ const NewView: React.FC<NewViewProps> = ({ currentView, onOpenUpload, uploadedCo
 
       {/* Recent Templates */}
       <section>
-        <h2 className="text-2xl font-bold text-gray-900 mb-6">Quick Start Templates</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <h2 className="text-2xl font-bold mb-6" style={{color: '#FFFFFF'}}>Quick Start Templates</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {[
-            { name: 'News Summary', duration: '5 min', style: 'Single Voice' },
-            { name: 'Research Discussion', duration: '15 min', style: 'Multi-Voice' },
-            { name: 'Tutorial Walkthrough', duration: '10 min', style: 'Single Voice' },
-            { name: 'Expert Interview', duration: '20 min', style: 'Expert Panel' },
+            { name: 'News Summary', duration: '5 min', style: 'Single Voice', icon: '📰' },
+            { name: 'Research Discussion', duration: '15 min', style: 'Multi-Voice', icon: '🔬' },
+            { name: 'Tutorial Walkthrough', duration: '10 min', style: 'Single Voice', icon: '📚' },
+            { name: 'Expert Interview', duration: '20 min', style: 'Expert Panel', icon: '🎙️' },
           ].map((template, index) => (
-            <div key={index} className="p-4 bg-gray-50 rounded-lg hover-lift cursor-pointer">
-              <h3 className="font-medium text-gray-900 mb-1">{template.name}</h3>
-              <p className="text-sm text-gray-600 mb-2">{template.style}</p>
-              <span className="text-xs text-accent-600 font-medium">{template.duration}</span>
+            <div 
+              key={index} 
+              className="group p-6 rounded-2xl border-2 border-gray-600/30 bg-gradient-to-br from-gray-800/20 to-gray-900/20 backdrop-blur-sm cursor-pointer transition-all duration-300 hover:border-purple-400/50 hover:shadow-lg hover:shadow-purple-500/10 hover:-translate-y-1"
+            >
+              <div className="flex flex-col items-center text-center space-y-3">
+                <div className="text-2xl group-hover:scale-110 transition-transform duration-300">
+                  {template.icon}
+                </div>
+                <h3 className="font-bold text-lg" style={{color: '#FFFFFF'}}>{template.name}</h3>
+                <p className="text-sm" style={{color: '#9CA3AF'}}>{template.style}</p>
+                <div className="mt-2 px-3 py-1 rounded-full text-xs font-bold" style={{backgroundColor: '#A5B4FC', color: '#1E1B4B'}}>
+                  {template.duration}
+                </div>
+              </div>
             </div>
           ))}
         </div>
