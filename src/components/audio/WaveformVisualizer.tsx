@@ -1,5 +1,6 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
+import { useTheme } from '../../contexts/ThemeContext';
 
 interface WaveformVisualizerProps {
   audioUrl?: string;
@@ -24,6 +25,7 @@ const WaveformVisualizer: React.FC<WaveformVisualizerProps> = ({
   height = 60,
   className = '',
 }) => {
+  const { theme } = useTheme();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationRef = useRef<number>();
   const audioContextRef = useRef<AudioContext>();
@@ -66,9 +68,11 @@ const WaveformVisualizer: React.FC<WaveformVisualizerProps> = ({
           ctx.shadowBlur = 8;
         }
       } else {
-        // Inactive bars
-        gradient.addColorStop(0, '#ffffff20');
-        gradient.addColorStop(1, '#ffffff10');
+        // Inactive bars - theme aware
+        const inactiveColor = theme === 'dark' ? '#ffffff20' : '#00000020';
+        const inactiveColorDim = theme === 'dark' ? '#ffffff10' : '#00000010';
+        gradient.addColorStop(0, inactiveColor);
+        gradient.addColorStop(1, inactiveColorDim);
         ctx.shadowBlur = 0;
       }
 
@@ -108,8 +112,8 @@ const WaveformVisualizer: React.FC<WaveformVisualizerProps> = ({
     }
     ctx.stroke();
 
-    // Draw unplayed portion
-    ctx.strokeStyle = '#ffffff20';
+    // Draw unplayed portion - theme aware
+    ctx.strokeStyle = theme === 'dark' ? '#ffffff20' : '#00000020';
     ctx.shadowBlur = 0;
     ctx.beginPath();
     ctx.moveTo(progressX, centerY + (waveformData[Math.floor((progressX / canvas.width) * waveformData.length)] || 0.5 - 0.5) * canvas.height * 0.8);
@@ -242,8 +246,10 @@ const WaveformVisualizer: React.FC<WaveformVisualizerProps> = ({
         onClick={handleClick}
       />
       
-      {/* Overlay gradient */}
-      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent pointer-events-none rounded-lg" />
+      {/* Overlay gradient - theme aware */}
+      <div className={`absolute inset-0 bg-gradient-to-r from-transparent to-transparent pointer-events-none rounded-lg ${
+        theme === 'dark' ? 'via-white/5' : 'via-black/5'
+      }`} />
     </motion.div>
   );
 };

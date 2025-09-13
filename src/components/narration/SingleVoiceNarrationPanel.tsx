@@ -507,7 +507,17 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
                   setIsPodcastPlaying(!isPodcastPlaying);
                 }
               }}
-              className="w-16 h-16 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-white transition-colors shadow-lg border-2 border-white/50"
+              className="w-16 h-16 backdrop-blur-sm rounded-full flex items-center justify-center transition-colors shadow-lg border-2"
+              style={{
+                backgroundColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.9)' : 'rgba(255, 255, 255, 0.95)',
+                borderColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.5)' : 'rgba(156, 163, 175, 0.3)'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = theme === 'dark' ? '#FFFFFF' : '#FFFFFF';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = theme === 'dark' ? 'rgba(255, 255, 255, 0.9)' : 'rgba(255, 255, 255, 0.95)';
+              }}
             >
               {isPodcastPlaying ? (
                 <Pause className="w-6 h-6 text-gray-800" />
@@ -519,15 +529,29 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
         </div>
 
         {/* Audio Controls */}
-        <div className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm space-y-4">
+        <div className="rounded-lg p-4 border shadow-sm space-y-4" style={{
+          backgroundColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.1)' : '#FFFFFF',
+          borderColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.2)' : 'rgba(156, 163, 175, 0.2)'
+        }}>
           {/* Primary Controls */}
           <div className="flex items-center justify-center space-x-4">
             <button
               onClick={handleStop}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              className="p-2 rounded-lg transition-colors"
+              style={{
+                backgroundColor: 'transparent'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = theme === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(156, 163, 175, 0.1)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'transparent';
+              }}
               title="Stop"
             >
-              <Square className="w-5 h-5 text-gray-600" />
+              <Square className="w-5 h-5" style={{
+                color: theme === 'dark' ? 'rgba(255, 255, 255, 0.7)' : '#4B5563'
+              }} />
             </button>
             
             <button
@@ -545,23 +569,45 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
                   setIsPodcastPlaying(!isPodcastPlaying);
                 }
               }}
-              className="p-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+              className="p-3 text-white rounded-lg transition-colors"
+              style={{
+                backgroundColor: '#3B82F6'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = '#2563EB';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = '#3B82F6';
+              }}
             >
               {isPodcastPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
             </button>
             
             <button
               onClick={handleDownload}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              className="p-2 rounded-lg transition-colors"
+              style={{
+                backgroundColor: 'transparent'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = theme === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(156, 163, 175, 0.1)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'transparent';
+              }}
               title="Download"
             >
-              <Download className="w-5 h-5 text-gray-600" />
+              <Download className="w-5 h-5" style={{
+                color: theme === 'dark' ? 'rgba(255, 255, 255, 0.7)' : '#4B5563'
+              }} />
             </button>
           </div>
 
           {/* Speed Control */}
           <div className="flex items-center justify-between">
-            <span className="text-sm text-gray-600">Speed</span>
+            <span className="text-sm" style={{
+              color: theme === 'dark' ? 'rgba(255, 255, 255, 0.7)' : '#4B5563'
+            }}>Speed</span>
             <div className="flex items-center space-x-2">
               {[0.5, 0.75, 1, 1.25, 1.5, 2].map((speed) => (
                 <button
@@ -572,11 +618,25 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
                       audioElement.playbackRate = speed;
                     }
                   }}
-                  className={`px-2 py-1 text-xs rounded transition-colors ${
-                    playbackSpeed === speed
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  }`}
+                  className="px-2 py-1 text-xs rounded transition-colors"
+                  style={{
+                    backgroundColor: playbackSpeed === speed 
+                      ? '#3B82F6' 
+                      : (theme === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(156, 163, 175, 0.1)'),
+                    color: playbackSpeed === speed 
+                      ? '#FFFFFF' 
+                      : (theme === 'dark' ? 'rgba(255, 255, 255, 0.7)' : '#4B5563')
+                  }}
+                  onMouseEnter={(e) => {
+                    if (playbackSpeed !== speed) {
+                      e.currentTarget.style.backgroundColor = theme === 'dark' ? 'rgba(255, 255, 255, 0.2)' : 'rgba(156, 163, 175, 0.2)';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (playbackSpeed !== speed) {
+                      e.currentTarget.style.backgroundColor = theme === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(156, 163, 175, 0.1)';
+                    }
+                  }}
                 >
                   {speed}x
                 </button>
@@ -589,7 +649,17 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
             {!showQuestionInput ? (
               <button
                 onClick={() => setShowQuestionInput(true)}
-                className="w-full flex items-center justify-center space-x-2 py-2 px-4 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors text-sm"
+                className="w-full flex items-center justify-center space-x-2 py-2 px-4 rounded-lg transition-colors text-sm"
+                style={{
+                  backgroundColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(156, 163, 175, 0.1)',
+                  color: theme === 'dark' ? 'rgba(255, 255, 255, 0.8)' : '#4B5563'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = theme === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(156, 163, 175, 0.2)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = theme === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(156, 163, 175, 0.1)';
+                }}
               >
                 <MessageCircle className="w-4 h-4" />
                 <span>Ask Question</span>
@@ -601,13 +671,31 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
                   value={question}
                   onChange={(e) => setQuestion(e.target.value)}
                   placeholder="Ask about the content..."
-                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="flex-1 px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  style={{
+                    backgroundColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.1)' : '#FFFFFF',
+                    borderColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.3)' : 'rgba(156, 163, 175, 0.3)',
+                    color: theme === 'dark' ? '#FFFFFF' : '#1F2937'
+                  }}
                   onKeyPress={(e) => e.key === 'Enter' && handleAskQuestion()}
                 />
                 <button
                   onClick={handleAskQuestion}
                   disabled={!question.trim()}
-                  className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 transition-colors text-sm"
+                  className="px-3 py-2 text-white rounded-lg transition-colors text-sm"
+                  style={{
+                    backgroundColor: question.trim() ? '#3B82F6' : (theme === 'dark' ? 'rgba(255, 255, 255, 0.3)' : 'rgba(156, 163, 175, 0.3)')
+                  }}
+                  onMouseEnter={(e) => {
+                    if (question.trim()) {
+                      e.currentTarget.style.backgroundColor = '#2563EB';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (question.trim()) {
+                      e.currentTarget.style.backgroundColor = '#3B82F6';
+                    }
+                  }}
                 >
                   Ask
                 </button>
@@ -868,7 +956,9 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
                       }`}
                     >
                       <input {...getInputProps()} />
-                      <FileText className="w-10 h-10 text-white/60 mx-auto mb-3" />
+                      <FileText className="w-10 h-10 mx-auto mb-3" style={{
+                        color: theme === 'dark' ? 'rgba(255, 255, 255, 0.6)' : '#9CA3AF'
+                      }} />
                       {isDragActive ? (
                         <p className="text-sm mb-3" style={{
                           color: theme === 'dark' ? '#C4B5FD' : '#3B82F6'
@@ -903,7 +993,9 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
                 <div className="mb-6">
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center space-x-2">
-                      <Volume2 className="w-4 h-4 text-white/90" />
+                      <Volume2 className="w-4 h-4" style={{
+                        color: theme === 'dark' ? 'rgba(255, 255, 255, 0.9)' : '#1F2937'
+                      }} />
                       <h3 className="font-medium text-sm" style={{
                         color: theme === 'dark' ? '#FFFFFF' : '#1F2937'
                       }}>Voice Selection</h3>
@@ -966,7 +1058,9 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
                             </option>
                           ))}
                         </select>
-                        <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-white/60 pointer-events-none" />
+                        <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 pointer-events-none" style={{
+                          color: theme === 'dark' ? 'rgba(255, 255, 255, 0.6)' : '#6B7280'
+                        }} />
                       </div>
                     </div>
                   )}
@@ -1025,20 +1119,31 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
                 {/* Format Options */}
                 <div className="mb-6">
                   <div className="flex items-center space-x-2 mb-3">
-                    <Settings className="w-4 h-4 text-white/90" />
+                    <Settings className="w-4 h-4" style={{
+                      color: theme === 'dark' ? 'rgba(255, 255, 255, 0.9)' : '#1F2937'
+                    }} />
                     <h3 className="font-medium text-sm" style={{
                       color: theme === 'dark' ? '#FFFFFF' : '#1F2937'
                     }}>Format Options</h3>
                   </div>
                   
                   <div className="mb-4">
-                    <label className="text-xs text-white/80 block mb-1">Podcast Style</label>
-                    <p className="text-xs text-white/60 mb-2">Choose your preferred style</p>
+                    <label className="text-xs block mb-1" style={{
+                      color: theme === 'dark' ? 'rgba(255, 255, 255, 0.8)' : '#4B5563'
+                    }}>Podcast Style</label>
+                    <p className="text-xs mb-2" style={{
+                      color: theme === 'dark' ? 'rgba(255, 255, 255, 0.6)' : '#6B7280'
+                    }}>Choose your preferred style</p>
                     <div className="relative">
                       <select
                         value={narrationType}
                         onChange={(e) => setNarrationType(e.target.value)}
-                        className="w-full px-3 py-2 text-sm bg-white/10 backdrop-blur-sm border border-white/30 rounded-lg text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 appearance-none"
+                        className="w-full px-3 py-2 text-sm backdrop-blur-sm border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 appearance-none"
+                        style={{
+                          backgroundColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.1)' : '#FFFFFF',
+                          borderColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.3)' : 'rgba(156, 163, 175, 0.3)',
+                          color: theme === 'dark' ? '#FFFFFF' : '#1F2937'
+                        }}
                       >
                         <option value="conversational">Conversational Podcast</option>
                         {narrationTypes.map((type) => (
@@ -1047,13 +1152,19 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
                           </option>
                         ))}
                       </select>
-                      <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-white/60 pointer-events-none" />
+                      <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 pointer-events-none" style={{
+                        color: theme === 'dark' ? 'rgba(255, 255, 255, 0.6)' : '#6B7280'
+                      }} />
                     </div>
                   </div>
 
                   <div>
-                    <label className="text-xs text-white/80 block mb-1">Background Music</label>
-                    <p className="text-xs text-white/60 mb-2">Add ambient background music</p>
+                    <label className="text-xs block mb-1" style={{
+                      color: theme === 'dark' ? 'rgba(255, 255, 255, 0.8)' : '#4B5563'
+                    }}>Background Music</label>
+                    <p className="text-xs mb-2" style={{
+                      color: theme === 'dark' ? 'rgba(255, 255, 255, 0.6)' : '#6B7280'
+                    }}>Add ambient background music</p>
                     <div className="relative">
                       <select
                         value={backgroundMusicEnabled ? selectedMusic : 'none'}
@@ -1066,7 +1177,12 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
                             setSelectedMusic(value);
                           }
                         }}
-                        className="w-full px-3 py-2 text-sm bg-white/10 backdrop-blur-sm border border-white/30 rounded-lg text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 appearance-none"
+                        className="w-full px-3 py-2 text-sm backdrop-blur-sm border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 appearance-none"
+                        style={{
+                          backgroundColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.1)' : '#FFFFFF',
+                          borderColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.3)' : 'rgba(156, 163, 175, 0.3)',
+                          color: theme === 'dark' ? '#FFFFFF' : '#1F2937'
+                        }}
                       >
                         {musicOptions.map((music) => (
                           <option key={music.id} value={music.id}>
@@ -1074,7 +1190,9 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
                           </option>
                         ))}
                       </select>
-                      <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-white/60 pointer-events-none" />
+                      <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 pointer-events-none" style={{
+                        color: theme === 'dark' ? 'rgba(255, 255, 255, 0.6)' : '#6B7280'
+                      }} />
                     </div>
                   </div>
                 </div>
@@ -1084,8 +1202,12 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
                   <div className="py-6">
                     <GlassCard variant="dark" className="p-6" glow>
                       <div className="text-center mb-4">
-                        <h3 className="text-white font-semibold mb-2">🎧 Your Podcast is Ready!</h3>
-                        <p className="text-white/70 text-sm">Enjoy your AI-generated audio experience</p>
+                        <h3 className="font-semibold mb-2" style={{
+                          color: theme === 'dark' ? '#FFFFFF' : '#1F2937'
+                        }}>🎧 Your Podcast is Ready!</h3>
+                        <p className="text-sm" style={{
+                          color: theme === 'dark' ? 'rgba(255, 255, 255, 0.7)' : '#4B5563'
+                        }}>Enjoy your AI-generated audio experience</p>
                       </div>
                       <div className="bg-gradient-to-br from-primary-600/20 to-secondary-600/20 rounded-2xl p-4 backdrop-blur-sm border border-white/10">
                         <ModernAudioPlayer
