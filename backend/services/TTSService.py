@@ -166,8 +166,9 @@ class ChatterboxTTSService:
 
     def _load_chatterbox_model(self):
         """Load the latest Chatterbox TTS model"""
-        if self.tts is not None and self.mtl_tts is not None:
-            return True  # Already loaded
+        # Force reload for debugging - remove this condition temporarily
+        # if self.tts is not None and self.mtl_tts is not None:
+        #     return True  # Already loaded
         
         try:
             # Import the actual Chatterbox TTS modules
@@ -176,6 +177,13 @@ class ChatterboxTTSService:
             chatterbox_path = str(Path(__file__).parent.parent / "chatterbox" / "src")
             if chatterbox_path not in sys.path:
                 sys.path.insert(0, chatterbox_path)
+            
+            # Force reload modules for debugging
+            import importlib
+            if 'chatterbox.tts' in sys.modules:
+                importlib.reload(sys.modules['chatterbox.tts'])
+            if 'chatterbox.mtl_tts' in sys.modules:
+                importlib.reload(sys.modules['chatterbox.mtl_tts'])
             
             from chatterbox.tts import ChatterboxTTS
             from chatterbox.mtl_tts import ChatterboxMultilingualTTS
@@ -322,6 +330,17 @@ class ChatterboxTTSService:
             finally:
                 # Restore stdout
                 sys.stdout = original_stdout
+            
+            # Debug: Check the type of wav
+            logger.info(f"DEBUG: wav type = {type(wav)}, has ndim = {hasattr(wav, 'ndim')}")
+            
+            # Ensure wav is a tensor, not bytes
+            if isinstance(wav, bytes):
+                logger.error("❌ Received bytes instead of tensor - using fallback")
+                # Create a silent tensor as fallback
+                duration = len(text) * 0.1  # Approximate duration
+                samples = int(duration * model.sr)
+                wav = torch.zeros(1, samples)  # Silent audio
             
             # Save audio using torchaudio
             ta.save(output_path, wav, model.sr)

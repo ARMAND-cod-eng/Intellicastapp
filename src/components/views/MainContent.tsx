@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import HomeView from './HomeView';
-import LibraryView from './LibraryView';
 import NewView from './NewView';
 import DocumentUpload from '../upload/DocumentUpload';
 import { PodcastGenerationView } from '../../views/PodcastGenerationView';
@@ -34,9 +33,6 @@ const MainContent: React.FC<MainContentProps> = ({ currentView }) => {
         return <HomeView currentView={currentView} onOpenUpload={() => setIsUploadModalOpen(true)} uploadedContent={uploadedContent} />;
       case 'new':
         return <NewView currentView={currentView} onOpenUpload={() => setIsUploadModalOpen(true)} uploadedContent={uploadedContent} uploadedFiles={uploadedFiles} />;
-      case 'library':
-      case 'episodes':
-        return <LibraryView currentView={currentView} />;
       default:
         return <HomeView currentView="home" onOpenUpload={() => setIsUploadModalOpen(true)} uploadedContent={uploadedContent} />;
     }
