@@ -19,6 +19,7 @@ import {
 import WaveformVisualizer from './WaveformVisualizer';
 import GlassCard from '../ui/GlassCard';
 import Button from '../ui/Button';
+import { useTheme } from '../../contexts/ThemeContext';
 
 interface ModernAudioPlayerProps {
   onClose?: () => void;
@@ -41,6 +42,7 @@ const ModernAudioPlayer: React.FC<ModernAudioPlayerProps> = ({
   isMinimized = false,
   onToggleMinimize
 }) => {
+  const { theme } = useTheme();
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(247); // Mock duration
@@ -185,10 +187,10 @@ const ModernAudioPlayer: React.FC<ModernAudioPlayerProps> = ({
               className="w-12 h-12 rounded-xl object-cover shadow-lg"
             />
             <div className="flex-1 min-w-0">
-              <h4 className="text-sm font-semibold text-white truncate">
+              <h4 className="text-sm font-semibold truncate" style={{color: theme === 'dark' ? '#FFFFFF' : '#1F2937'}}>
                 {currentTrack.title}
               </h4>
-              <p className="text-xs text-white/70 truncate">
+              <p className="text-xs truncate" style={{color: theme === 'dark' ? 'rgba(255,255,255,0.7)' : '#4B5563'}}>
                 {currentTrack.artist}
               </p>
             </div>
@@ -206,7 +208,7 @@ const ModernAudioPlayer: React.FC<ModernAudioPlayerProps> = ({
           </div>
           
           {/* Mini progress bar */}
-          <div className="mt-2 h-1 bg-white/20 rounded-full overflow-hidden">
+          <div className={`mt-2 h-1 rounded-full overflow-hidden ${theme === 'dark' ? 'bg-white/20' : 'bg-gray-300/50'}`}>
             <motion.div 
               className="h-full bg-gradient-to-r from-primary-500 to-secondary-500 rounded-full"
               style={{ width: `${(currentTime / duration) * 100}%` }}
@@ -235,10 +237,19 @@ const ModernAudioPlayer: React.FC<ModernAudioPlayerProps> = ({
       >
         <GlassCard variant="dark" className="rounded-t-3xl rounded-b-none border-b-0 backdrop-blur-3xl">
           {/* Background gradient */}
-          <div className="absolute inset-0 bg-gradient-to-t from-dark-900/95 via-dark-800/90 to-dark-700/85 rounded-t-3xl" />
+          <div className="absolute inset-0 rounded-t-3xl" style={{
+            background: theme === 'dark' 
+              ? 'linear-gradient(to top, rgba(17, 24, 39, 0.95), rgba(55, 65, 81, 0.90), rgba(75, 85, 99, 0.85))'
+              : 'linear-gradient(to top, rgba(251, 245, 240, 0.95), rgba(251, 245, 240, 0.90), rgba(251, 245, 240, 0.85))'
+          }} />
           
           {/* Animated background */}
-          <div className="absolute inset-0 mesh-gradient opacity-20 rounded-t-3xl" />
+          <div className={`absolute inset-0 rounded-t-3xl ${theme === 'dark' ? 'mesh-gradient opacity-20' : 'opacity-10'}`} 
+               style={{
+                 background: theme === 'light' 
+                   ? 'linear-gradient(135deg, rgba(191,200,216,0.1) 0%, rgba(251,245,240,0.2) 100%)'
+                   : undefined
+               }} />
           
           <div className="relative z-10 p-6">
             {/* Header */}
@@ -250,7 +261,7 @@ const ModernAudioPlayer: React.FC<ModernAudioPlayerProps> = ({
                 transition={{ delay: 0.1 }}
               >
                 <div className="w-2 h-2 rounded-full bg-primary-500 animate-pulse" />
-                <span className="text-white/70 text-sm font-medium">Now Playing</span>
+                <span className="text-sm font-medium" style={{color: theme === 'dark' ? 'rgba(255,255,255,0.7)' : '#4B5563'}}>Now Playing</span>
               </motion.div>
               
               <div className="flex items-center space-x-2">
@@ -311,13 +322,13 @@ const ModernAudioPlayer: React.FC<ModernAudioPlayerProps> = ({
                 animate={{ x: 0, opacity: 1 }}
                 transition={{ delay: 0.3 }}
               >
-                <h3 className="text-xl font-bold text-white mb-1 truncate">
+                <h3 className="text-xl font-bold mb-1 truncate" style={{color: theme === 'dark' ? '#FFFFFF' : '#1F2937'}}>
                   {currentTrack.title}
                 </h3>
-                <p className="text-white/70 text-sm mb-2 truncate">
+                <p className="text-sm mb-2 truncate" style={{color: theme === 'dark' ? 'rgba(255,255,255,0.7)' : '#4B5563'}}>
                   {currentTrack.artist}
                 </p>
-                <p className="text-white/50 text-xs line-clamp-2">
+                <p className="text-xs line-clamp-2" style={{color: theme === 'dark' ? 'rgba(255,255,255,0.5)' : '#6B7280'}}>
                   {currentTrack.description}
                 </p>
                 
@@ -361,7 +372,7 @@ const ModernAudioPlayer: React.FC<ModernAudioPlayerProps> = ({
               className="mb-6"
             >
               <div className="flex items-center justify-between mb-3">
-                <span className="text-white/70 text-sm">Waveform</span>
+                <span className="text-sm" style={{color: theme === 'dark' ? 'rgba(255,255,255,0.7)' : '#4B5563'}}>Waveform</span>
                 <div className="flex space-x-1">
                   {(['bars', 'wave', 'spectrum'] as const).map((type) => (
                     <Button
@@ -397,14 +408,17 @@ const ModernAudioPlayer: React.FC<ModernAudioPlayerProps> = ({
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.5 }}
             >
-              <div className="flex items-center justify-between text-sm text-white/70 mb-2">
+              <div className="flex items-center justify-between text-sm mb-2" style={{color: theme === 'dark' ? 'rgba(255,255,255,0.7)' : '#4B5563'}}>
                 <span>{formatTime(currentTime)}</span>
                 <span>{formatTime(duration)}</span>
               </div>
               
               <div 
                 ref={progressRef}
-                className="relative h-2 bg-white/20 rounded-full cursor-pointer group overflow-hidden"
+                className="relative h-2 rounded-full cursor-pointer group overflow-hidden"
+                style={{
+                  backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.2)' : 'rgba(156,163,175,0.3)'
+                }}
                 onClick={handleProgressClick}
               >
                 <motion.div 
@@ -517,11 +531,14 @@ const ModernAudioPlayer: React.FC<ModernAudioPlayerProps> = ({
                   step="0.05"
                   value={isMuted ? 0 : volume}
                   onChange={handleVolumeChange}
-                  className="w-full h-1 bg-white/20 rounded-full appearance-none cursor-pointer slider"
+                  className="w-full h-1 rounded-full appearance-none cursor-pointer slider"
+                  style={{
+                    backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.2)' : 'rgba(156,163,175,0.3)'
+                  }}
                 />
               </div>
               
-              <span className="text-xs text-white/50 w-8 text-center">
+              <span className="text-xs w-8 text-center" style={{color: theme === 'dark' ? 'rgba(255,255,255,0.5)' : '#6B7280'}}>
                 {Math.round((isMuted ? 0 : volume) * 100)}
               </span>
             </motion.div>

@@ -1,5 +1,6 @@
 import React from 'react';
 import { Home, Plus, Headphones } from 'lucide-react';
+import { useTheme } from '../../contexts/ThemeContext';
 
 interface SidebarProps {
   currentView: string;
@@ -8,6 +9,7 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange, onOpenUpload }) => {
+  const { theme } = useTheme();
   const menuItems = [
     { id: 'home', icon: Home, label: 'Home' },
     { id: 'new', icon: Plus, label: 'New' },
@@ -16,14 +18,14 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange, onOpenUplo
   const libraryItems: any[] = [];
 
   return (
-    <aside className="w-64 h-full flex flex-col" style={{backgroundColor: '#1E1B4B'}}>
+    <aside className="w-64 h-full flex flex-col" style={{backgroundColor: theme === 'dark' ? '#1E1B4B' : '#FBF5F0'}}>
       {/* Logo */}
       <div className="p-6">
         <div className="flex items-center space-x-2">
           <div className="w-8 h-8 bg-gradient-to-br from-accent-500 to-primary-600 rounded-lg flex items-center justify-center">
             <Headphones className="w-5 h-5 text-white" />
           </div>
-          <span className="text-xl font-semibold" style={{color: '#C7D2FE'}}>IntelliCast</span>
+          <span className="text-xl font-semibold" style={{color: theme === 'dark' ? '#C7D2FE' : '#1F2937'}}>IntelliCast</span>
         </div>
       </div>
 
@@ -44,12 +46,14 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange, onOpenUplo
                         : ''
                     }`}
                     style={{
-                      color: currentView === item.id ? '#FFFFFF' : '#C7D2FE',
+                      color: currentView === item.id 
+                        ? (theme === 'dark' ? '#FFFFFF' : '#1F2937') 
+                        : (theme === 'dark' ? '#C7D2FE' : '#4B5563'),
                       backgroundColor: currentView === item.id ? 'transparent' : 'transparent'
                     }}
                     onMouseEnter={(e) => {
                       if (currentView !== item.id) {
-                        e.currentTarget.style.backgroundColor = '#3730A3';
+                        e.currentTarget.style.backgroundColor = theme === 'dark' ? '#3730A3' : 'rgba(59,130,246,0.1)';
                       }
                     }}
                     onMouseLeave={(e) => {
@@ -70,7 +74,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange, onOpenUplo
       </nav>
 
       {/* Bottom Section */}
-      <div className="p-4 border-t" style={{borderColor: '#312E81'}}>
+      <div className="p-4 border-t" style={{borderColor: theme === 'dark' ? '#312E81' : 'rgba(191,200,216,0.3)'}}>
         <button 
           onClick={onOpenUpload}
           className="w-full px-4 py-2 bg-gradient-to-r from-accent-500 to-primary-600 text-white rounded-lg font-medium hover:shadow-lg transition-all duration-200 transform hover:scale-105"

@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { cn } from '../../utils/cn';
+import { useTheme } from '../../contexts/ThemeContext';
 
 interface GlassCardProps {
   children: React.ReactNode;
@@ -23,16 +24,36 @@ const GlassCard: React.FC<GlassCardProps> = ({
   onClick,
   delay = 0,
 }) => {
-  const baseClasses = {
-    light: 'bg-white/5 backdrop-blur-sm border-white/10',
-    medium: 'bg-white/10 backdrop-blur-md border-white/20',
-    strong: 'bg-white/15 backdrop-blur-lg border-white/30',
-    dark: 'bg-black/20 backdrop-blur-md border-white/10',
+  const { theme } = useTheme();
+
+  const getBaseClasses = () => {
+    if (theme === 'dark') {
+      return {
+        light: 'bg-white/5 backdrop-blur-sm border-white/10',
+        medium: 'bg-white/10 backdrop-blur-md border-white/20',
+        strong: 'bg-white/15 backdrop-blur-lg border-white/30',
+        dark: 'bg-black/20 backdrop-blur-md border-white/10',
+      };
+    } else {
+      return {
+        light: 'backdrop-blur-sm border-gray-300/20',
+        medium: 'backdrop-blur-md border-gray-300/30',  
+        strong: 'backdrop-blur-lg border-gray-300/40',
+        dark: 'backdrop-blur-md border-gray-400/50',
+      };
+    }
   };
 
-  const hoverClasses = hover
-    ? 'hover:bg-white/20 hover:border-white/40 hover:-translate-y-1 hover:shadow-glass-lg'
-    : '';
+  const getHoverClasses = () => {
+    if (!hover) return '';
+    
+    return theme === 'dark'
+      ? 'hover:bg-white/20 hover:border-white/40 hover:-translate-y-1 hover:shadow-glass-lg'
+      : 'hover:border-gray-400/60 hover:-translate-y-1 hover:shadow-lg';
+  };
+
+  const baseClasses = getBaseClasses();
+  const hoverClasses = getHoverClasses();
 
   const glowClasses = glow
     ? 'hover:shadow-neon-purple hover:border-primary-500/50'
@@ -58,6 +79,9 @@ const GlassCard: React.FC<GlassCardProps> = ({
         onClick && 'interactive-press',
         className
       )}
+      style={{
+        backgroundColor: theme === 'light' ? '#FBF5F0' : undefined
+      }}
       onClick={onClick}
     >
       {/* Inner glow */}

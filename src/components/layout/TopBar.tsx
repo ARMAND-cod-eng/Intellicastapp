@@ -10,12 +10,16 @@ import {
   X,
   Sparkles,
   Zap,
-  Star
+  Star,
+  Sun,
+  Moon
 } from 'lucide-react';
+import { useTheme } from '../../contexts/ThemeContext';
 import Button from '../ui/Button';
 import GlassCard from '../ui/GlassCard';
 
 const TopBar: React.FC = () => {
+  const { theme, toggleTheme } = useTheme();
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [notifications, setNotifications] = useState(3);
@@ -68,7 +72,7 @@ const TopBar: React.FC = () => {
         className="h-full !border-0 !border-b-0 !shadow-none rounded-none backdrop-blur-3xl"
       >
         {/* Background gradient */}
-        <div className="absolute inset-0" style={{backgroundColor: '#1E1B4B'}} />
+        <div className="absolute inset-0" style={{backgroundColor: theme === 'dark' ? '#1E1B4B' : '#FBF5F0'}} />
         
         <div className="relative z-10 flex items-center justify-between px-6 pr-32 h-full">
           {/* Left Section - Navigation & Search */}
@@ -99,7 +103,7 @@ const TopBar: React.FC = () => {
               <div className="w-8 h-8 bg-gradient-to-br from-primary-500 to-secondary-600 rounded-xl flex items-center justify-center shadow-lg">
                 <Sparkles size={16} className="text-white" />
               </div>
-              <span className="font-bold text-lg hidden md:block" style={{color: '#FFFFFF'}}>
+              <span className="font-bold text-lg hidden md:block" style={{color: theme === 'dark' ? '#FFFFFF' : '#1F2937'}}>
                 IntelliCast
               </span>
             </motion.div>
@@ -128,7 +132,7 @@ const TopBar: React.FC = () => {
                         <Zap size={16} className="text-primary-400" />
                       </motion.div>
                     ) : (
-                      <Search size={16} style={{color: '#9CA3AF'}} />
+                      <Search size={16} style={{color: theme === 'dark' ? '#9CA3AF' : '#6B7280'}} />
                     )}
                   </div>
                   
@@ -139,12 +143,13 @@ const TopBar: React.FC = () => {
                     onChange={(e) => setSearchQuery(e.target.value)}
                     onFocus={() => setIsSearchFocused(true)}
                     onBlur={() => setIsSearchFocused(false)}
-                    className={`w-full pl-10 pr-10 py-2.5 bg-white/10 backdrop-blur-md border border-white/20 rounded-xl transition-all duration-200 ${
-                      isSearchFocused ? 'bg-white/15 border-white/30' : ''
+                    className={`w-full pl-10 pr-10 py-2.5 backdrop-blur-md rounded-xl transition-all duration-200 placeholder:text-gray-500 ${
+                      isSearchFocused ? (theme === 'dark' ? 'bg-white/15 border-white/30' : 'bg-white border-gray-300') : ''
                     }`}
                     style={{
-                      color: '#FFFFFF',
-                      '::placeholder': { color: '#C7D2FE' }
+                      color: theme === 'dark' ? '#FFFFFF' : '#1F2937',
+                      backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)',
+                      border: theme === 'dark' ? '1px solid rgba(255,255,255,0.2)' : '1px solid rgba(156,163,175,0.3)'
                     }}
                   />
                   
@@ -188,6 +193,30 @@ const TopBar: React.FC = () => {
 
           {/* Right Section - User Actions */}
           <div className="flex items-center space-x-3">
+            {/* Theme Toggle */}
+            <div className="flex items-center bg-gray-800/20 rounded-lg p-1">
+              <button
+                onClick={() => theme === 'light' ? null : toggleTheme()}
+                className={`p-2 rounded-md transition-all duration-200 ${
+                  theme === 'light' 
+                    ? 'bg-white shadow-sm text-gray-900' 
+                    : 'text-gray-400 hover:text-gray-300'
+                }`}
+              >
+                <Sun size={16} />
+              </button>
+              <button
+                onClick={() => theme === 'dark' ? null : toggleTheme()}
+                className={`p-2 rounded-md transition-all duration-200 ${
+                  theme === 'dark' 
+                    ? 'bg-white/10 text-white' 
+                    : 'text-gray-400 hover:text-gray-600'
+                }`}
+              >
+                <Moon size={16} />
+              </button>
+            </div>
+
             {/* Notifications */}
             <div className="relative">
               <Button

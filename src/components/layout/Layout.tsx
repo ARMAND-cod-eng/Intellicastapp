@@ -5,8 +5,10 @@ import TopBar from './TopBar';
 import ModernAudioPlayer from '../audio/ModernAudioPlayer';
 import MainContent from '../views/MainContent';
 import AIHealthCheck from '../debug/AIHealthCheck';
+import { useTheme } from '../../contexts/ThemeContext';
 
 const Layout: React.FC = () => {
+  const { theme } = useTheme();
   const [currentView, setCurrentView] = useState('home');
   const [isPlayerVisible, setIsPlayerVisible] = useState(false);
   const [isPlayerMinimized, setIsPlayerMinimized] = useState(false);
@@ -37,17 +39,28 @@ const Layout: React.FC = () => {
   };
 
   return (
-    <div className="h-screen flex flex-col overflow-hidden relative bg-dark-950">
+    <div className="h-screen flex flex-col overflow-hidden relative" 
+         style={{
+           background: theme === 'dark' ? '#0F0F23' : 'linear-gradient(135deg, #FBF5F0 0%, #BFC8D8 100%)'
+         }}>
       {/* Animated Background */}
-      <div className="absolute inset-0 mesh-gradient opacity-30" />
+      <div className={`absolute inset-0 ${theme === 'dark' ? 'mesh-gradient opacity-30' : 'opacity-20'}`} 
+           style={{
+             background: theme === 'light' 
+               ? 'linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%)'
+               : undefined
+           }} />
       
       {/* Floating Particles */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         {particles.map((particle) => (
           <motion.div
             key={particle.id}
-            className="absolute rounded-full bg-gradient-to-r from-primary-500/20 to-secondary-500/20 blur-sm"
+            className="absolute rounded-full blur-sm"
             style={{
+              background: theme === 'dark' 
+                ? 'linear-gradient(to right, rgba(139, 92, 246, 0.2), rgba(219, 39, 119, 0.2))'
+                : 'linear-gradient(to right, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.2))',
               left: `${particle.x}%`,
               top: `${particle.y}%`,
               width: `${particle.size}px`,
@@ -100,7 +113,12 @@ const Layout: React.FC = () => {
         >
           <div className="h-full relative">
             {/* Content background blur overlay */}
-            <div className="absolute inset-0 bg-dark-900/20 backdrop-blur-sm" />
+            <div className="absolute inset-0 backdrop-blur-sm" 
+                 style={{
+                   backgroundColor: theme === 'dark' 
+                     ? 'rgba(17, 24, 39, 0.2)' 
+                     : 'rgba(255, 255, 255, 0.1)'
+                 }} />
             
             <div className="relative z-10">
               <MainContent currentView={currentView} />
@@ -132,7 +150,8 @@ const Layout: React.FC = () => {
       
       {/* Loading overlay for initial render */}
       <motion.div
-        className="fixed inset-0 bg-dark-950 flex items-center justify-center z-50 pointer-events-none"
+        className="fixed inset-0 flex items-center justify-center z-50 pointer-events-none"
+        style={{backgroundColor: theme === 'dark' ? '#0F0F23' : '#FBF5F0'}}
         initial={{ opacity: 1 }}
         animate={{ opacity: 0 }}
         transition={{ duration: 1, delay: 1 }}
@@ -148,8 +167,8 @@ const Layout: React.FC = () => {
             animate={{ rotate: 360 }}
             transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
           />
-          <h2 className="text-xl font-bold gradient-text mb-2">IntelliCast</h2>
-          <p className="text-white/70 text-sm">Initializing AI-powered audio experience...</p>
+          <h2 className="text-xl font-bold mb-2" style={{color: theme === 'dark' ? '#FFFFFF' : '#BFC8D8'}}>IntelliCast</h2>
+          <p className="text-sm" style={{color: theme === 'dark' ? 'rgba(255,255,255,0.7)' : 'rgba(191,200,216,0.8)'}}>Initializing AI-powered audio experience...</p>
         </motion.div>
       </motion.div>
     </div>

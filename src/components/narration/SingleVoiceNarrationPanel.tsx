@@ -6,6 +6,7 @@ import { NarrationAPI } from '../../services/narrationApi';
 import ChatterboxVoiceSelector from '../voice/ChatterboxVoiceSelector';
 import ModernAudioPlayer from '../audio/ModernAudioPlayer';
 import GlassCard from '../ui/GlassCard';
+import { useTheme } from '../../contexts/ThemeContext';
 
 // Voice settings interface
 interface VoiceSettings {
@@ -44,6 +45,7 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
   isMinimized = false,
   onAudioGenerated
 }) => {
+  const { theme } = useTheme();
   const [selectedVoice, setSelectedVoice] = useState('emma_en');
   const [narrationType, setNarrationType] = useState('summary');
   const [backgroundMusicEnabled, setBackgroundMusicEnabled] = useState(false);
@@ -715,10 +717,17 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
         <div className="flex-1 bg-black/30 backdrop-blur-sm" onClick={onClose} />
       
       {/* Main Panel Container - Half Screen */}
-      <div className="w-1/2 bg-dark-900/95 backdrop-blur-3xl border-l border-white/10 shadow-2xl overflow-hidden flex flex-col relative">
+      <div className="w-1/2 backdrop-blur-3xl border-l shadow-2xl overflow-hidden flex flex-col relative" style={{
+        backgroundColor: theme === 'dark' ? 'rgba(15, 15, 35, 0.95)' : '#FBF5F0',
+        borderColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(156, 163, 175, 0.2)'
+      }}>
         {/* Animated Background */}
-        <div className="absolute inset-0 mesh-gradient opacity-20" />
-        <div className="absolute inset-0 bg-gradient-to-br from-primary-900/20 to-secondary-900/20" />
+        {theme === 'dark' && (
+          <>
+            <div className="absolute inset-0 mesh-gradient opacity-20" />
+            <div className="absolute inset-0 bg-gradient-to-br from-primary-900/20 to-secondary-900/20" />
+          </>
+        )}
         
         {/* Top Control Bar */}
         <div className="absolute top-6 left-6 z-[100] flex items-center space-x-3">
@@ -739,8 +748,13 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
         </div>
         
         {/* Header */}
-        <div className="relative flex items-center justify-between p-6 bg-white/5 backdrop-blur-md border-b border-white/10">
-          <h1 className="text-2xl font-bold text-white flex items-center space-x-3">
+        <div className="relative flex items-center justify-between p-6 backdrop-blur-md border-b" style={{
+          backgroundColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(255, 255, 255, 0.8)',
+          borderColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(156, 163, 175, 0.2)'
+        }}>
+          <h1 className="text-2xl font-bold flex items-center space-x-3" style={{
+            color: theme === 'dark' ? '#FFFFFF' : '#1F2937'
+          }}>
             <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary-500 to-secondary-500 flex items-center justify-center">
               <Mic2 className="w-4 h-4 text-white" />
             </div>
@@ -759,11 +773,15 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
                  (uploadedFiles && uploadedFiles.length > 0) || 
                  (internalUploadedFiles && internalUploadedFiles.length > 0) ? (
                   <>
-                    <h2 className="text-xl font-bold text-white mb-2">Document Summary</h2>
+                    <h2 className="text-xl font-bold mb-2" style={{
+                      color: theme === 'dark' ? '#FFFFFF' : '#1F2937'
+                    }}>Document Summary</h2>
                     <div className="mb-4">
                       <div className="flex items-center space-x-2 mb-3">
                         <FileText className="w-5 h-5 text-primary-400" />
-                        <span className="text-sm font-medium text-white/90">
+                        <span className="text-sm font-medium" style={{
+                          color: theme === 'dark' ? 'rgba(255, 255, 255, 0.9)' : '#1F2937'
+                        }}>
                           {uploadedContent && uploadedContent.length > 0 
                             ? uploadedContent[0].metadata?.fileName || uploadedContent[0].title
                             : internalUploadedFiles && internalUploadedFiles.length > 0
@@ -776,9 +794,14 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
                     </div>
                     
                     {/* Document Summary Content */}
-                    <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 mb-4 border border-white/20">
+                    <div className="backdrop-blur-sm rounded-lg p-4 mb-4 border" style={{
+                      backgroundColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.1)' : '#FFFFFF',
+                      borderColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.2)' : 'rgba(156, 163, 175, 0.2)'
+                    }}>
                       <div className="flex items-start justify-between mb-3">
-                        <p className="text-white/80 text-sm leading-relaxed flex-1">
+                        <p className="text-sm leading-relaxed flex-1" style={{
+                          color: theme === 'dark' ? 'rgba(255, 255, 255, 0.8)' : '#4B5563'
+                        }}>
                           {getDocumentSummary()}
                         </p>
                         {!documentSummary && !isLoadingSummary && (
@@ -801,43 +824,63 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
                     {/* Document Stats */}
                     {uploadedContent && uploadedContent.length > 0 && (
                       <div className="grid grid-cols-2 gap-4 text-sm">
-                        <div className="bg-primary-500/20 backdrop-blur-sm rounded-lg p-3 border border-primary-500/30">
-                          <div className="text-primary-300 font-medium">Word Count</div>
-                          <div className="text-white/90">{uploadedContent[0].metadata?.wordCount || uploadedContent[0].content.split(' ').length} words</div>
+                        <div className="backdrop-blur-sm rounded-lg p-3 border" style={{
+                          backgroundColor: theme === 'dark' ? 'rgba(139, 92, 246, 0.2)' : 'rgba(59, 130, 246, 0.1)',
+                          borderColor: theme === 'dark' ? 'rgba(139, 92, 246, 0.3)' : 'rgba(59, 130, 246, 0.2)'
+                        }}>
+                          <div className="font-medium" style={{
+                            color: theme === 'dark' ? '#C4B5FD' : '#3B82F6'
+                          }}>Word Count</div>
+                          <div style={{
+                            color: theme === 'dark' ? 'rgba(255, 255, 255, 0.9)' : '#1F2937'
+                          }}>{uploadedContent[0].metadata?.wordCount || uploadedContent[0].content.split(' ').length} words</div>
                         </div>
-                        <div className="bg-secondary-500/20 backdrop-blur-sm rounded-lg p-3 border border-secondary-500/30">
-                          <div className="text-secondary-300 font-medium">Est. Reading Time</div>
-                          <div className="text-white/90">{Math.ceil((uploadedContent[0].metadata?.wordCount || uploadedContent[0].content.split(' ').length) / 250)} min</div>
+                        <div className="backdrop-blur-sm rounded-lg p-3 border" style={{
+                          backgroundColor: theme === 'dark' ? 'rgba(219, 39, 119, 0.2)' : 'rgba(16, 185, 129, 0.1)',
+                          borderColor: theme === 'dark' ? 'rgba(219, 39, 119, 0.3)' : 'rgba(16, 185, 129, 0.2)'
+                        }}>
+                          <div className="font-medium" style={{
+                            color: theme === 'dark' ? '#F9A8D4' : '#10B981'
+                          }}>Est. Reading Time</div>
+                          <div style={{
+                            color: theme === 'dark' ? 'rgba(255, 255, 255, 0.9)' : '#1F2937'
+                          }}>{Math.ceil((uploadedContent[0].metadata?.wordCount || uploadedContent[0].content.split(' ').length) / 250)} min</div>
                         </div>
                       </div>
                     )}
                   </>
                 ) : (
                   <>
-                    <h2 className="text-xl font-bold text-white mb-2">Upload Your Document</h2>
-                    <p className="text-white/70 text-sm mb-6">
-                      We support PDF, EPUB, DOCX, and TXT formats. Maximum file size is 50MB.
-                    </p>
+                    <h2 className="text-xl font-bold mb-2" style={{
+                      color: theme === 'dark' ? '#FFFFFF' : '#1F2937'
+                    }}>Upload Your Document</h2>
+                    <p className="text-sm mb-6" style={{
+                      color: theme === 'dark' ? 'rgba(255, 255, 255, 0.7)' : '#4B5563'
+                    }}>We support PDF, EPUB, DOCX, and TXT formats. Maximum file size is 50MB.</p>
                     
                     {/* Upload Area */}
                     <div 
                       {...getRootProps()} 
-                      className={`border-2 border-dashed rounded-lg p-6 text-center mb-4 transition-colors cursor-pointer ${
+                      className={`border-2 border-dashed rounded-lg p-6 text-center mb-4 transition-colors cursor-pointer backdrop-blur-sm ${
                         isDragActive 
-                          ? 'border-primary-400 bg-primary-500/20 backdrop-blur-sm' 
-                          : 'border-white/30 bg-white/10 backdrop-blur-sm hover:border-primary-400/50'
+                          ? (theme === 'dark' ? 'border-primary-400 bg-primary-500/20' : 'border-blue-400 bg-blue-50') 
+                          : (theme === 'dark' ? 'border-white/30 bg-white/10 hover:border-primary-400/50' : 'border-gray-300 bg-white hover:border-blue-400')
                       }`}
                     >
                       <input {...getInputProps()} />
                       <FileText className="w-10 h-10 text-white/60 mx-auto mb-3" />
                       {isDragActive ? (
-                        <p className="text-primary-300 text-sm mb-3">Drop your file here</p>
+                        <p className="text-sm mb-3" style={{
+                          color: theme === 'dark' ? '#C4B5FD' : '#3B82F6'
+                        }}>Drop your file here</p>
                       ) : (
                         <>
-                          <p className="text-white/70 text-sm mb-3">Drag and drop your file here or click to browse</p>
-                          <div className="px-4 py-2 bg-gradient-to-r from-primary-600 to-secondary-600 text-white rounded-lg text-sm font-medium hover:from-primary-500 hover:to-secondary-500 transition-all duration-300 inline-block shadow-lg hover:shadow-primary-500/25">
-                            Choose File
-                          </div>
+                          <p className="text-sm mb-3" style={{
+                            color: theme === 'dark' ? 'rgba(255, 255, 255, 0.7)' : '#4B5563'
+                          }}>Drag and drop your file here or click to browse</p>
+                          <div className="px-4 py-2 text-white rounded-lg text-sm font-medium transition-all duration-300 inline-block shadow-lg" style={{
+                            background: theme === 'dark' ? 'linear-gradient(to right, #7C3AED, #DB2777)' : '#3B82F6'
+                          }}>Choose File</div>
                         </>
                       )}
                     </div>
@@ -849,17 +892,21 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
             {/* Right Side - Customize Options */}
             <div className="flex-1">
               <GlassCard variant="medium" className="p-6 h-full" glow>
-              <h2 className="text-xl font-bold text-white mb-2">Customize Your Podcast</h2>
-              <p className="text-white/70 text-sm mb-6">
-                Personalize your audio experience with our customization options.
-              </p>
+              <h2 className="text-xl font-bold mb-2" style={{
+                color: theme === 'dark' ? '#FFFFFF' : '#1F2937'
+              }}>Customize Your Podcast</h2>
+              <p className="text-sm mb-6" style={{
+                color: theme === 'dark' ? 'rgba(255, 255, 255, 0.7)' : '#4B5563'
+              }}>Personalize your audio experience with our customization options.</p>
 
                 {/* Voice Selection */}
                 <div className="mb-6">
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center space-x-2">
                       <Volume2 className="w-4 h-4 text-white/90" />
-                      <h3 className="text-white font-medium text-sm">Voice Selection</h3>
+                      <h3 className="font-medium text-sm" style={{
+                        color: theme === 'dark' ? '#FFFFFF' : '#1F2937'
+                      }}>Voice Selection</h3>
                       <span className="text-xs bg-secondary-500/30 text-secondary-200 px-2 py-1 rounded-full backdrop-blur-sm border border-secondary-400/30">Chatterbox Multilingual</span>
                     </div>
                     <button
@@ -882,7 +929,10 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
                   </div>
                   
                   {showAdvancedVoiceSelector ? (
-                    <div className="border border-white/20 rounded-lg p-4 bg-white/10 backdrop-blur-sm">
+                    <div className="border rounded-lg p-4 backdrop-blur-sm" style={{
+                      backgroundColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.1)' : '#FFFFFF',
+                      borderColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.2)' : 'rgba(156, 163, 175, 0.2)'
+                    }}>
                       <ChatterboxVoiceSelector
                         selectedVoice={selectedVoice}
                         onVoiceChange={setSelectedVoice}
@@ -893,13 +943,22 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
                     </div>
                   ) : (
                     <div>
-                      <label className="text-xs text-white/80 block mb-1">Primary Narrator</label>
-                      <p className="text-xs text-white/60 mb-2">Popular Chatterbox multilingual voices (click "All Voices" for full selection)</p>
+                      <label className="text-xs block mb-1" style={{
+                        color: theme === 'dark' ? 'rgba(255, 255, 255, 0.8)' : '#4B5563'
+                      }}>Primary Narrator</label>
+                      <p className="text-xs mb-2" style={{
+                        color: theme === 'dark' ? 'rgba(255, 255, 255, 0.6)' : '#6B7280'
+                      }}>Popular Chatterbox multilingual voices (click "All Voices" for full selection)</p>
                       <div className="relative">
                         <select
                           value={selectedVoice}
                           onChange={(e) => setSelectedVoice(e.target.value)}
-                          className="w-full px-3 py-2 text-sm bg-white/10 backdrop-blur-sm border border-white/30 rounded-lg text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 appearance-none"
+                          className="w-full px-3 py-2 text-sm backdrop-blur-sm border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 appearance-none"
+                          style={{
+                            backgroundColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.1)' : '#FFFFFF',
+                            borderColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.3)' : 'rgba(156, 163, 175, 0.3)',
+                            color: theme === 'dark' ? '#FFFFFF' : '#1F2937'
+                          }}
                         >
                           {popularChatterboxVoices.map((voice) => (
                             <option key={voice.id} value={voice.id}>
@@ -915,12 +974,19 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
 
                 {/* Voice Customization */}
                 <div className="mb-6">
-                  <div className="p-3 bg-primary-500/20 backdrop-blur-sm rounded-lg border border-primary-500/30">
-                    <h4 className="text-sm font-medium text-white/90 mb-2">Voice Customization (Advanced)</h4>
+                  <div className="p-3 backdrop-blur-sm rounded-lg border" style={{
+                    backgroundColor: theme === 'dark' ? 'rgba(139, 92, 246, 0.2)' : 'rgba(59, 130, 246, 0.1)',
+                    borderColor: theme === 'dark' ? 'rgba(139, 92, 246, 0.3)' : 'rgba(59, 130, 246, 0.2)'
+                  }}>
+                    <h4 className="text-sm font-medium mb-2" style={{
+                      color: theme === 'dark' ? 'rgba(255, 255, 255, 0.9)' : '#1F2937'
+                    }}>Voice Customization (Advanced)</h4>
                     
                     <div className="space-y-3">
                       <div>
-                        <label className="text-xs text-white/80 block mb-1">Exaggeration</label>
+                        <label className="text-xs block mb-1" style={{
+                          color: theme === 'dark' ? 'rgba(255, 255, 255, 0.8)' : '#4B5563'
+                        }}>Exaggeration</label>
                         <input
                           type="range"
                           min="0.25"
@@ -930,11 +996,15 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
                           onChange={(e) => setVoiceSettings(prev => ({...prev, exaggeration: parseFloat(e.target.value)}))}
                           className="w-full accent-primary-500"
                         />
-                        <span className="text-xs text-white/60">{voiceSettings.exaggeration.toFixed(2)}</span>
+                        <span className="text-xs" style={{
+                          color: theme === 'dark' ? 'rgba(255, 255, 255, 0.6)' : '#6B7280'
+                        }}>{voiceSettings.exaggeration.toFixed(2)}</span>
                       </div>
                       
                       <div>
-                        <label className="text-xs text-white/80 block mb-1">Temperature</label>
+                        <label className="text-xs block mb-1" style={{
+                          color: theme === 'dark' ? 'rgba(255, 255, 255, 0.8)' : '#4B5563'
+                        }}>Temperature</label>
                         <input
                           type="range"
                           min="0.05"
@@ -944,7 +1014,9 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
                           onChange={(e) => setVoiceSettings(prev => ({...prev, temperature: parseFloat(e.target.value)}))}
                           className="w-full accent-primary-500"
                         />
-                        <span className="text-xs text-white/60">{voiceSettings.temperature.toFixed(2)}</span>
+                        <span className="text-xs" style={{
+                          color: theme === 'dark' ? 'rgba(255, 255, 255, 0.6)' : '#6B7280'
+                        }}>{voiceSettings.temperature.toFixed(2)}</span>
                       </div>
                     </div>
                   </div>
@@ -954,7 +1026,9 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
                 <div className="mb-6">
                   <div className="flex items-center space-x-2 mb-3">
                     <Settings className="w-4 h-4 text-white/90" />
-                    <h3 className="text-white font-medium text-sm">Format Options</h3>
+                    <h3 className="font-medium text-sm" style={{
+                      color: theme === 'dark' ? '#FFFFFF' : '#1F2937'
+                    }}>Format Options</h3>
                   </div>
                   
                   <div className="mb-4">
