@@ -39,7 +39,7 @@ const Layout: React.FC = () => {
   };
 
   return (
-    <div className="h-screen flex overflow-hidden relative"
+    <div className="h-screen flex relative"
          style={{
            background: theme === 'professional-dark' ? '#202020' : theme === 'dark' ? '#0F0F23' : '#F8F9FA'
          }}>
@@ -58,9 +58,9 @@ const Layout: React.FC = () => {
       </motion.div>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col justify-center items-center relative">
+      <div className="flex-1 flex flex-col relative overflow-hidden">
         <motion.main
-          className="w-full max-w-4xl px-8"
+          className="flex-1 w-full overflow-y-auto custom-scrollbar"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, ease: "easeOut", delay: 0.4 }}

@@ -3,6 +3,7 @@ import HomeView from './HomeView';
 import NewView from './NewView';
 import DocumentUpload from '../upload/DocumentUpload';
 import { PodcastGenerationView } from '../../views/PodcastGenerationView';
+import NewsAudioView from '../../../modules/news-audio/frontend/views/NewsAudioView';
 import type { DocumentContent } from '../../types/document';
 
 interface MainContentProps {
@@ -33,6 +34,8 @@ const MainContent: React.FC<MainContentProps> = ({ currentView }) => {
         return <HomeView currentView={currentView} onOpenUpload={() => setIsUploadModalOpen(true)} uploadedContent={uploadedContent} />;
       case 'new':
         return <NewView currentView={currentView} onOpenUpload={() => setIsUploadModalOpen(true)} uploadedContent={uploadedContent} uploadedFiles={uploadedFiles} />;
+      case 'news':
+        return <NewsAudioView />;
       default:
         return <HomeView currentView="home" onOpenUpload={() => setIsUploadModalOpen(true)} uploadedContent={uploadedContent} />;
     }

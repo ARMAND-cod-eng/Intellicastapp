@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Home, Plus, Settings, User, Bell, MessageSquare, Compass } from 'lucide-react';
+import { Home, Plus, Settings, User, Bell, MessageSquare, Compass, Newspaper } from 'lucide-react';
 import { useTheme } from '../../contexts/ThemeContext';
 
 interface SidebarProps {
@@ -14,6 +14,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange, onOpenUplo
   const menuItems = [
     { id: 'home', icon: Home, label: 'Home' },
     { id: 'new', icon: Plus, label: 'New' },
+    { id: 'news', icon: Newspaper, label: 'News Audio' },
     { id: 'library', icon: Compass, label: 'Library' },
     { id: 'discover', icon: MessageSquare, label: 'Discover' },
   ];

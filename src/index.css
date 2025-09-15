@@ -10,12 +10,18 @@
   
   html {
     font-family: -apple-system, BlinkMacSystemFont, 'system-ui', sans-serif;
+    height: 100%;
   }
-  
+
   body {
     @apply bg-gray-50 text-gray-900;
     margin: 0;
+    height: 100%;
     overflow-x: hidden;
+  }
+
+  #root {
+    height: 100%;
   }
 }
 
@@ -48,18 +54,30 @@
   .custom-scrollbar::-webkit-scrollbar {
     width: 6px;
   }
-  
+
   .custom-scrollbar::-webkit-scrollbar-track {
     background: transparent;
   }
-  
+
   .custom-scrollbar::-webkit-scrollbar-thumb {
     background: rgba(0, 0, 0, 0.2);
     border-radius: 3px;
+    transition: background-color 0.2s ease;
   }
-  
+
   .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: rgba(0, 0, 0, 0.3);
+    background: rgba(0, 0, 0, 0.4);
+  }
+
+  /* Dark theme scrollbar */
+  [data-theme="dark"] .custom-scrollbar::-webkit-scrollbar-thumb,
+  [data-theme="professional-dark"] .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+  }
+
+  [data-theme="dark"] .custom-scrollbar::-webkit-scrollbar-thumb:hover,
+  [data-theme="professional-dark"] .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
   }
   
   /* Animation utilities */

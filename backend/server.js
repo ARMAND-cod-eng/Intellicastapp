@@ -8,6 +8,7 @@ import fs from 'fs-extra';
 import narrationRoutes from './routes/narration.js';
 import audioRoutes from './routes/audio.js';
 import voicesRoutes from './routes/voices.js';
+import newsRoutes from './routes/news.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -41,6 +42,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/api/narration', narrationRoutes);
 app.use('/api/audio', audioRoutes);
 app.use('/api/voices', voicesRoutes);
+app.use('/api/news', newsRoutes);
 
 // Health check
 app.get('/health', async (req, res) => {
