@@ -28,7 +28,8 @@ import {
   Thermometer,
   DollarSign,
   BarChart3,
-  Building2
+  Building2,
+  ChevronDown
 } from 'lucide-react';
 
 interface NewsArticle {
@@ -54,6 +55,7 @@ const NewsAudioView: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [playingArticle, setPlayingArticle] = useState<number | null>(null);
+  const [showTopNews, setShowTopNews] = useState(false);
   const [categories, setCategories] = useState([
     { id: 'all', label: 'All News' },
     { id: 'technology', label: 'Technology' },
@@ -199,74 +201,75 @@ const NewsAudioView: React.FC = () => {
     }}>
       {/* Main Content Area */}
       <div className="flex-1">
-        {/* Hero Header Section */}
-        <div className="relative px-6 pt-8 pb-12" style={{
-          background: theme === 'professional-dark'
-            ? 'linear-gradient(135deg, #2563EB 0%, #3B82F6 50%, #60A5FA 100%)'
-            : theme === 'dark'
-            ? 'linear-gradient(135deg, #7C3AED 0%, #8B5CF6 50%, #A78BFA 100%)'
-            : 'linear-gradient(135deg, #60A5FA 0%, #3B82F6 50%, #2563EB 100%)'
-        }}>
-        <div className="relative z-10">
-          <div className="flex items-center justify-between mb-8">
-            <div className="flex items-center space-x-4">
-              <div className="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center">
-                <Newspaper className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h1 className="text-3xl font-bold text-white mb-1">News Audio</h1>
-                <p className="text-white/80 text-lg">AI-powered intelligent narration</p>
+        {/* Top News Card Only */}
+        <div className="p-6">
+          <div className="relative rounded-3xl overflow-hidden p-8" style={{
+            backgroundColor: theme === 'professional-dark' ? '#2563EB' : theme === 'dark' ? '#7C3AED' : '#60A5FA'
+          }}>
+            <div className="relative z-10">
+              <p className="text-white/80 text-sm mb-2">News Article</p>
+              <h3 className="text-white text-3xl font-bold mb-4 leading-tight">
+                Top News<br />
+                Of The<br />
+                Week
+              </h3>
+              <div className="flex items-center space-x-4">
+                <button className="flex items-center space-x-2 bg-white/20 backdrop-blur-md px-6 py-3 rounded-full text-white hover:bg-white/30 transition-all duration-200">
+                  <Play className="w-5 h-5 ml-1" />
+                  <span className="font-medium">Play</span>
+                </button>
+
+                {/* Dropdown Button for View Article */}
+                <div className="relative">
+                  <button
+                    onClick={() => setShowTopNews(!showTopNews)}
+                    className="flex items-center space-x-2 text-white/80 hover:text-white font-medium transition-colors"
+                  >
+                    <span>View Article</span>
+                    <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${showTopNews ? 'rotate-180' : ''}`} />
+                  </button>
+
+                  {/* Dropdown Content */}
+                  {showTopNews && (
+                    <div className="absolute top-full left-0 mt-2 w-96 bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20 z-20">
+                      <h3 className="text-white text-lg font-semibold mb-4">Global Top 5</h3>
+                      <div className="space-y-3">
+                        {articles.slice(0, 5).map((article, index) => (
+                          <div key={article.id} className="flex items-center space-x-4 p-3 rounded-xl hover:bg-white/5 transition-colors cursor-pointer">
+                            <div className="w-8 h-8 rounded-lg flex items-center justify-center text-white/70 bg-white/10 text-sm font-medium">
+                              {String(index + 1).padStart(2, '0')}
+                            </div>
+                            <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center">
+                              <Newspaper className="w-6 h-6 text-white" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-white font-medium line-clamp-1">{article.title}</p>
+                              <p className="text-white/70 text-sm">{article.source_name}</p>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-white/70 text-sm">{formatDate(article.published_at).split(',')[0]}</p>
+                            </div>
+                            <button className="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors">
+                              {article.status === 'processed' ? (
+                                <Play className="w-4 h-4 text-white ml-0.5" />
+                              ) : (
+                                <Volume2 className="w-4 h-4 text-white" />
+                              )}
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
 
-            <button className="flex items-center space-x-2 px-6 py-3 rounded-xl bg-white/20 backdrop-blur-md border border-white/30 text-white hover:bg-white/30 transition-all duration-200">
-              <Settings className="w-4 h-4" />
-              <span className="font-medium">Manage Sources</span>
-            </button>
-          </div>
-
-          {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-            <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/20">
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
-                  <TrendingUp className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <p className="text-white/70 text-sm">Total Articles</p>
-                  <p className="text-white text-xl font-bold">{articles.length}</p>
-                </div>
-              </div>
-            </div>
-            <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/20">
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
-                  <Headphones className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <p className="text-white/70 text-sm">Audio Ready</p>
-                  <p className="text-white text-xl font-bold">{articles.filter(a => a.status === 'processed').length}</p>
-                </div>
-              </div>
-            </div>
-            <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/20">
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
-                  <Star className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <p className="text-white/70 text-sm">Categories</p>
-                  <p className="text-white text-xl font-bold">{categories.length - 1}</p>
-                </div>
-              </div>
-            </div>
+            {/* Decorative background elements */}
+            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
+            <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/5 rounded-full blur-xl"></div>
           </div>
         </div>
-
-        {/* Decorative elements */}
-        <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-0 left-0 w-32 h-32 bg-white/5 rounded-full blur-2xl"></div>
-      </div>
 
       <div className="px-6">
         {/* Category Filter Pills */}
