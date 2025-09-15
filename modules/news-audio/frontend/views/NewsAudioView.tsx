@@ -20,7 +20,15 @@ import {
   Star,
   Eye,
   ArrowRight,
-  Headphones
+  Headphones,
+  Cloud,
+  Sun,
+  CloudRain,
+  Wind,
+  Thermometer,
+  DollarSign,
+  BarChart3,
+  Building2
 } from 'lucide-react';
 
 interface NewsArticle {
@@ -53,6 +61,35 @@ const NewsAudioView: React.FC = () => {
     { id: 'business', label: 'Business' },
     { id: 'science', label: 'Science' }
   ]);
+
+  // Mock data for sidebar
+  const weatherData = {
+    temperature: 92,
+    condition: 'Sunny',
+    location: 'Arlington',
+    forecast: [
+      { day: 'Wed', temp: 94, icon: 'sun' },
+      { day: 'Thu', temp: 96, icon: 'sun' },
+      { day: 'Fri', temp: 96, icon: 'cloud' },
+      { day: 'Sat', temp: 96, icon: 'cloud' },
+      { day: 'Sun', temp: 95, icon: 'sun' }
+    ]
+  };
+
+  const marketData = [
+    { symbol: 'S&P Futu...', price: '6,537.25', change: '+15.5', percentage: '+0.24%', trend: 'up' },
+    { symbol: 'NASDAQ ...', price: '23,872', change: '-2', percentage: '-0.01%', trend: 'down' },
+    { symbol: 'Bitcoin', price: '$113,771.59', change: '+$2,232.53', percentage: '+2%', trend: 'up' },
+    { symbol: 'VIX', price: '15.4', change: '+0.36', percentage: '+2.39%', trend: 'up' }
+  ];
+
+  const trendingCompanies = [
+    { name: 'Apple Inc.', price: '$225.99', change: '+2.45%', trend: 'up' },
+    { name: 'Microsoft Corp.', price: '$441.23', change: '+1.89%', trend: 'up' },
+    { name: 'NVIDIA Corp.', price: '$138.07', change: '-0.87%', trend: 'down' },
+    { name: 'Tesla Inc.', price: '$248.98', change: '+3.21%', trend: 'up' },
+    { name: 'Amazon.com Inc.', price: '$186.45', change: '+1.56%', trend: 'up' }
+  ];
 
   // Fetch real articles from API
   useEffect(() => {
@@ -157,17 +194,19 @@ const NewsAudioView: React.FC = () => {
   }
 
   return (
-    <div className="min-h-full" style={{
+    <div className="min-h-full flex" style={{
       backgroundColor: theme === 'professional-dark' ? '#1a1a1a' : theme === 'dark' ? '#0F0F23' : '#F8F9FA'
     }}>
-      {/* Hero Header Section */}
-      <div className="relative px-6 pt-8 pb-12" style={{
-        background: theme === 'professional-dark'
-          ? 'linear-gradient(135deg, #2563EB 0%, #3B82F6 50%, #60A5FA 100%)'
-          : theme === 'dark'
-          ? 'linear-gradient(135deg, #7C3AED 0%, #8B5CF6 50%, #A78BFA 100%)'
-          : 'linear-gradient(135deg, #60A5FA 0%, #3B82F6 50%, #2563EB 100%)'
-      }}>
+      {/* Main Content Area */}
+      <div className="flex-1">
+        {/* Hero Header Section */}
+        <div className="relative px-6 pt-8 pb-12" style={{
+          background: theme === 'professional-dark'
+            ? 'linear-gradient(135deg, #2563EB 0%, #3B82F6 50%, #60A5FA 100%)'
+            : theme === 'dark'
+            ? 'linear-gradient(135deg, #7C3AED 0%, #8B5CF6 50%, #A78BFA 100%)'
+            : 'linear-gradient(135deg, #60A5FA 0%, #3B82F6 50%, #2563EB 100%)'
+        }}>
         <div className="relative z-10">
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center space-x-4">
@@ -533,6 +572,158 @@ const NewsAudioView: React.FC = () => {
           </button>
         </div>
       )}
+      </div>
+
+      {/* Sidebar */}
+      <div className="w-80 p-6 border-l" style={{
+        backgroundColor: theme === 'professional-dark' ? '#1a1a1a' : theme === 'dark' ? '#0F0F23' : '#F8F9FA',
+        borderColor: theme === 'professional-dark' ? '#3C4043' : theme === 'dark' ? 'rgba(255,255,255,0.1)' : '#E5E7EB'
+      }}>
+        {/* Weather Widget */}
+        <div className="mb-6 p-4 rounded-2xl" style={{
+          backgroundColor: theme === 'professional-dark' ? '#2A2A2A' : theme === 'dark' ? 'rgba(255,255,255,0.05)' : '#FFFFFF',
+          border: `1px solid ${theme === 'professional-dark' ? '#3C4043' : theme === 'dark' ? 'rgba(255,255,255,0.1)' : '#E5E7EB'}`
+        }}>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center space-x-2">
+              <Sun className="w-5 h-5" style={{
+                color: theme === 'light' ? '#F59E0B' : '#FCD34D'
+              }} />
+              <span className="text-lg font-bold" style={{
+                color: theme === 'professional-dark' ? '#E8EAED' : theme === 'dark' ? '#FFFFFF' : '#1F2937'
+              }}>
+                {weatherData.temperature}°
+              </span>
+              <span className="text-sm" style={{
+                color: theme === 'professional-dark' ? '#9AA0A6' : theme === 'dark' ? '#C7D2FE' : '#6B7280'
+              }}>
+                F/C
+              </span>
+            </div>
+            <div className="text-right">
+              <p className="text-sm font-medium" style={{
+                color: theme === 'professional-dark' ? '#E8EAED' : theme === 'dark' ? '#FFFFFF' : '#1F2937'
+              }}>
+                {weatherData.condition}
+              </p>
+              <p className="text-xs" style={{
+                color: theme === 'professional-dark' ? '#9AA0A6' : theme === 'dark' ? '#C7D2FE' : '#6B7280'
+              }}>
+                {weatherData.location}
+              </p>
+            </div>
+          </div>
+
+          {/* 5-day forecast */}
+          <div className="grid grid-cols-5 gap-2">
+            {weatherData.forecast.map((day, index) => (
+              <div key={index} className="text-center">
+                <p className="text-xs mb-1" style={{
+                  color: theme === 'professional-dark' ? '#9AA0A6' : theme === 'dark' ? '#C7D2FE' : '#6B7280'
+                }}>
+                  {day.day}
+                </p>
+                {day.icon === 'sun' ? (
+                  <Sun className="w-4 h-4 mx-auto mb-1 text-yellow-400" />
+                ) : day.icon === 'cloud' ? (
+                  <Cloud className="w-4 h-4 mx-auto mb-1 text-gray-400" />
+                ) : (
+                  <CloudRain className="w-4 h-4 mx-auto mb-1 text-blue-400" />
+                )}
+                <p className="text-xs font-medium" style={{
+                  color: theme === 'professional-dark' ? '#E8EAED' : theme === 'dark' ? '#FFFFFF' : '#1F2937'
+                }}>
+                  {day.temp}°
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Market Outlook */}
+        <div className="mb-6">
+          <h3 className="text-lg font-bold mb-4" style={{
+            color: theme === 'professional-dark' ? '#E8EAED' : theme === 'dark' ? '#FFFFFF' : '#1F2937'
+          }}>
+            Market Outlook
+          </h3>
+          <div className="space-y-3">
+            {marketData.map((item, index) => (
+              <div key={index} className="flex items-center justify-between p-3 rounded-xl" style={{
+                backgroundColor: theme === 'professional-dark' ? '#2A2A2A' : theme === 'dark' ? 'rgba(255,255,255,0.05)' : '#FFFFFF',
+                border: `1px solid ${theme === 'professional-dark' ? '#3C4043' : theme === 'dark' ? 'rgba(255,255,255,0.1)' : '#E5E7EB'}`
+              }}>
+                <div className="flex-1">
+                  <p className="text-sm font-medium" style={{
+                    color: theme === 'professional-dark' ? '#E8EAED' : theme === 'dark' ? '#FFFFFF' : '#1F2937'
+                  }}>
+                    {item.symbol}
+                  </p>
+                  <p className="text-xs" style={{
+                    color: theme === 'professional-dark' ? '#9AA0A6' : theme === 'dark' ? '#C7D2FE' : '#6B7280'
+                  }}>
+                    {item.price}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="text-xs" style={{
+                    color: item.trend === 'up' ? '#22C55E' : '#EF4444'
+                  }}>
+                    {item.percentage}
+                  </p>
+                  <p className="text-xs" style={{
+                    color: item.trend === 'up' ? '#22C55E' : '#EF4444'
+                  }}>
+                    {item.change}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Trending Companies */}
+        <div>
+          <h3 className="text-lg font-bold mb-4" style={{
+            color: theme === 'professional-dark' ? '#E8EAED' : theme === 'dark' ? '#FFFFFF' : '#1F2937'
+          }}>
+            Trending Companies
+          </h3>
+          <div className="space-y-3">
+            {trendingCompanies.map((company, index) => (
+              <div key={index} className="flex items-center space-x-3 p-3 rounded-xl hover:scale-[1.02] transition-transform duration-200" style={{
+                backgroundColor: theme === 'professional-dark' ? '#2A2A2A' : theme === 'dark' ? 'rgba(255,255,255,0.05)' : '#FFFFFF',
+                border: `1px solid ${theme === 'professional-dark' ? '#3C4043' : theme === 'dark' ? 'rgba(255,255,255,0.1)' : '#E5E7EB'}`
+              }}>
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{
+                  backgroundColor: theme === 'light' ? '#60A5FA' : theme === 'professional-dark' ? '#2563EB' : '#7C3AED'
+                }}>
+                  <Building2 className="w-4 h-4 text-white" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-medium" style={{
+                    color: theme === 'professional-dark' ? '#E8EAED' : theme === 'dark' ? '#FFFFFF' : '#1F2937'
+                  }}>
+                    {company.name}
+                  </p>
+                  <p className="text-xs" style={{
+                    color: theme === 'professional-dark' ? '#9AA0A6' : theme === 'dark' ? '#C7D2FE' : '#6B7280'
+                  }}>
+                    {company.price}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="text-xs font-medium" style={{
+                    color: company.trend === 'up' ? '#22C55E' : '#EF4444'
+                  }}>
+                    {company.change}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
