@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Search, Mic, Upload, Sparkles, ArrowRight } from 'lucide-react';
 import { useTheme } from '../../contexts/ThemeContext';
+import VoiceSearchPro from '../search/VoiceSearchPro';
 import type { DocumentContent } from '../../types/document';
 
 interface HomeViewProps {
@@ -13,8 +14,23 @@ const HomeView: React.FC<HomeViewProps> = ({ currentView, onOpenUpload, uploaded
   const { theme } = useTheme();
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const [activeSearch, setActiveSearch] = useState<string | null>(null);
 
   if (currentView !== 'home') return null;
+
+  const handleSearch = (query: string) => {
+    if (query.trim()) {
+      setActiveSearch(query.trim());
+    }
+  };
+
+  const handleBackToSearch = () => {
+    setActiveSearch(null);
+  };
+
+  if (activeSearch) {
+    return <VoiceSearchPro query={activeSearch} onBack={handleBackToSearch} />;
+  }
 
   const suggestions = [
     "Create a podcast about artificial intelligence trends",
@@ -52,6 +68,11 @@ const HomeView: React.FC<HomeViewProps> = ({ currentView, onOpenUpload, uploaded
             onChange={(e) => setSearchQuery(e.target.value)}
             onFocus={() => setIsSearchFocused(true)}
             onBlur={() => setIsSearchFocused(false)}
+            onKeyPress={(e) => {
+              if (e.key === 'Enter') {
+                handleSearch(searchQuery);
+              }
+            }}
             className="w-full pl-12 pr-20 py-4 text-lg rounded-xl transition-all duration-200 focus:outline-none"
             style={{
               backgroundColor: theme === 'professional-dark' ? '#2A2A2A' : '#F9FAFB',
@@ -83,11 +104,13 @@ const HomeView: React.FC<HomeViewProps> = ({ currentView, onOpenUpload, uploaded
               <Mic className="w-4 h-4" />
             </button>
 
-            <button className="p-2 rounded-lg transition-all duration-200"
-                    style={{
-                      backgroundColor: theme === 'light' ? '#60A5FA' : theme === 'professional-dark' ? '#2563EB' : '#6366F1',
-                      color: 'white'
-                    }}>
+            <button
+              onClick={() => handleSearch(searchQuery)}
+              className="p-2 rounded-lg transition-all duration-200"
+              style={{
+                backgroundColor: theme === 'light' ? '#60A5FA' : theme === 'professional-dark' ? '#2563EB' : '#6366F1',
+                color: 'white'
+              }}>
               <ArrowRight className="w-4 h-4" />
             </button>
           </div>
@@ -99,7 +122,7 @@ const HomeView: React.FC<HomeViewProps> = ({ currentView, onOpenUpload, uploaded
             {suggestions.map((suggestion, index) => (
               <button
                 key={index}
-                onClick={() => setSearchQuery(suggestion)}
+                onClick={() => handleSearch(suggestion)}
                 className="px-4 py-2 rounded-full text-sm transition-all duration-200 hover:scale-105"
                 style={{
                   backgroundColor: theme === 'professional-dark' ? '#2A2A2A' : '#F3F4F6',

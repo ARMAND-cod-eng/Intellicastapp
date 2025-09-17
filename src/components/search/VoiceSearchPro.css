@@ -1,0 +1,159 @@
+/* Perplexity-style Citations */
+.citation-link {
+  color: #60A5FA;
+  text-decoration: none;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 1px 4px;
+  margin-left: 2px;
+  border-radius: 4px;
+  background-color: rgba(96, 165, 250, 0.1);
+  border: 1px solid rgba(96, 165, 250, 0.2);
+  transition: all 0.2s ease;
+  display: inline-block;
+}
+
+.citation-link:hover {
+  background-color: rgba(96, 165, 250, 0.2);
+  border-color: rgba(96, 165, 250, 0.4);
+  transform: scale(1.05);
+}
+
+/* Dark theme citations */
+[data-theme="professional-dark"] .citation-link {
+  color: #60A5FA;
+  background-color: rgba(96, 165, 250, 0.1);
+  border-color: rgba(96, 165, 250, 0.2);
+}
+
+[data-theme="professional-dark"] .citation-link:hover {
+  background-color: rgba(96, 165, 250, 0.2);
+  border-color: rgba(96, 165, 250, 0.4);
+}
+
+/* Light theme citations */
+[data-theme="light"] .citation-link {
+  color: #2563EB;
+  background-color: rgba(37, 99, 235, 0.1);
+  border-color: rgba(37, 99, 235, 0.2);
+}
+
+[data-theme="light"] .citation-link:hover {
+  background-color: rgba(37, 99, 235, 0.2);
+  border-color: rgba(37, 99, 235, 0.4);
+}
+
+/* Line clamp utility for text truncation */
+.line-clamp-1 {
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Source card hover effects */
+.source-card {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.source-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+/* Answer content styling */
+.answer-content {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  line-height: 1.7;
+  letter-spacing: 0.01em;
+}
+
+.answer-content p {
+  margin-bottom: 1rem;
+}
+
+.answer-content p:last-child {
+  margin-bottom: 0;
+}
+
+/* Follow-up question animations */
+.followup-question {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.followup-question:hover {
+  transform: translateX(4px);
+}
+
+/* Loading skeleton animations */
+@keyframes shimmer {
+  0% {
+    background-position: -200px 0;
+  }
+  100% {
+    background-position: calc(200px + 100%) 0;
+  }
+}
+
+.skeleton {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200px 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+/* Audio player enhancements */
+.audio-progress {
+  transition: width 0.3s ease-in-out;
+}
+
+.audio-button {
+  transition: all 0.2s ease;
+}
+
+.audio-button:hover {
+  transform: scale(1.05);
+  filter: brightness(1.1);
+}
+
+/* Glassmorphism enhancements */
+.glass-card {
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Smooth scrolling for sources */
+.sources-container {
+  scroll-behavior: smooth;
+}
+
+/* Tab transition animations */
+.tab-content {
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
