@@ -1,0 +1,332 @@
+/* WebResultsTab Styles - Beautiful search results with podcast features */
+
+/* Card hover animations */
+@keyframes cardHover {
+  from {
+    transform: translateY(0) scale(1);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  }
+  to {
+    transform: translateY(-4px) scale(1.01);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  }
+}
+
+@keyframes audioButtonPulse {
+  0%, 100% {
+    transform: scale(1);
+    background-color: rgba(139, 92, 246, 0.1);
+  }
+  50% {
+    transform: scale(1.05);
+    background-color: rgba(139, 92, 246, 0.2);
+  }
+}
+
+@keyframes badgeGlow {
+  0%, 100% {
+    box-shadow: 0 0 5px rgba(239, 68, 68, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 15px rgba(239, 68, 68, 0.6);
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Result card animations */
+.result-card {
+  animation: fadeInUp 0.6s ease-out forwards;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.result-card:hover {
+  animation: cardHover 0.3s ease-out forwards;
+}
+
+/* Audio button animations */
+.audio-button {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.audio-button:hover {
+  animation: audioButtonPulse 1.5s ease-in-out infinite;
+}
+
+.audio-button::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: rgba(139, 92, 246, 0.2);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  transition: width 0.3s, height 0.3s;
+}
+
+.audio-button:hover::before {
+  width: 100px;
+  height: 100px;
+}
+
+/* Badge animations */
+.breaking-badge {
+  animation: badgeGlow 2s ease-in-out infinite;
+}
+
+.new-badge {
+  animation: fadeInUp 0.5s ease-out;
+}
+
+/* Filter panel animation */
+.filter-panel {
+  animation: slideDown 0.3s ease-out;
+}
+
+/* View mode transition */
+.view-mode-transition {
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Grid to list transition */
+.grid-to-list {
+  animation: fadeInUp 0.4s ease-out;
+}
+
+.list-to-grid {
+  animation: fadeInUp 0.4s ease-out;
+}
+
+/* Content expansion animation */
+.content-expand {
+  animation: slideDown 0.3s ease-out;
+}
+
+/* Favicon hover effect */
+.favicon-container {
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.favicon-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(59, 130, 246, 0.1));
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.favicon-container:hover::before {
+  opacity: 1;
+}
+
+.favicon-container:hover {
+  transform: scale(1.1);
+}
+
+/* Score indicator animation */
+.score-indicator {
+  position: relative;
+  overflow: hidden;
+}
+
+.score-indicator::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    left: -100%;
+  }
+  100% {
+    left: 100%;
+  }
+}
+
+/* Filter button active state */
+.filter-button-active {
+  position: relative;
+  overflow: hidden;
+}
+
+.filter-button-active::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.05), rgba(59, 130, 246, 0.05));
+  animation: pulse 2s ease-in-out infinite;
+}
+
+/* Relevance score visual */
+.relevance-high {
+  color: #10B981;
+}
+
+.relevance-medium {
+  color: #F59E0B;
+}
+
+.relevance-low {
+  color: #EF4444;
+}
+
+/* Read time indicator */
+.read-time-fast {
+  color: #10B981;
+}
+
+.read-time-medium {
+  color: #F59E0B;
+}
+
+.read-time-long {
+  color: #6B7280;
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+  .result-card {
+    margin-bottom: 1rem;
+  }
+
+  .audio-button {
+    padding: 0.5rem;
+  }
+
+  .audio-button:hover::before {
+    width: 60px;
+    height: 60px;
+  }
+}
+
+/* Dark mode enhancements */
+@media (prefers-color-scheme: dark) {
+  .breaking-badge {
+    box-shadow: 0 0 10px rgba(239, 68, 68, 0.4);
+  }
+
+  .favicon-container::before {
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(59, 130, 246, 0.15));
+  }
+
+  .score-indicator::after {
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+  }
+}
+
+/* Accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .result-card,
+  .audio-button,
+  .breaking-badge,
+  .filter-panel,
+  .content-expand {
+    animation: none !important;
+  }
+
+  .result-card:hover,
+  .audio-button:hover,
+  .favicon-container:hover {
+    transform: none !important;
+  }
+}
+
+/* Focus styles */
+.audio-button:focus,
+.filter-button:focus,
+.expand-button:focus {
+  outline: 2px solid #8B5CF6;
+  outline-offset: 2px;
+}
+
+/* Loading state enhancements */
+.loading-card {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200px 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+.loading-card-dark {
+  background: linear-gradient(90deg, #374151 25%, #4B5563 50%, #374151 75%);
+  background-size: 200px 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+/* Smooth transitions for all interactive elements */
+* {
+  transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+
+/* Custom scrollbar for expanded content */
+.expanded-content::-webkit-scrollbar {
+  width: 4px;
+}
+
+.expanded-content::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 2px;
+}
+
+.expanded-content::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #8B5CF6, #06B6D4);
+  border-radius: 2px;
+}
+
+.expanded-content::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #7C3AED, #0891B2);
+}
+
+/* Print styles */
+@media print {
+  .audio-button,
+  .filter-panel,
+  .view-mode-toggle {
+    display: none !important;
+  }
+
+  .result-card {
+    border: 1px solid #ccc !important;
+    background: white !important;
+    break-inside: avoid;
+    margin-bottom: 1rem;
+  }
+}
