@@ -4,7 +4,7 @@ import Sidebar from './Sidebar';
 import TopBar from './TopBar';
 import ModernAudioPlayer from '../audio/ModernAudioPlayer';
 import MainContent from '../views/MainContent';
-import AIHealthCheck from '../debug/AIHealthCheck';
+import SimpleHealthIndicator from '../debug/SimpleHealthIndicator';
 import { useTheme } from '../../contexts/ThemeContext';
 
 const Layout: React.FC = () => {
@@ -87,8 +87,8 @@ const Layout: React.FC = () => {
         )}
       </AnimatePresence>
 
-      {/* AI Health Check - Debug Component */}
-      <AIHealthCheck />
+      {/* AI Services Health Indicator */}
+      <SimpleHealthIndicator />
       
       {/* Loading overlay for initial render */}
       <motion.div

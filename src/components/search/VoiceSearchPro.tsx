@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Mic, Play, Pause, BookOpen, Globe, Volume2, Heart, Share2, Download, Clock, Star, ChevronDown, ChevronUp, List, BarChart3, Calendar, TrendingUp } from 'lucide-react';
 import { useTheme } from '../../contexts/ThemeContext';
-import { TavilyClient, type TavilySearchResponse, TavilyError } from '../../features/voice-search/services/tavily-client';
+import { TavilyClient, type TavilySearchResponse, TavilyError, shouldIncludeNews } from '../../features/voice-search/services/tavily-client';
 import AIAnswerTab from '../../features/voice-search/components/AIAnswerTab';
 import WebResultsTab from '../../features/voice-search/components/WebResultsTab';
 import './VoiceSearchPro.css';
@@ -32,9 +32,10 @@ const VoiceSearchPro: React.FC<VoiceSearchProProps> = ({ query, onBack }) => {
     setError(null);
 
     try {
+      // Use enhanced search with comprehensive AI summaries
       const response = await tavilyClient.search(searchQuery, {
         searchDepth: 'advanced',
-        includeNews: true,
+        includeNews: shouldIncludeNews(searchQuery),
         maxResults: 8
       });
 
@@ -112,9 +113,19 @@ const VoiceSearchPro: React.FC<VoiceSearchProProps> = ({ query, onBack }) => {
           </div>
 
           {searchData && (
-            <p className="text-sm" style={{ color: theme === 'professional-dark' ? '#9AA0A6' : '#6B7280' }}>
-              Found {searchData.results.length} results in {searchData.response_time.toFixed(2)}s
-            </p>
+            <div className="flex items-center justify-between">
+              <p className="text-sm" style={{ color: theme === 'professional-dark' ? '#9AA0A6' : '#6B7280' }}>
+                Found {searchData.results.length} results in {searchData.response_time.toFixed(2)}s
+              </p>
+              {searchData.metadata && (
+                <div className="text-xs px-3 py-1 rounded-full" style={{
+                  backgroundColor: theme === 'professional-dark' ? 'rgba(139, 92, 246, 0.2)' : 'rgba(139, 92, 246, 0.1)',
+                  color: '#8B5CF6'
+                }}>
+                  {searchData.metadata.query_intent} • AI Enhanced
+                </div>
+              )}
+            </div>
           )}
         </div>
 
