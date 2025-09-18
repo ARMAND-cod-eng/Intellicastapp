@@ -81,17 +81,27 @@ const AIAnswerTab: React.FC<AIAnswerTabProps> = ({
   const formatAnswerWithCitations = (answer: string) => {
     if (!answer) return '';
 
-    // Add pause indicators for audio-ready formatting
-    let formatted = answer
-      .replace(/\. /g, '. • ')
-      .replace(/\? /g, '? • ')
-      .replace(/! /g, '! • ');
+    let formatted = answer;
+
+    // Format headers (## Text)
+    formatted = formatted.replace(/^## (.+)$/gm, '<h3 class="answer-header">$1</h3>');
+
+    // Format paragraphs
+    formatted = formatted.replace(/\n\n/g, '</p><p class="answer-paragraph">');
+
+    // Wrap in paragraph tags if not already formatted
+    if (!formatted.includes('<p class="answer-paragraph">')) {
+      formatted = '<p class="answer-paragraph">' + formatted + '</p>';
+    }
 
     // Format citations with interactive elements
     formatted = formatted.replace(/\[(\d+)\]/g, (match, num) => {
       const citationNum = parseInt(num);
       return `<sup class="citation-interactive" data-citation="${citationNum}" onclick="scrollToCitation(${citationNum - 1})">[${citationNum}]</sup>`;
     });
+
+    // Clean up empty paragraphs
+    formatted = formatted.replace(/<p class="answer-paragraph">\s*<\/p>/g, '');
 
     return formatted;
   };
@@ -210,10 +220,9 @@ const AIAnswerTab: React.FC<AIAnswerTabProps> = ({
             <div className="space-y-6">
               <div
                 ref={answerRef}
-                className="text-lg leading-relaxed answer-content"
+                className="answer-content"
                 style={{
                   color: theme === 'professional-dark' ? '#E5E7EB' : '#374151',
-                  lineHeight: '1.8',
                   fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
                 }}
                 dangerouslySetInnerHTML={{

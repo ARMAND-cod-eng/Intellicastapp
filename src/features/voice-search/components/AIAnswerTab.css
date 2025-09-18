@@ -98,11 +98,36 @@
   animation: glow 1s ease-in-out;
 }
 
-/* Answer Content Styling */
+/* Enhanced Answer Content Styling */
 .answer-content {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   line-height: 1.8;
   letter-spacing: 0.01em;
+  font-size: 16px;
+}
+
+.answer-content .answer-header {
+  font-size: 20px;
+  font-weight: 700;
+  margin: 24px 0 16px 0;
+  padding-bottom: 8px;
+  border-bottom: 2px solid rgba(139, 92, 246, 0.3);
+  color: #8B5CF6;
+  letter-spacing: -0.02em;
+}
+
+.answer-content .answer-paragraph {
+  margin: 18px 0;
+  line-height: 1.8;
+  text-align: justify;
+  text-justify: inter-word;
+}
+
+.answer-content .answer-paragraph:first-child {
+  margin-top: 0;
+  font-size: 17px;
+  font-weight: 500;
+  color: inherit;
 }
 
 .answer-content p {
@@ -111,6 +136,17 @@
 
 .answer-content p:last-child {
   margin-bottom: 0;
+}
+
+/* Dark theme adjustments */
+.dark .answer-content .answer-header {
+  color: #A78BFA;
+  border-bottom-color: rgba(167, 139, 250, 0.4);
+}
+
+.professional-dark .answer-content .answer-header {
+  color: #A78BFA;
+  border-bottom-color: rgba(167, 139, 250, 0.4);
 }
 
 /* Audio-ready formatting indicators */

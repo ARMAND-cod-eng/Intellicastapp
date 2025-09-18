@@ -14,6 +14,13 @@ const EnhancedAIDemo: React.FC = () => {
 
   const exampleQueries = [
     {
+      id: 'google-microsoft',
+      category: 'Comparison',
+      query: 'Google Windows app vs Microsoft search',
+      icon: Target,
+      description: 'Head-to-head comparison with structured analysis'
+    },
+    {
       id: 'ai-tech',
       category: 'Technology',
       query: 'How do large language models like GPT work and what are their capabilities?',
