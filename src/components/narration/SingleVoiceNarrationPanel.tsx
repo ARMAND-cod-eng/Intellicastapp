@@ -80,6 +80,7 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
     seed: 0,
     reference_audio: null
   });
+  const [summaryType, setSummaryType] = useState<'quick' | 'detailed' | 'full'>('detailed');
   const [showModernPlayer, setShowModernPlayer] = useState(false);
   const [currentTrackData, setCurrentTrackData] = useState<any>(null);
   const [playerMinimized, setPlayerMinimized] = useState(false);
@@ -179,7 +180,7 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
       } else {
         content = backendProcessedContent;
       }
-    } 
+    }
     // Fallback to frontend processed content if backend fails
     else if (uploadedContent && uploadedContent.length > 0) {
       content = uploadedContent[0].content;
@@ -189,11 +190,18 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
       setDocumentSummary('No document content available for summary generation.');
       return;
     }
-    
+
+    // Handle different summary types
+    if (summaryType === 'full') {
+      // For full document, just display the original content
+      setDocumentSummary(content);
+      return;
+    }
+
     setIsLoadingSummary(true);
     try {
-      const response = await NarrationAPI.generateDocumentSummary(content);
-      
+      const response = await NarrationAPI.generateDocumentSummary(content, summaryType);
+
       if (response.success) {
         setDocumentSummary(response.summary);
       } else {
@@ -1207,14 +1215,52 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
                         <span className="text-sm font-medium" style={{
                           color: theme === 'professional-dark' ? '#E8EAED' : theme === 'dark' ? 'rgba(255, 255, 255, 0.9)' : '#1F2937'
                         }}>
-                          {uploadedContent && uploadedContent.length > 0 
+                          {uploadedContent && uploadedContent.length > 0
                             ? uploadedContent[0].metadata?.fileName || uploadedContent[0].title
                             : internalUploadedFiles && internalUploadedFiles.length > 0
                               ? internalUploadedFiles[0].name
-                              : uploadedFiles && uploadedFiles.length > 0 
-                                ? uploadedFiles[0].name 
+                              : uploadedFiles && uploadedFiles.length > 0
+                                ? uploadedFiles[0].name
                                 : 'Document'}
                         </span>
+                      </div>
+
+                      {/* Summary Type Selector */}
+                      <div className="mb-3">
+                        <label className="text-xs block mb-2" style={{
+                          color: theme === 'professional-dark' ? '#9AA0A6' : theme === 'dark' ? 'rgba(255, 255, 255, 0.8)' : '#4B5563'
+                        }}>Summary Type</label>
+                        <div className="grid grid-cols-3 gap-2">
+                          {[
+                            { id: 'quick', name: 'Quick', desc: 'Concise key points' },
+                            { id: 'detailed', name: 'Detailed', desc: 'In-depth analysis' },
+                            { id: 'full', name: 'Full Document', desc: 'Complete content' }
+                          ].map((type) => (
+                            <button
+                              key={type.id}
+                              onClick={() => setSummaryType(type.id as 'quick' | 'detailed' | 'full')}
+                              className={`p-2 text-xs rounded-lg transition-all duration-200 border ${
+                                summaryType === type.id
+                                  ? 'border-blue-400 bg-blue-500/20 shadow-sm'
+                                  : 'border-gray-300/30 bg-transparent hover:bg-gray-500/10'
+                              }`}
+                              style={{
+                                backgroundColor: summaryType === type.id
+                                  ? (theme === 'professional-dark' ? 'rgba(37, 99, 235, 0.2)' : theme === 'dark' ? 'rgba(99, 102, 241, 0.2)' : 'rgba(96, 165, 250, 0.1)')
+                                  : 'transparent',
+                                borderColor: summaryType === type.id
+                                  ? (theme === 'professional-dark' ? '#2563EB' : theme === 'dark' ? '#6366F1' : '#60A5FA')
+                                  : (theme === 'professional-dark' ? '#3C4043' : theme === 'dark' ? 'rgba(255, 255, 255, 0.2)' : 'rgba(156, 163, 175, 0.3)'),
+                                color: summaryType === type.id
+                                  ? (theme === 'professional-dark' ? '#2563EB' : theme === 'dark' ? '#C4B5FD' : '#60A5FA')
+                                  : (theme === 'professional-dark' ? '#E8EAED' : theme === 'dark' ? 'rgba(255, 255, 255, 0.9)' : '#1F2937')
+                              }}
+                            >
+                              <div className="font-medium">{type.name}</div>
+                              <div className="text-xs opacity-75 mt-0.5">{type.desc}</div>
+                            </button>
+                          ))}
+                        </div>
                       </div>
                     </div>
                     

@@ -205,9 +205,9 @@ router.post('/generate', async (req, res) => {
     } catch (audioError) {
       console.error('❌ TTS generation failed:', audioError.message);
       
-      // For document-summary, create a placeholder success response so text can be displayed
-      if (narrationType === 'document-summary') {
-        console.log('🔄 Document summary: Returning text without audio due to TTS issue');
+      // For summary types, create a placeholder success response so text can be displayed
+      if (narrationType === 'document-summary' || narrationType === 'quick-summary') {
+        console.log(`🔄 ${narrationType}: Returning text without audio due to TTS issue`);
         audioResult = {
           success: true,
           fileName: 'placeholder.wav',
@@ -225,9 +225,9 @@ router.post('/generate', async (req, res) => {
     if (!audioResult || !audioResult.success) {
       console.error('❌ TTS generation failed:', audioResult ? audioResult.error : 'No result returned');
       
-      // For document-summary, create a placeholder success response
-      if (narrationType === 'document-summary') {
-        console.log('🔄 Document summary: Creating placeholder audio response');
+      // For summary types, create a placeholder success response
+      if (narrationType === 'document-summary' || narrationType === 'quick-summary') {
+        console.log(`🔄 ${narrationType}: Creating placeholder audio response`);
         audioResult = {
           success: true,
           fileName: 'placeholder.wav',

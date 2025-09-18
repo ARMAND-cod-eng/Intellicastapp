@@ -39,7 +39,16 @@ export interface AskQuestionResponse {
 }
 
 export class NarrationAPI {
-  static async generateDocumentSummary(documentContent: string): Promise<{ success: boolean; summary: string; model: string; }> {
+  static async generateDocumentSummary(
+    documentContent: string,
+    summaryType: 'quick' | 'detailed' = 'detailed'
+  ): Promise<{ success: boolean; summary: string; model: string; }> {
+    // Map frontend summary types to backend narration types
+    const narrationTypeMap = {
+      'quick': 'quick-summary',
+      'detailed': 'document-summary'
+    };
+
     const response = await fetch(`${API_BASE_URL}/narration/generate`, {
       method: 'POST',
       headers: {
@@ -47,7 +56,7 @@ export class NarrationAPI {
       },
       body: JSON.stringify({
         documentContent,
-        narrationType: 'document-summary', // Use special summary type
+        narrationType: narrationTypeMap[summaryType], // Use mapped summary type
         voice: 'emma_en', // Single professional voice for consistent quality
         speed: 1.0,
         backgroundMusic: false
@@ -59,7 +68,7 @@ export class NarrationAPI {
     }
 
     const result = await response.json();
-    
+
     return {
       success: result.success,
       summary: result.script || '', // Should be clean summary now

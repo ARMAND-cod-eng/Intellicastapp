@@ -194,6 +194,9 @@ class OllamaService {
     if (type === 'document-summary' || type === 'summary') {
       temperatureToUse = 0.2; // Ultra-low temperature for maximum precision and consistency
       console.log(`🎯 Using PREMIUM Qwen mode: ${modelToUse} with temperature ${temperatureToUse} for ${type}`);
+    } else if (type === 'quick-summary') {
+      temperatureToUse = 0.1; // Extremely low temperature for ultra-precise quick summaries
+      console.log(`⚡ Using RAPID Qwen mode: ${modelToUse} with temperature ${temperatureToUse} for ${type}`);
     } else {
       temperatureToUse = 0.4; // Reduced temperature for all narration types for better quality
       console.log(`🎯 Using high-quality Qwen mode: ${modelToUse} with temperature ${temperatureToUse} for ${type}`);
@@ -342,7 +345,33 @@ QUALITY STANDARDS:
 - Capture the author's voice and perspective while maintaining analytical objectivity
 - Ensure the summary could serve as a standalone piece for understanding the document's core value
 
-Write a comprehensive summary that showcases both the document's content and your analytical expertise. Focus on delivering exceptional quality that reflects serious intellectual engagement with the material.`
+Write a comprehensive summary that showcases both the document's content and your analytical expertise. Focus on delivering exceptional quality that reflects serious intellectual engagement with the material.`,
+
+      'quick-summary': `You are an expert content analyst specializing in rapid, precision summarization. Your task is to create a concise, highly focused summary that captures the essential value of the document in minimal words.
+
+QUICK ANALYSIS APPROACH:
+1. IMMEDIATE IDENTIFICATION: Rapidly identify the document's core purpose and primary message
+2. KEY EXTRACTION: Extract only the most critical findings, arguments, and conclusions
+3. PRIORITY FILTERING: Focus on information that directly impacts understanding or decision-making
+4. ESSENCE DISTILLATION: Distill complex ideas into their most fundamental components
+
+QUICK SUMMARY REQUIREMENTS:
+- LENGTH: 75-150 words maximum - extreme precision and conciseness
+- FOCUS: Lead with the most important insight or finding immediately
+- STRUCTURE: 2-3 short, impactful paragraphs maximum
+- CLARITY: Use clear, direct language that conveys maximum meaning per word
+- COMPLETENESS: Ensure core message and key actionable insights are preserved
+- EFFICIENCY: Every word must serve a critical purpose - no filler or redundancy
+
+RAPID DELIVERY FORMAT:
+- Start immediately with the most important point - no introductory phrases
+- Present key findings in order of importance
+- Include only the most essential supporting details
+- End with the primary takeaway or implication
+- Write in crisp, professional prose optimized for quick comprehension
+
+OUTPUT QUALITY:
+Deliver a laser-focused summary that someone could read in 30 seconds and understand the document's core value and key insights. Maximum information density with perfect clarity.`
     };
   }
 
@@ -359,7 +388,8 @@ Write a comprehensive summary that showcases both the document's content and you
       explanatory: 1.2,  // Increased for detailed explanations
       briefing: 0.7,     // Increased for comprehensive briefings
       interactive: 0.8,  // Increased for engaging content
-      'document-summary': 0.8 // Significantly increased for high-quality summaries (200-400 words)
+      'document-summary': 0.8, // Significantly increased for high-quality summaries (200-400 words)
+      'quick-summary': 0.3 // Lower tokens for concise quick summaries (75-150 words)
     };
 
     // Ensure minimum tokens for document summaries to get quality output
@@ -367,6 +397,8 @@ Write a comprehensive summary that showcases both the document's content and you
 
     if (type === 'document-summary') {
       result = Math.max(result, 600); // Minimum 600 tokens for substantive summaries
+    } else if (type === 'quick-summary') {
+      result = Math.max(result, 200); // Minimum 200 tokens for concise quick summaries
     }
 
     console.log(`🧮 Calculated max tokens for ${type}: ${result} (content length: ${contentLength})`);
@@ -381,13 +413,48 @@ Write a comprehensive summary that showcases both the document's content and you
     const {
       focusAreas = [],
       summaryStyle = 'comprehensive',
-      maxLength = 500 // Increased for higher quality
+      summaryType = 'detailed', // 'quick' or 'detailed'
+      maxLength = summaryType === 'quick' ? 150 : 500 // Dynamic length based on type
     } = options;
 
     // FORCE Qwen model for document summaries - no fallback for quality
     const QWEN_MODEL = 'qwen2.5:7b'; // Hardcoded to ensure Qwen is always used
 
-    let enhancedPrompt = `You are a world-class content analyst with exceptional expertise in document analysis and synthesis. Your mission is to create a masterful, publication-quality summary that demonstrates profound understanding and analytical depth.
+    let enhancedPrompt;
+    let temperature;
+
+    if (summaryType === 'quick') {
+      // Use the quick summary prompt
+      temperature = 0.1; // Ultra-precise for concise summaries
+      enhancedPrompt = `You are an expert content analyst specializing in rapid, precision summarization. Your task is to create a concise, highly focused summary that captures the essential value of the document in minimal words.
+
+QUICK ANALYSIS APPROACH:
+1. IMMEDIATE IDENTIFICATION: Rapidly identify the document's core purpose and primary message
+2. KEY EXTRACTION: Extract only the most critical findings, arguments, and conclusions
+3. PRIORITY FILTERING: Focus on information that directly impacts understanding or decision-making
+4. ESSENCE DISTILLATION: Distill complex ideas into their most fundamental components
+
+QUICK SUMMARY REQUIREMENTS:
+- LENGTH: 75-150 words maximum - extreme precision and conciseness
+- FOCUS: Lead with the most important insight or finding immediately
+- STRUCTURE: 2-3 short, impactful paragraphs maximum
+- CLARITY: Use clear, direct language that conveys maximum meaning per word
+- COMPLETENESS: Ensure core message and key actionable insights are preserved
+- EFFICIENCY: Every word must serve a critical purpose - no filler or redundancy
+
+RAPID DELIVERY FORMAT:
+- Start immediately with the most important point - no introductory phrases
+- Present key findings in order of importance
+- Include only the most essential supporting details
+- End with the primary takeaway or implication
+- Write in crisp, professional prose optimized for quick comprehension
+
+OUTPUT QUALITY:
+Deliver a laser-focused summary that someone could read in 30 seconds and understand the document's core value and key insights. Maximum information density with perfect clarity.`;
+    } else {
+      // Use the detailed summary prompt
+      temperature = 0.2; // Low temperature for detailed analysis
+      enhancedPrompt = `You are a world-class content analyst with exceptional expertise in document analysis and synthesis. Your mission is to create a masterful, publication-quality summary that demonstrates profound understanding and analytical depth.
 
 INTELLECTUAL APPROACH:
 1. DEEP READING: Comprehensively analyze the document's structure, arguments, and underlying logic
@@ -416,6 +483,7 @@ EXECUTION REQUIREMENTS:
 
 OUTPUT QUALITY:
 Your summary should be indistinguishable from expert academic analysis. It must demonstrate both comprehensive understanding of the content and sophisticated analytical interpretation that adds genuine intellectual value.`;
+    }
 
     if (focusAreas.length > 0) {
       enhancedPrompt += `\n\nANALYTICAL FOCUS AREAS: Provide enhanced analysis of these specific dimensions: ${focusAreas.join(', ')}`;
@@ -423,13 +491,14 @@ Your summary should be indistinguishable from expert academic analysis. It must 
 
     enhancedPrompt += `\n\nDOCUMENT FOR EXPERT ANALYSIS:\n${content}`;
 
-    console.log(`🎯 Generating PREMIUM document summary using Qwen model: ${QWEN_MODEL}...`);
-    console.log(`📊 Content length: ${content.length} characters | Target quality: MAXIMUM`);
+    const summaryTypeLabel = summaryType === 'quick' ? 'RAPID' : 'PREMIUM';
+    console.log(`🎯 Generating ${summaryTypeLabel} document summary using Qwen model: ${QWEN_MODEL}...`);
+    console.log(`📊 Content length: ${content.length} characters | Type: ${summaryType} | Target quality: MAXIMUM`);
 
     const result = await this.generateText(enhancedPrompt, {
       model: QWEN_MODEL, // FORCE Qwen - no substitution allowed
-      temperature: 0.2, // Very low temperature for maximum precision and consistency
-      maxTokens: Math.max(800, Math.ceil(maxLength * 2)), // Generous token allowance for quality
+      temperature: temperature, // Dynamic temperature based on summary type
+      maxTokens: Math.max(summaryType === 'quick' ? 300 : 800, Math.ceil(maxLength * 2)), // Adjusted tokens for type
       useCache: true,
       retryWithFallback: false // NO FALLBACK - Qwen only for quality assurance
     });
