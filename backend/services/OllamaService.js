@@ -184,42 +184,57 @@ class OllamaService {
   async generateNarrationScript(text, type = 'summary', contentAnalysis = {}) {
     const prompts = this.getNarrationPrompts(contentAnalysis);
     const prompt = prompts[type] || prompts.summary;
-    
-    // Use faster model for large documents to avoid timeouts
-    const shouldUseFastModel = type === 'summary' || type === 'document-summary' || text.length > 10000;
-    const modelToUse = shouldUseFastModel ? this.fastModel : this.primaryModel;
-    
+
+    // ALWAYS use Qwen model for high-quality content generation
+    const QWEN_MODEL = 'qwen2.5:7b'; // Force Qwen for all narration tasks
+    let modelToUse = QWEN_MODEL;
+    let temperatureToUse = 0.7;
+
+    // For document summaries, use ultra-precise settings for maximum quality
+    if (type === 'document-summary' || type === 'summary') {
+      temperatureToUse = 0.2; // Ultra-low temperature for maximum precision and consistency
+      console.log(`🎯 Using PREMIUM Qwen mode: ${modelToUse} with temperature ${temperatureToUse} for ${type}`);
+    } else {
+      temperatureToUse = 0.4; // Reduced temperature for all narration types for better quality
+      console.log(`🎯 Using high-quality Qwen mode: ${modelToUse} with temperature ${temperatureToUse} for ${type}`);
+    }
+
     console.log(`🎯 Using model: ${modelToUse} for ${type} (content length: ${text.length})`);
-    
-    // Use truncation for large documents (15KB+) to improve performance
-    if (text.length > 15000) {
-      console.log(`📏 Large document detected (${text.length} chars), using truncated approach`);
-      const truncatedText = text.substring(0, 10000) + '...\n\n[Note: This is a large document - summary based on key sections]';
+
+    // Only use truncation for extremely large documents (20KB+) to maintain quality
+    if (text.length > 20000) {
+      console.log(`📏 Very large document detected (${text.length} chars), using intelligent truncation`);
+
+      // Smart truncation: Take first 8KB + last 2KB to capture intro and conclusion
+      const firstPart = text.substring(0, 8000);
+      const lastPart = text.substring(text.length - 2000);
+      const truncatedText = firstPart + '\n\n[... content continues ...]\n\n' + lastPart;
+
       const fullPrompt = `${prompt}\n\nContent to summarize:\n${truncatedText}`;
-      
-      console.log(`📝 Generating ${type} narration script for large document...`);
-      
+
+      console.log(`📝 Generating ${type} narration script for very large document...`);
+
       const result = await this.generateText(fullPrompt, {
         model: modelToUse,
-        temperature: 0.7,
-        maxTokens: this.calculateMaxTokens(type, 10000)
+        temperature: temperatureToUse,
+        maxTokens: this.calculateMaxTokens(type, 12000) // Adjust for truncated content
       });
 
       // Clean the generated script
       if (result.success) {
         result.response = this.cleanNarrationScript(result.response);
       }
-      
+
       return result;
     }
-    
-    const fullPrompt = `${prompt}\n\nContent to narrate:\n${text}`;
-    
+
+    const fullPrompt = `${prompt}\n\nContent to summarize:\n${text}`;
+
     console.log(`📝 Generating ${type} narration script...`);
-    
+
     const result = await this.generateText(fullPrompt, {
       model: modelToUse,
-      temperature: 0.7,
+      temperature: temperatureToUse,
       maxTokens: this.calculateMaxTokens(type, text.length)
     });
 
@@ -227,7 +242,7 @@ class OllamaService {
     if (result.success) {
       result.response = this.cleanNarrationScript(result.response);
     }
-    
+
     return result;
   }
 
@@ -301,18 +316,33 @@ Requirements:
 - Make it feel like a natural conversation
 - Write ONLY spoken words - no stage directions or parenthetical instructions`,
 
-      'document-summary': `Create a concise, professional document summary without any podcast formatting or conversational elements.
+      'document-summary': `You are an expert content analyst with exceptional analytical capabilities and deep subject matter expertise. Your task is to create a masterful, high-quality summary that captures the true essence and value of the provided document.
 
-Task: Generate a clean, focused summary that captures the essential information and key insights from the document.
+ANALYTICAL FRAMEWORK:
+1. CORE ANALYSIS: Identify the document's central thesis, primary arguments, and foundational concepts
+2. INSIGHT EXTRACTION: Uncover both explicit findings and implicit insights that may not be immediately obvious
+3. CONTEXTUAL UNDERSTANDING: Assess the document's significance within its broader field or domain
+4. CRITICAL EVALUATION: Analyze the strength of arguments, quality of evidence, and logical coherence
+5. SYNTHESIS: Connect disparate concepts and identify underlying patterns or themes
 
-Requirements:
-- Write in clear, formal prose
-- Focus on main points, arguments, and conclusions
-- Use 2-3 well-structured paragraphs
-- No introductions, welcomes, or conversational tone
-- No podcast formatting, brackets, or host references
-- Direct, informative summary style
-- Highlight the most important insights and takeaways`
+SUMMARY REQUIREMENTS:
+- LENGTH: 300-500 words for substantive, professional-grade analysis
+- STRUCTURE: Begin with the document's primary purpose, proceed through key findings, and conclude with significance
+- DEPTH: Go beyond surface-level description to provide meaningful analysis and interpretation
+- PRECISION: Use exact, specific language that accurately represents the document's content and intent
+- INSIGHTS: Highlight novel concepts, important implications, and actionable information
+- CONNECTIONS: Show relationships between different ideas and how they support the overall thesis
+- CONTEXT: Explain why this document matters and what makes it valuable or unique
+- CLARITY: Write in clear, sophisticated prose that demonstrates intellectual rigor
+
+QUALITY STANDARDS:
+- Demonstrate deep comprehension through nuanced analysis
+- Include specific examples or evidence when they illuminate key points
+- Avoid generic statements; every sentence should add substantive value
+- Capture the author's voice and perspective while maintaining analytical objectivity
+- Ensure the summary could serve as a standalone piece for understanding the document's core value
+
+Write a comprehensive summary that showcases both the document's content and your analytical expertise. Focus on delivering exceptional quality that reflects serious intellectual engagement with the material.`
     };
   }
 
@@ -320,20 +350,106 @@ Requirements:
    * Calculate appropriate max tokens based on narration type and content length
    */
   calculateMaxTokens(type, contentLength) {
-    // Even more conservative calculation for better performance with large documents
-    const baseTokens = Math.min(Math.ceil(contentLength / 6), 800); // More conservative for stability
-    
+    // Enhanced calculation for higher quality outputs
+    const baseTokens = Math.min(Math.ceil(contentLength / 4), 1200); // Increased base for better quality
+
     const multipliers = {
-      summary: 0.5,      // Shorter output for faster generation
-      full: 0.8,         // Reduced for better performance
-      explanatory: 1.0,  // Standard
-      briefing: 0.6,     // Concise
-      interactive: 0.7,  // Shorter with questions
-      'document-summary': 0.4 // Very concise for document summaries
+      summary: 0.6,      // Increased for better summaries
+      full: 0.9,         // Increased for more complete content
+      explanatory: 1.2,  // Increased for detailed explanations
+      briefing: 0.7,     // Increased for comprehensive briefings
+      interactive: 0.8,  // Increased for engaging content
+      'document-summary': 0.8 // Significantly increased for high-quality summaries (200-400 words)
     };
-    
-    const result = Math.ceil(baseTokens * (multipliers[type] || 0.6));
+
+    // Ensure minimum tokens for document summaries to get quality output
+    let result = Math.ceil(baseTokens * (multipliers[type] || 0.6));
+
+    if (type === 'document-summary') {
+      result = Math.max(result, 600); // Minimum 600 tokens for substantive summaries
+    }
+
     console.log(`🧮 Calculated max tokens for ${type}: ${result} (content length: ${contentLength})`);
+    return result;
+  }
+
+  /**
+   * Generate high-quality document summary (dedicated method)
+   * ALWAYS uses Qwen model for superior analytical capabilities
+   */
+  async generateDocumentSummary(content, options = {}) {
+    const {
+      focusAreas = [],
+      summaryStyle = 'comprehensive',
+      maxLength = 500 // Increased for higher quality
+    } = options;
+
+    // FORCE Qwen model for document summaries - no fallback for quality
+    const QWEN_MODEL = 'qwen2.5:7b'; // Hardcoded to ensure Qwen is always used
+
+    let enhancedPrompt = `You are a world-class content analyst with exceptional expertise in document analysis and synthesis. Your mission is to create a masterful, publication-quality summary that demonstrates profound understanding and analytical depth.
+
+INTELLECTUAL APPROACH:
+1. DEEP READING: Comprehensively analyze the document's structure, arguments, and underlying logic
+2. CRITICAL THINKING: Evaluate the strength of evidence, identify assumptions, and assess reasoning quality
+3. INSIGHT MINING: Extract both explicit findings and subtle implications that require analytical sophistication
+4. SYNTHESIS: Weave together disparate concepts to reveal the document's unified message and broader significance
+5. CONTEXTUAL EVALUATION: Assess the document's contribution within its field and potential impact
+
+PREMIUM SUMMARY STANDARDS:
+- LENGTH: ${maxLength} words minimum - prioritize depth and comprehensiveness over brevity
+- ANALYTICAL RIGOR: Demonstrate sophisticated understanding through nuanced interpretation
+- INTELLECTUAL SOPHISTICATION: Use precise, scholarly language that reflects serious academic engagement
+- STRUCTURAL EXCELLENCE: Create logical flow from purpose → key findings → implications → significance
+- INSIGHT DENSITY: Every sentence must deliver substantial analytical value
+- EVIDENCE INTEGRATION: Incorporate specific examples that illuminate broader patterns
+- CRITICAL PERSPECTIVE: Show awareness of strengths, limitations, and broader context
+
+EXECUTION REQUIREMENTS:
+- Begin with the document's core purpose and primary contribution
+- Systematically develop key findings with analytical commentary
+- Highlight novel insights and their practical implications
+- Connect ideas to show how they support the overarching thesis
+- Conclude with the document's broader significance and value proposition
+- Maintain scholarly objectivity while capturing the author's perspective
+- Eliminate all generic language - every word must serve the analysis
+
+OUTPUT QUALITY:
+Your summary should be indistinguishable from expert academic analysis. It must demonstrate both comprehensive understanding of the content and sophisticated analytical interpretation that adds genuine intellectual value.`;
+
+    if (focusAreas.length > 0) {
+      enhancedPrompt += `\n\nANALYTICAL FOCUS AREAS: Provide enhanced analysis of these specific dimensions: ${focusAreas.join(', ')}`;
+    }
+
+    enhancedPrompt += `\n\nDOCUMENT FOR EXPERT ANALYSIS:\n${content}`;
+
+    console.log(`🎯 Generating PREMIUM document summary using Qwen model: ${QWEN_MODEL}...`);
+    console.log(`📊 Content length: ${content.length} characters | Target quality: MAXIMUM`);
+
+    const result = await this.generateText(enhancedPrompt, {
+      model: QWEN_MODEL, // FORCE Qwen - no substitution allowed
+      temperature: 0.2, // Very low temperature for maximum precision and consistency
+      maxTokens: Math.max(800, Math.ceil(maxLength * 2)), // Generous token allowance for quality
+      useCache: true,
+      retryWithFallback: false // NO FALLBACK - Qwen only for quality assurance
+    });
+
+    if (result.success) {
+      // Advanced text cleaning for professional output
+      result.response = result.response
+        .trim()
+        // Remove generic openings
+        .replace(/^(This document|The document|This text|The text|This paper|The paper|This article|The article)[\s\w]*?[:.,]\s*/i, '')
+        .replace(/^(Summary|Overview|Analysis)[:.]?\s*/i, '')
+        // Remove meta-commentary
+        .replace(/^(In summary|To summarize|In conclusion)[:,.]?\s*/i, '')
+        // Clean up any remaining formatting issues
+        .replace(/\s+/g, ' ')
+        .trim();
+
+      console.log(`✅ HIGH-QUALITY summary generated: ${result.response.length} characters using ${result.model}`);
+    }
+
     return result;
   }
 

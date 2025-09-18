@@ -46,7 +46,7 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
   onAudioGenerated
 }) => {
   const { theme } = useTheme();
-  const [selectedVoice, setSelectedVoice] = useState('emma_en');
+  const [selectedVoice, setSelectedVoice] = useState('emma_en'); // Single professional voice for consistency
   const [narrationType, setNarrationType] = useState('summary');
   const [backgroundMusicEnabled, setBackgroundMusicEnabled] = useState(false);
   const [selectedMusic, setSelectedMusic] = useState('none');

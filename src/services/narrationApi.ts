@@ -48,7 +48,7 @@ export class NarrationAPI {
       body: JSON.stringify({
         documentContent,
         narrationType: 'document-summary', // Use special summary type
-        voice: 'emma',
+        voice: 'emma_en', // Single professional voice for consistent quality
         speed: 1.0,
         backgroundMusic: false
       }),
@@ -86,7 +86,7 @@ export class NarrationAPI {
   static async generateNarration(
     documentContent: string,
     narrationType: string = 'summary',
-    voice: string = 'emma',
+    voice: string = 'emma_en', // Default to professional Emma voice for consistency
     speed: number = 1.0,
     backgroundMusic: boolean = false,
     musicType: string = 'none',

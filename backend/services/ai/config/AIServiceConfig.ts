@@ -5,16 +5,17 @@
 
 import { AIServiceConfig, CacheConfig, RetryConfig, OllamaConfig } from '../types';
 
-// Default configuration values
+// Default configuration values - Optimized for high-quality content generation
 const DEFAULT_AI_CONFIG: AIServiceConfig = {
-  defaultModel: 'llama3.1:8b',
+  defaultModel: 'qwen2.5:7b', // Primary model for superior analytical capabilities
   providers: {
     ollama: {
       baseUrl: process.env.OLLAMA_BASE_URL || 'http://localhost:11434',
-      defaultModel: process.env.OLLAMA_DEFAULT_MODEL || 'llama3.1:8b',
+      defaultModel: process.env.OLLAMA_DEFAULT_MODEL || 'qwen2.5:7b', // Force Qwen for quality
       availableModels: [
-        'llama3.1:8b',
-        'llama3.1:70b',
+        'qwen2.5:7b',        // Primary: Exceptional analytical and summarization capabilities
+        'llama3.1:8b',       // Fallback: Good general performance
+        'llama3.1:70b',      // Large model option
         'llama2:7b',
         'llama2:13b',
         'codellama:7b',
@@ -154,12 +155,13 @@ export class AIServiceConfigManager {
       retry: this.config.retry
     };
 
-    // Operation-specific overrides
+    // Operation-specific overrides - Optimized for Qwen model performance
     const operationDefaults = {
       summarize: {
-        temperature: 0.3,
-        maxTokens: 1024,
-        cacheTtl: this.config.cache.ttl
+        model: 'qwen2.5:7b',  // Force Qwen for superior summarization quality
+        temperature: 0.2,     // Ultra-low for maximum precision and consistency
+        maxTokens: 1600,      // Increased for comprehensive high-quality summaries
+        cacheTtl: this.config.cache.ttl * 2  // Longer cache for expensive high-quality summaries
       },
       dialogue: {
         temperature: 0.8,
