@@ -95,10 +95,11 @@ export class NarrationAPI {
   static async generateNarration(
     documentContent: string,
     narrationType: string = 'summary',
-    voice: string = 'emma_en', // Default to professional Emma voice for consistency
+    voice: string = 'bf991597-6c13-4d2c-8d3d-2f4f2a4c9e4e', // Default Cartesia Newslady voice
     speed: number = 1.0,
     backgroundMusic: boolean = false,
     musicType: string = 'none',
+    podcastStyle: string = 'conversational',
     voiceSettings?: {
       exaggeration?: number;
       temperature?: number;
@@ -122,6 +123,7 @@ export class NarrationAPI {
         speed,
         backgroundMusic,
         musicType,
+        podcastStyle,
         ...(voiceSettings && {
           exaggeration: voiceSettings.exaggeration,
           temperature: voiceSettings.temperature,

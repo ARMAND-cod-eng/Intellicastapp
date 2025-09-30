@@ -3,15 +3,19 @@ import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs-extra';
+import dotenv from 'dotenv';
+
+// Load environment variables from parent directory's .env file
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+dotenv.config({ path: path.join(__dirname, '..', '.env') });
 
 // Import routes
 import narrationRoutes from './routes/narration.js';
 import audioRoutes from './routes/audio.js';
 import voicesRoutes from './routes/voices.js';
 import newsRoutes from './routes/news.js';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+import searchRoutes from './routes/search.js';
 
 const app = express();
 const PORT = process.env.PORT || 3004;
@@ -43,6 +47,7 @@ app.use('/api/narration', narrationRoutes);
 app.use('/api/audio', audioRoutes);
 app.use('/api/voices', voicesRoutes);
 app.use('/api/news', newsRoutes);
+app.use('/api/search', searchRoutes);
 
 // Health check
 app.get('/health', async (req, res) => {

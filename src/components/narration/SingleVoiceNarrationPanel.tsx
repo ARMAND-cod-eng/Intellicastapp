@@ -3,7 +3,7 @@ import { useDropzone } from 'react-dropzone';
 import { X, Play, Pause, Volume2, VolumeX, Music, ChevronDown, Upload, FileText, Settings, Download, Square, MessageCircle, RotateCcw, Mic2, Grid3X3, Minimize2 } from 'lucide-react';
 import type { DocumentContent } from '../../types/document';
 import { NarrationAPI } from '../../services/narrationApi';
-import ChatterboxVoiceSelector from '../voice/ChatterboxVoiceSelector';
+import CartesiaVoiceSelector from '../voice/CartesiaVoiceSelector';
 import ModernAudioPlayer from '../audio/ModernAudioPlayer';
 import GlassCard from '../ui/GlassCard';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -46,7 +46,8 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
   onAudioGenerated
 }) => {
   const { theme } = useTheme();
-  const [selectedVoice, setSelectedVoice] = useState('emma_en'); // Single professional voice for consistency
+  const [selectedVoice, setSelectedVoice] = useState('829ccd10-f8b3-43cd-b8a0-4aeaa81f3b30'); // Default: Linda - Conversational Guide
+  const [selectedPodcastStyle, setSelectedPodcastStyle] = useState('conversational');
   const [narrationType, setNarrationType] = useState('summary');
   const [backgroundMusicEnabled, setBackgroundMusicEnabled] = useState(false);
   const [selectedMusic, setSelectedMusic] = useState('none');
@@ -85,14 +86,15 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
   const [currentTrackData, setCurrentTrackData] = useState<any>(null);
   const [playerMinimized, setPlayerMinimized] = useState(false);
 
-  // Popular Chatterbox voices for simple selection mode
-  const popularChatterboxVoices = [
-    { id: 'emma_en', name: 'Emma', description: 'Professional English female', language: 'English' },
-    { id: 'james_en', name: 'James', description: 'Authoritative English male', language: 'English' },
-    { id: 'sophia_es', name: 'Sophia', description: 'Warm Spanish female', language: 'Spanish' },
-    { id: 'am_adam', name: 'Adam', description: 'Confident American male', accent: 'American' },
-    { id: 'bf_heart', name: 'Heart', description: 'Refined British female', accent: 'British' },
-    { id: 'am_david', name: 'David', description: 'Friendly American male', accent: 'American' },
+  // Cartesia AI voices (verified from API)
+  const cartesiaVoices = [
+    { id: '829ccd10-f8b3-43cd-b8a0-4aeaa81f3b30', name: 'Linda', description: 'Clear, confident mature female', language: 'English', gender: 'female' },
+    { id: 'e07c00bc-4134-4eae-9ea4-1a55fb45746b', name: 'Brooke', description: 'Approachable adult female', language: 'English', gender: 'female' },
+    { id: 'f786b574-daa5-4673-aa0c-cbe3e8534c02', name: 'Katie', description: 'Enunciating young adult female', language: 'English', gender: 'female' },
+    { id: '9626c31c-bec5-4cca-baa8-f8ba9e84c8bc', name: 'Jacqueline', description: 'Confident, young adult female', language: 'English', gender: 'female' },
+    { id: '694f9389-aac1-45b6-b726-9d9369183238', name: 'Sarah', description: 'Soothing female for meditations', language: 'English', gender: 'female' },
+    { id: 'a167e0f3-df7e-4d52-a9c3-f949145efdab', name: 'Blake', description: 'Energetic adult male', language: 'English', gender: 'male' },
+    { id: '5ee9feff-1265-424a-9d7f-8e4d431a12c7', name: 'Ronald', description: 'Intense, deep young adult male', language: 'English', gender: 'male' },
   ];
 
   const narrationTypes = [
@@ -254,7 +256,7 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
 
   // Get voice name for display
   const getSelectedVoiceName = () => {
-    const voice = popularChatterboxVoices.find(v => v.id === selectedVoice);
+    const voice = cartesiaVoices.find(v => v.id === selectedVoice);
     return voice ? voice.name : 'AI Voice';
   };
 
@@ -286,6 +288,7 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
         playbackSpeed,
         backgroundMusicEnabled,
         backgroundMusicEnabled ? selectedMusic : 'none',
+        selectedPodcastStyle,
         voiceSettings
       );
       
@@ -907,11 +910,10 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
                  backgroundColor: theme === 'professional-dark' ? '#2A2A2A' : theme === 'dark' ? 'rgba(255, 255, 255, 0.05)' : '#F8F9FA',
                  borderColor: theme === 'professional-dark' ? '#3C4043' : theme === 'dark' ? 'rgba(255, 255, 255, 0.1)' : '#E5E7EB'
                }}>
-            <div className="w-6 h-6 rounded-full flex items-center justify-center"
+            <div className={`w-6 h-6 rounded-full flex items-center justify-center ${theme === 'professional-dark' ? '' : 'bg-gradient-to-br from-primary-500 to-secondary-500'}`}
                  style={{
                    backgroundColor: theme === 'light' ? '#60A5FA' : theme === 'professional-dark' ? '#2563EB' : '#6366F1'
-                 }}
-                 className={theme === 'professional-dark' ? '' : 'bg-gradient-to-br from-primary-500 to-secondary-500'}>
+                 }}>
               <Mic2 className="w-3 h-3 text-white" />
             </div>
             <div className="flex flex-col items-center space-y-1">
@@ -1182,11 +1184,10 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
           <h1 className="text-2xl font-bold flex items-center space-x-3" style={{
             color: theme === 'professional-dark' ? '#E8EAED' : theme === 'dark' ? '#FFFFFF' : '#1F2937'
           }}>
-            <div className="w-8 h-8 rounded-full flex items-center justify-center"
+            <div className={`w-8 h-8 rounded-full flex items-center justify-center ${theme === 'professional-dark' ? '' : 'bg-gradient-to-br from-primary-500 to-secondary-500'}`}
                  style={{
                    backgroundColor: theme === 'light' ? '#60A5FA' : theme === 'professional-dark' ? '#2563EB' : '#7C3AED'
-                 }}
-                 className={theme === 'professional-dark' ? '' : 'bg-gradient-to-br from-primary-500 to-secondary-500'}>
+                 }}>
               <Mic2 className="w-4 h-4 text-white" />
             </div>
             <span>Single Voice Narration</span>
@@ -1391,7 +1392,7 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
                               color: theme === 'professional-dark' ? '#2563EB' : '#C7D2FE',
                               borderColor: theme === 'professional-dark' ? '#2563EB' : 'rgba(139, 92, 246, 0.4)'
                             }}>
-                        Chatterbox Multilingual
+                        Cartesia AI
                       </span>
                     </div>
                     <button
@@ -1427,41 +1428,41 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
                       backgroundColor: theme === 'professional-dark' ? '#2A2A2A' : theme === 'dark' ? 'rgba(255, 255, 255, 0.1)' : '#FFFFFF',
                       borderColor: theme === 'professional-dark' ? '#3C4043' : theme === 'dark' ? 'rgba(255, 255, 255, 0.2)' : 'rgba(156, 163, 175, 0.5)'
                     }}>
-                      <ChatterboxVoiceSelector
+                      <CartesiaVoiceSelector
                         selectedVoice={selectedVoice}
+                        selectedPodcastStyle={selectedPodcastStyle}
                         onVoiceChange={setSelectedVoice}
-                        showAdvanced={true}
-                        compact={true}
-                        contentCategory={contentCategory || 'general'}
+                        onPodcastStyleChange={setSelectedPodcastStyle}
+                        previewText="This is how your podcast content will sound with this voice and style combination."
                       />
                     </div>
                   ) : (
                     <div>
                       <label className="text-xs block mb-1" style={{
-                        color: theme === 'dark' ? 'rgba(255, 255, 255, 0.8)' : '#4B5563'
+                        color: theme === 'professional-dark' ? '#9AA0A6' : theme === 'dark' ? 'rgba(255, 255, 255, 0.8)' : '#4B5563'
                       }}>Primary Narrator</label>
                       <p className="text-xs mb-2" style={{
-                        color: theme === 'dark' ? 'rgba(255, 255, 255, 0.6)' : '#6B7280'
-                      }}>Popular Chatterbox multilingual voices (click "All Voices" for full selection)</p>
+                        color: theme === 'professional-dark' ? '#9AA0A6' : theme === 'dark' ? 'rgba(255, 255, 255, 0.6)' : '#6B7280'
+                      }}>Select from high-quality Cartesia AI voices (click "All Voices" for advanced options)</p>
                       <div className="relative">
                         <select
                           value={selectedVoice}
                           onChange={(e) => setSelectedVoice(e.target.value)}
                           className="w-full px-3 py-2 text-sm backdrop-blur-sm border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 appearance-none"
                           style={{
-                            backgroundColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.1)' : '#FFFFFF',
-                            borderColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.3)' : 'rgba(156, 163, 175, 0.3)',
-                            color: theme === 'dark' ? '#FFFFFF' : '#1F2937'
+                            backgroundColor: theme === 'professional-dark' ? '#2A2A2A' : theme === 'dark' ? 'rgba(255, 255, 255, 0.1)' : '#FFFFFF',
+                            borderColor: theme === 'professional-dark' ? '#3C4043' : theme === 'dark' ? 'rgba(255, 255, 255, 0.3)' : 'rgba(156, 163, 175, 0.3)',
+                            color: theme === 'professional-dark' ? '#E8EAED' : theme === 'dark' ? '#FFFFFF' : '#1F2937'
                           }}
                         >
-                          {popularChatterboxVoices.map((voice) => (
+                          {cartesiaVoices.map((voice) => (
                             <option key={voice.id} value={voice.id}>
-                              {voice.name} ({voice.language}, {voice.description})
+                              {voice.name} - {voice.description} ({voice.gender})
                             </option>
                           ))}
                         </select>
                         <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 pointer-events-none" style={{
-                          color: theme === 'dark' ? 'rgba(255, 255, 255, 0.6)' : '#6B7280'
+                          color: theme === 'professional-dark' ? '#9AA0A6' : theme === 'dark' ? 'rgba(255, 255, 255, 0.6)' : '#6B7280'
                         }} />
                       </div>
                     </div>

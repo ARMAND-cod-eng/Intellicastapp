@@ -15,7 +15,7 @@ interface VoiceSearchProProps {
 
 const VoiceSearchPro: React.FC<VoiceSearchProProps> = ({ query, onBack }) => {
   const { theme } = useTheme();
-  const [activeTab, setActiveTab] = useState<'ai' | 'web'>('ai');
+  const [activeTab, setActiveTab] = useState<'simple' | 'detailed' | 'web'>('simple');
   const [searchData, setSearchData] = useState<TavilySearchResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -129,30 +129,48 @@ const VoiceSearchPro: React.FC<VoiceSearchProProps> = ({ query, onBack }) => {
           )}
         </div>
 
-        {/* Tab Navigation */}
+        {/* Tab Navigation - 3 Tabs */}
         <div className="mb-8">
           <div className="flex space-x-1 p-1 rounded-xl" style={getCardStyle()}>
             <button
-              onClick={() => setActiveTab('ai')}
-              className={`flex-1 flex items-center justify-center space-x-2 py-3 px-6 rounded-lg transition-all duration-200 ${
-                activeTab === 'ai' ? 'transform scale-[1.02]' : ''
+              onClick={() => setActiveTab('simple')}
+              className={`flex-1 flex items-center justify-center space-x-2 py-3 px-4 rounded-lg transition-all duration-200 ${
+                activeTab === 'simple' ? 'transform scale-[1.02]' : ''
               }`}
               style={{
-                backgroundColor: activeTab === 'ai'
+                backgroundColor: activeTab === 'simple'
                   ? (theme === 'professional-dark' ? '#2563EB' : '#60A5FA')
                   : 'transparent',
-                color: activeTab === 'ai'
+                color: activeTab === 'simple'
                   ? 'white'
                   : (theme === 'professional-dark' ? '#E8EAED' : '#1F2937')
               }}
             >
               <BookOpen className="w-4 h-4" />
-              <span className="font-medium">AI Answer</span>
+              <span className="font-medium">Simple Summary</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('detailed')}
+              className={`flex-1 flex items-center justify-center space-x-2 py-3 px-4 rounded-lg transition-all duration-200 ${
+                activeTab === 'detailed' ? 'transform scale-[1.02]' : ''
+              }`}
+              style={{
+                backgroundColor: activeTab === 'detailed'
+                  ? (theme === 'professional-dark' ? '#2563EB' : '#60A5FA')
+                  : 'transparent',
+                color: activeTab === 'detailed'
+                  ? 'white'
+                  : (theme === 'professional-dark' ? '#E8EAED' : '#1F2937')
+              }}
+            >
+              <BarChart3 className="w-4 h-4" />
+              <span className="font-medium">Detailed Summary</span>
             </button>
 
             <button
               onClick={() => setActiveTab('web')}
-              className={`flex-1 flex items-center justify-center space-x-2 py-3 px-6 rounded-lg transition-all duration-200 ${
+              className={`flex-1 flex items-center justify-center space-x-2 py-3 px-4 rounded-lg transition-all duration-200 ${
                 activeTab === 'web' ? 'transform scale-[1.02]' : ''
               }`}
               style={{
@@ -173,7 +191,7 @@ const VoiceSearchPro: React.FC<VoiceSearchProProps> = ({ query, onBack }) => {
         {/* Content */}
         {loading ? (
           <div className="space-y-6">
-            {activeTab === 'ai' ? (
+            {(activeTab === 'simple' || activeTab === 'detailed') ? (
               <AIAnswerTab searchData={{} as TavilySearchResponse} isLoading={true} />
             ) : (
               [...Array(3)].map((_, i) => (
@@ -198,11 +216,21 @@ const VoiceSearchPro: React.FC<VoiceSearchProProps> = ({ query, onBack }) => {
           </div>
         ) : (
           <div>
-            {activeTab === 'ai' && searchData && (
+            {activeTab === 'simple' && searchData && (
               <AIAnswerTab
                 searchData={searchData}
                 onFollowUpSearch={(newQuery) => performSearch(newQuery)}
                 onSaveEpisode={() => console.log('Save episode functionality')}
+                mode="simple"
+              />
+            )}
+
+            {activeTab === 'detailed' && searchData && (
+              <AIAnswerTab
+                searchData={searchData}
+                onFollowUpSearch={(newQuery) => performSearch(newQuery)}
+                onSaveEpisode={() => console.log('Save episode functionality')}
+                mode="detailed"
               />
             )}
 

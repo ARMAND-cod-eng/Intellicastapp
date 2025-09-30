@@ -3,16 +3,16 @@ import TTSWrapper from '../services/TTSWrapper.js';
 
 const router = express.Router();
 
-// Initialize Chatterbox Multilingual TTS service
+// Initialize Cartesia AI TTS service
 const ttsService = new TTSWrapper();
 
 /**
  * GET /api/voices
- * Get all available Chatterbox multilingual voices with their characteristics
+ * Get all available Cartesia AI voices with their characteristics
  */
 router.get('/', async (req, res) => {
   try {
-    console.log('📋 Fetching all available Chatterbox multilingual voices...');
+    console.log('📋 Fetching all available Cartesia AI voices...');
     
     let voicesData;
     try {
@@ -22,26 +22,15 @@ router.get('/', async (req, res) => {
       
       // Provide fallback voice data so UI doesn't completely break
       console.log('🔄 Providing fallback voice data...');
-      voicesData = {
-        success: true,
-        voices_by_language: {
-          'en': [
-            {
-              id: 'default_en',
-              name: 'Emma',
-              description: 'Default English voice',
-              language: 'en',
-              characteristics: ['clear', 'professional'],
-              best_for: ['general', 'business', 'educational'],
-              exaggeration: 0.3,
-              emotion: 0.5
-            }
-          ]
-        },
-        total_voices: 1,
-        supported_languages: ['en'],
-        features: ['Multilingual TTS', 'Voice Cloning', 'Emotion Control']
-      };
+      voicesData = [
+        {
+          id: 'bf991597-6c13-4d2c-8d3d-2f4f2a4c9e4e',
+          name: 'Newslady',
+          gender: 'female',
+          language: 'en',
+          provider: 'Cartesia'
+        }
+      ];
     }
     
     if (!voicesData) {
@@ -153,31 +142,31 @@ router.get('/recommendations', async (req, res) => {
 
 /**
  * POST /api/voices/:voiceId/preview
- * Generate a preview audio for a specific voice
+ * Generate a preview audio for a specific voice with podcast style
  */
 router.post('/:voiceId/preview', async (req, res) => {
   try {
     const { voiceId } = req.params;
-    const { text } = req.body;
-    
-    console.log(`🎧 Generating preview for voice: ${voiceId}`);
-    
+    const { text, podcastStyle } = req.body;
+
+    console.log(`🎧 Generating preview for voice: ${voiceId} with style: ${podcastStyle || 'conversational'}`);
+
     if (!voiceId) {
       return res.status(400).json({
         error: 'Voice ID is required'
       });
     }
-    
-    // Generate preview with optional custom text
+
+    // Generate preview with optional custom text and podcast style
     let previewResult;
     if (text) {
       previewResult = await ttsService.generateAudio(text, {
         voice: voiceId,
-        speed: 1.0,
-        outputFile: `preview_${voiceId}_custom_${Date.now()}.wav`
+        podcastStyle: podcastStyle || 'conversational',
+        outputFile: `preview_${voiceId}_${podcastStyle || 'conversational'}_${Date.now()}.wav`
       });
     } else {
-      previewResult = await ttsService.generateVoicePreview(voiceId);
+      previewResult = await ttsService.generateVoicePreview(voiceId, podcastStyle || 'conversational');
     }
     
     if (!previewResult.success) {
@@ -236,6 +225,32 @@ router.get('/groups', async (req, res) => {
     console.error('❌ Voice groups error:', error);
     res.status(500).json({
       error: 'Failed to fetch voice groups',
+      message: error.message
+    });
+  }
+});
+
+/**
+ * GET /api/voices/podcast-styles
+ * Get all available podcast styles
+ */
+router.get('/podcast-styles', async (req, res) => {
+  try {
+    console.log('🎭 Fetching podcast styles...');
+
+    const podcastStyles = ttsService.getPodcastStyles();
+
+    res.json({
+      success: true,
+      podcastStyles,
+      total: podcastStyles.length,
+      timestamp: new Date().toISOString()
+    });
+
+  } catch (error) {
+    console.error('❌ Podcast styles error:', error);
+    res.status(500).json({
+      error: 'Failed to fetch podcast styles',
       message: error.message
     });
   }

@@ -111,19 +111,11 @@ router.post('/generate', async (req, res) => {
     const {
       documentContent,
       narrationType = 'summary',
-      voice: requestedVoice = 'emma',
+      voice: requestedVoice = '829ccd10-f8b3-43cd-b8a0-4aeaa81f3b30', // Default: Linda - Conversational Guide
+      podcastStyle = 'conversational',
       speed = 1.0,
       backgroundMusic = false,
-      musicType = 'none',
-      // Advanced voice customization parameters
-      exaggeration = null,
-      temperature = 0.8,
-      cfg_weight = 0.5,
-      min_p = 0.05,
-      top_p = 1.0,
-      repetition_penalty = 1.2,
-      seed = 0,
-      reference_audio = null
+      musicType = 'none'
     } = req.body;
 
     if (!documentContent) {
@@ -149,30 +141,29 @@ router.post('/generate', async (req, res) => {
     // Generate unique ID for narration
     const narrationId = uuidv4();
     
-    // Map frontend voice IDs to backend Chatterbox voice IDs
+    // Map frontend voice IDs to backend Cartesia voice IDs
     const voiceMapping = {
-      // Frontend voices -> Backend Chatterbox voices
-      'emma_en': 'default_en',
-      'james_en': 'default_en', 
-      'sophia_es': 'default_es',
-      'am_adam': 'default_en',
-      'bf_heart': 'default_en',
-      'am_david': 'default_en',
-      // Direct Chatterbox voice IDs (passthrough)
-      'default_en': 'default_en',
-      'default_es': 'default_es',
-      'default_fr': 'default_fr',
-      'default_de': 'default_de',
-      'default_ar': 'default_ar',
-      'default_zh': 'default_zh',
-      'default_ja': 'default_ja',
-      'default_ko': 'default_ko',
-      'default_it': 'default_it',
-      'default_pt': 'default_pt',
-      'default_ru': 'default_ru',
-      'default_hi': 'default_hi'
+      // Frontend legacy voices -> Cartesia voices
+      'emma_en': '829ccd10-f8b3-43cd-b8a0-4aeaa81f3b30', // Linda - Conversational Guide
+      'james_en': 'a167e0f3-df7e-4d52-a9c3-f949145efdab', // Blake - Helpful Agent
+      'sophia_es': '5c5ad5e7-1020-476b-8b91-fdcbe9cc313c', // Daniela - Relaxed Woman
+      'am_adam': '5ee9feff-1265-424a-9d7f-8e4d431a12c7', // Ronald - Thinker
+      'bf_heart': '694f9389-aac1-45b6-b726-9d9369183238', // Sarah - Mindful Woman
+      'am_david': 'a167e0f3-df7e-4d52-a9c3-f949145efdab', // Blake - Helpful Agent
+      // Direct Cartesia voice IDs (passthrough) - updated with correct IDs
+      'e07c00bc-4134-4eae-9ea4-1a55fb45746b': 'e07c00bc-4134-4eae-9ea4-1a55fb45746b', // Brooke
+      'f786b574-daa5-4673-aa0c-cbe3e8534c02': 'f786b574-daa5-4673-aa0c-cbe3e8534c02', // Katie
+      '9626c31c-bec5-4cca-baa8-f8ba9e84c8bc': '9626c31c-bec5-4cca-baa8-f8ba9e84c8bc', // Jacqueline
+      'f9836c6e-a0bd-460e-9d3c-f7299fa60f94': 'f9836c6e-a0bd-460e-9d3c-f7299fa60f94', // Caroline
+      '5ee9feff-1265-424a-9d7f-8e4d431a12c7': '5ee9feff-1265-424a-9d7f-8e4d431a12c7', // Ronald
+      '829ccd10-f8b3-43cd-b8a0-4aeaa81f3b30': '829ccd10-f8b3-43cd-b8a0-4aeaa81f3b30', // Linda
+      '694f9389-aac1-45b6-b726-9d9369183238': '694f9389-aac1-45b6-b726-9d9369183238', // Sarah
+      '248be419-c632-4f23-adf1-5324ed7dbf1d': '248be419-c632-4f23-adf1-5324ed7dbf1d', // Elizabeth
+      'a167e0f3-df7e-4d52-a9c3-f949145efdab': 'a167e0f3-df7e-4d52-a9c3-f949145efdab', // Blake
+      '5c5ad5e7-1020-476b-8b91-fdcbe9cc313c': '5c5ad5e7-1020-476b-8b91-fdcbe9cc313c', // Daniela
+      'default_en': '829ccd10-f8b3-43cd-b8a0-4aeaa81f3b30' // Linda - Conversational Guide
     };
-    
+
     let voice = voiceMapping[requestedVoice] || voiceMapping['default_en'];
     
     if (voice !== requestedVoice) {
@@ -183,24 +174,16 @@ router.post('/generate', async (req, res) => {
     
     // Generate TTS audio with Chatterbox multilingual TTS
     // ALWAYS generate audio for all narration types - user expects audio output
-    console.log(`🎧 Generating TTS audio with Chatterbox multilingual TTS (Advanced)...`);
-    console.log(`📝 Text length: ${scriptResult.response.length} chars, Voice: ${voice}`);
-    
-    // Emergency fix: For document-summary, prioritize text delivery over audio
+    console.log(`🎧 Generating TTS audio with Cartesia AI TTS...`);
+    console.log(`📝 Text length: ${scriptResult.response.length} chars, Voice: ${voice}, Style: ${podcastStyle}`);
+
     let audioResult = null;
-    
+
     try {
-      audioResult = await ttsService.generateAudio(scriptResult.response, { 
-        voice: voice, 
-        speed,
-        exaggeration,
-        temperature,
-        cfg_weight,
-        min_p,
-        top_p,
-        repetition_penalty,
-        seed,
-        reference_audio
+      audioResult = await ttsService.generateAudio(scriptResult.response, {
+        voice: voice,
+        podcastStyle: podcastStyle,
+        speed
       });
     } catch (audioError) {
       console.error('❌ TTS generation failed:', audioError.message);

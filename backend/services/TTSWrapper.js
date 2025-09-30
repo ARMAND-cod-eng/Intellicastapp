@@ -1,85 +1,63 @@
-import { spawn } from 'child_process';
-import path from 'path';
-import fs from 'fs-extra';
-import { fileURLToPath } from 'url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+import CartesiaTTSService from './CartesiaTTSService.js';
 
 class TTSWrapper {
   constructor() {
-    this.pythonScript = path.join(__dirname, 'TTSService.py');  // Use Chatterbox exclusive service
-    this.audioDir = path.join(__dirname, '..', 'audio');
-    
-    console.log('🎙️  Exclusive Chatterbox TTS Service initialized');
-    console.log('🌍 Supporting 23 languages with emotion control');
-    console.log('🚫 No fallback TTS - Chatterbox exclusive mode enabled');
+    this.ttsService = new CartesiaTTSService();
+
+    console.log('🎙️  Cartesia AI TTS Service initialized');
+    console.log('🌍 Supporting multiple voices with podcast style adaptation');
+    console.log('✨ Enhanced with 5 podcast presentation styles');
   }
 
   /**
    * Check if TTS service is healthy
    */
   async healthCheck() {
-    try {
-      console.log('🔍 Checking TTS service health...');
-      
-      const result = await this.runPythonScript(['--health-check']);
-      
-      if (result.success) {
-        const healthData = JSON.parse(result.output);
-        console.log('✅ TTS service is healthy');
-        return {
-          status: 'healthy',
-          ...healthData
-        };
-      } else {
-        console.error('❌ TTS service health check failed:', result.error);
-        return {
-          status: 'unhealthy',
-          error: result.error
-        };
-      }
-    } catch (error) {
-      console.error('❌ TTS health check error:', error);
-      return {
-        status: 'unhealthy',
-        error: error.message
-      };
-    }
+    return await this.ttsService.healthCheck();
   }
 
   /**
    * Get all available voices with their characteristics
    */
   async getAvailableVoices() {
-    try {
-      const result = await this.runPythonScript(['--list-voices']);
-      
-      if (result.success) {
-        return JSON.parse(result.output);
-      } else {
-        console.error('❌ Failed to get voice list:', result.error);
-        return null;
-      }
-    } catch (error) {
-      console.error('❌ Get voices error:', error);
-      return null;
-    }
+    return await this.ttsService.getAvailableVoices();
   }
 
   /**
-   * Get voice recommendations based on content category
+   * Get available podcast styles
    */
-  async getVoiceRecommendations(category = 'general') {
+  getPodcastStyles() {
+    return this.ttsService.getPodcastStyles();
+  }
+
+  /**
+   * Get voice recommendations based on content category and podcast style
+   */
+  async getVoiceRecommendations(category = 'general', podcastStyle = 'conversational') {
     try {
-      const result = await this.runPythonScript(['--recommend', category]);
-      
-      if (result.success) {
-        return JSON.parse(result.output);
-      } else {
-        console.error('❌ Failed to get voice recommendations:', result.error);
-        return [];
-      }
+      const voices = await this.getAvailableVoices();
+
+      // Filter voices based on category and style preferences
+      const recommendations = voices.filter(voice => {
+        switch (category) {
+          case 'news':
+            return voice.name.toLowerCase().includes('news') ||
+                   voice.name.toLowerCase().includes('professional');
+          case 'educational':
+            return voice.gender === 'female' ||
+                   voice.name.toLowerCase().includes('calm');
+          case 'business':
+            return voice.name.toLowerCase().includes('professional') ||
+                   voice.name.toLowerCase().includes('british');
+          case 'storytelling':
+            return voice.name.toLowerCase().includes('dramatic') ||
+                   voice.name.toLowerCase().includes('mischief');
+          default:
+            return true;
+        }
+      });
+
+      return recommendations.slice(0, 3); // Return top 3 recommendations
     } catch (error) {
       console.error('❌ Get recommendations error:', error);
       return [];
@@ -87,205 +65,55 @@ class TTSWrapper {
   }
 
   /**
-   * Generate a voice preview
+   * Generate a voice preview with podcast style
    */
-  async generateVoicePreview(voiceId) {
-    try {
-      console.log(`🎧 Generating preview for voice: ${voiceId}`);
-
-      // Generate a short preview text based on language
-      const previewTexts = {
-        'en': 'Hello! This is a preview of this professional voice for your podcast content.',
-        'es': 'Hola! Esta es una previsualización de esta voz profesional para tu contenido de podcast.',
-        'fr': 'Bonjour! Ceci est un aperçu de cette voix professionnelle pour votre contenu de podcast.',
-        'de': 'Hallo! Dies ist eine Vorschau dieser professionellen Stimme für Ihren Podcast-Inhalt.',
-        'ar': 'مرحبا! هذه معاينة لهذا الصوت الاحترافي لمحتوى البودكاست الخاص بك.',
-        'da': 'Hej! Dette er en forhåndsvisning af denne professionelle stemme til dit podcast-indhold.',
-        'el': 'Γειά σου! Αυτή είναι μια προεπισκόπηση αυτής της επαγγελματικής φωνής για το περιεχόμενο του podcast σας.',
-        'fi': 'Hei! Tämä on esikatselu tästä ammattimaisesta äänestä podcast-sisällöllesi.',
-        'he': 'שלום! זוהי תצוגה מקדימה של הקול המקצועי הזה עבור תוכן הפודקאסט שלך.',
-        'hi': 'नमस्ते! यह आपकी पॉडकास्ट सामग्री के लिए इस पेशेवर आवाज का पूर्वावलोकन है।',
-        'it': 'Ciao! Questa è un\'anteprima di questa voce professionale per il contenuto del tuo podcast.',
-        'ja': 'こんにちは！これはあなたのポッドキャストコンテンツのためのプロフェッショナルな声のプレビューです。',
-        'ko': '안녕하세요! 이것은 귀하의 팟캐스트 콘텐츠를 위한 이 전문적인 목소리의 미리보기입니다.',
-        'ms': 'Hello! Ini adalah pratonton suara profesional untuk kandungan podcast anda.',
-        'nl': 'Hallo! Dit is een voorvertoning van deze professionele stem voor je podcast-inhoud.',
-        'no': 'Hei! Dette er en forhåndsvisning av denne profesjonelle stemmen for podcast-innholdet ditt.',
-        'pl': 'Cześć! To jest podgląd tego profesjonalnego głosu dla treści twojego podcastu.',
-        'pt': 'Olá! Esta é uma prévia desta voz profissional para o conteúdo do seu podcast.',
-        'ru': 'Привет! Это предварительный просмотр этого профессионального голоса для вашего подкаст-контента.',
-        'sv': 'Hej! Detta är en förhandsvisning av denna professionella röst för ditt podcast-innehåll.',
-        'sw': 'Hujambo! Hii ni hakiki ya sauti hii ya kitaaluma kwa maudhui ya podcast yako.',
-        'tr': 'Merhaba! Bu, podcast içeriğiniz için bu profesyonel sesin önizlemesidir.',
-        'zh': '你好！这是为您的播客内容提供的专业声音预览。'
-      };
-      
-      const language = voiceId.includes('_') ? voiceId.split('_').pop() : 'en';
-      const previewText = previewTexts[language] || previewTexts['en'];
-
-      const result = await this.runPythonScript(['--text', previewText, '--voice', voiceId]);
-
-      if (result.success) {
-        const audioData = JSON.parse(result.output);
-        console.log(`✅ Preview generated: ${audioData.file_name}`);
-        
-        return {
-          success: true,
-          audioUrl: `/audio/${audioData.file_name}`,
-          filePath: audioData.file_path,
-          fileName: audioData.file_name,
-          duration: audioData.duration,
-          voiceId: voiceId,
-          language: audioData.language,
-          model: audioData.model
-        };
-      } else {
-        console.error('❌ Preview generation failed:', result.error);
-        return {
-          success: false,
-          error: result.error
-        };
-      }
-    } catch (error) {
-      console.error('❌ Preview generation error:', error);
-      return {
-        success: false,
-        error: error.message
-      };
-    }
+  async generateVoicePreview(voiceId, podcastStyle = 'conversational') {
+    return await this.ttsService.generateVoicePreview(voiceId, podcastStyle);
   }
 
   /**
-   * Generate audio from text using Chatterbox multilingual voice ID with advanced customization
+   * Generate audio from text using Cartesia AI with podcast style adaptation
    */
   async generateAudio(text, options = {}) {
     try {
       const {
-        voice = 'default_en',  // Use Chatterbox default voice ID with language suffix
+        voice = '829ccd10-f8b3-43cd-b8a0-4aeaa81f3b30', // Default: Linda - Conversational Guide
+        podcastStyle = 'conversational',
         speed = 1.0,
-        emotion = null,
-        exaggeration = null,
-        temperature = 0.8,
-        cfg_weight = 0.5,
-        min_p = 0.05,
-        top_p = 1.0,
-        repetition_penalty = 1.2,
-        seed = 0,
-        reference_audio = null,
-        outputFile = null,
-        autoDetect = true
+        outputFile = null
       } = options;
 
-      // Use custom exaggeration if provided, otherwise use emotion if provided, otherwise use default
-      const final_exaggeration = exaggeration !== null ? exaggeration : (emotion !== null ? emotion : 0.5);
-
-      console.log(`🎤 Generating TTS audio: voice='${voice}', exag=${final_exaggeration}, temp=${temperature}, cfg=${cfg_weight}`);
+      console.log(`🎤 Generating TTS audio: voice='${voice}', style='${podcastStyle}', speed=${speed}`);
       console.log(`📄 Text to synthesize (${text.length} chars): "${text.substring(0, 100)}..."`);
 
-      const args = [
-        '--text', text,
-        '--voice', voice,
-        '--speed', speed.toString()
-      ];
-
-      // Advanced voice customization parameters
-      if (exaggeration !== null) {
-        args.push('--exaggeration', exaggeration.toString());
-      } else if (emotion !== null) {
-        args.push('--emotion', emotion.toString());
-      }
-
-      if (temperature !== 0.8) {
-        args.push('--temperature', temperature.toString());
-      }
-
-      if (cfg_weight !== 0.5) {
-        args.push('--cfg-weight', cfg_weight.toString());
-      }
-
-      if (min_p !== 0.05) {
-        args.push('--min-p', min_p.toString());
-      }
-
-      if (top_p !== 1.0) {
-        args.push('--top-p', top_p.toString());
-      }
-
-      if (repetition_penalty !== 1.2) {
-        args.push('--repetition-penalty', repetition_penalty.toString());
-      }
-
-      if (seed !== 0) {
-        args.push('--seed', seed.toString());
-      }
-
-      if (reference_audio) {
-        args.push('--reference-audio', reference_audio);
-      }
-
-      if (outputFile) {
-        args.push('--output', outputFile);
-      }
-
-      if (autoDetect) {
-        args.push('--auto-detect');
-      }
-
-      console.log(`🐍 Calling Python TTS service with ${args.length} arguments`);
-      const result = await this.runPythonScript(args);
+      const result = await this.ttsService.generateAudio(text, {
+        voice,
+        podcastStyle,
+        outputFile
+      });
 
       if (result.success) {
-        // Extract JSON from output (ignore loading messages and logs)
-        const output = result.output;
-        
-        // Find the complete JSON object by matching braces
-        const jsonStartIndex = output.indexOf('{');
-        if (jsonStartIndex === -1) {
-          throw new Error('No JSON response found in TTS output');
-        }
-        
-        let braceCount = 0;
-        let jsonEndIndex = -1;
-        
-        for (let i = jsonStartIndex; i < output.length; i++) {
-          if (output[i] === '{') braceCount++;
-          if (output[i] === '}') braceCount--;
-          if (braceCount === 0) {
-            jsonEndIndex = i;
-            break;
-          }
-        }
-        
-        if (jsonEndIndex === -1) {
-          throw new Error('Incomplete JSON response found in TTS output');
-        }
-        
-        const jsonString = output.substring(jsonStartIndex, jsonEndIndex + 1);
-        const audioData = JSON.parse(jsonString);
-        console.log(`✅ Audio generated: ${audioData.file_name} (${audioData.duration}s, ${audioData.language})`);
-        
+        console.log(`✅ Audio generated: ${result.fileName} (${result.fileSize} bytes, ${result.podcastStyle} style)`);
+
         return {
           success: true,
-          audioUrl: `/audio/${audioData.file_name}`,
-          filePath: audioData.file_path,
-          fileName: audioData.file_name,
-          duration: audioData.duration,
-          fileSize: audioData.file_size,
-          voice: audioData.voice,
-          language: audioData.language,
-          emotion: audioData.emotion,
-          voiceCharacteristics: audioData.voice_characteristics,
-          speed: audioData.speed,
-          textLength: audioData.text_length,
-          model: audioData.model
+          audioUrl: result.audioUrl,
+          filePath: result.filePath,
+          fileName: result.fileName,
+          fileSize: result.fileSize,
+          voice: result.voice,
+          voiceId: result.voiceId,
+          podcastStyle: result.podcastStyle,
+          styleDescription: result.styleDescription,
+          provider: result.provider,
+          textLength: result.textLength,
+          speed: result.speed
         };
       } else {
-        console.error('❌ Chatterbox TTS generation failed:', result.error);
-        console.error('❌ Full TTS result:', JSON.stringify(result, null, 2));
-        console.error('❌ TTS args used:', args);
+        console.error('❌ Cartesia TTS generation failed:', result.error);
         return {
           success: false,
-          error: `Chatterbox TTS failed: ${result.error || 'Unknown TTS error'}`
+          error: result.error
         };
       }
     } catch (error) {
@@ -298,134 +126,10 @@ class TTSWrapper {
   }
 
   /**
-   * Run Python TTS script with arguments
-   */
-  async runPythonScript(args) {
-    return new Promise((resolve) => {
-      const process = spawn('python', [this.pythonScript, ...args], {
-        stdio: ['pipe', 'pipe', 'pipe']
-      });
-
-      let output = '';
-      let error = '';
-
-      process.stdout.on('data', (data) => {
-        output += data.toString();
-      });
-
-      process.stderr.on('data', (data) => {
-        error += data.toString();
-      });
-
-      process.on('close', (code) => {
-        if (code === 0) {
-          resolve({
-            success: true,
-            output: output.trim(),
-            error: null
-          });
-        } else {
-          resolve({
-            success: false,
-            output: output.trim(),
-            error: error.trim() || `Process exited with code ${code}`
-          });
-        }
-      });
-
-      process.on('error', (err) => {
-        resolve({
-          success: false,
-          output: '',
-          error: err.message
-        });
-      });
-    });
-  }
-
-  /**
-   * Validate Chatterbox voice ID format
-   */
-  validateChatterboxVoiceId(voiceId) {
-    const validPatterns = ['_en', '_es', '_fr', '_de', '_ar', '_da', '_el', '_fi', '_he', '_hi', '_it', '_ja', '_ko', '_ms', '_nl', '_no', '_pl', '_pt', '_ru', '_sv', '_sw', '_tr', '_zh'];
-    return validPatterns.some(suffix => voiceId.endsWith(suffix));
-  }
-
-  /**
-   * Get default Chatterbox voice if invalid voice provided
-   */
-  getDefaultChatterboxVoice() {
-    return 'default_en'; // Default English - professional default
-  }
-
-  /**
-   * Clone voice from reference audio (5-second cloning)
-   */
-  async cloneVoice(referenceAudioPath, targetVoiceId = null) {
-    try {
-      console.log(`🎭 Cloning voice from: ${referenceAudioPath}`);
-
-      const args = ['--clone-voice', referenceAudioPath];
-      if (targetVoiceId) {
-        args.push('--voice', targetVoiceId);
-      }
-
-      const result = await this.runPythonScript(args);
-
-      if (result.success && !result.output.includes('failed')) {
-        console.log(`✅ Voice cloned successfully`);
-        return {
-          success: true,
-          clonedVoiceId: result.output.trim()
-        };
-      } else {
-        console.error('❌ Voice cloning failed:', result.output);
-        return {
-          success: false,
-          error: result.output || 'Voice cloning failed'
-        };
-      }
-    } catch (error) {
-      console.error('❌ Voice cloning error:', error);
-      return {
-        success: false,
-        error: error.message
-      };
-    }
-  }
-
-  /**
    * Clean up old audio files
    */
   async cleanupOldFiles(olderThanHours = 24) {
-    try {
-      const files = await fs.readdir(this.audioDir);
-      const now = Date.now();
-      const threshold = olderThanHours * 60 * 60 * 1000;
-
-      let cleaned = 0;
-
-      for (const file of files) {
-        if ((file.startsWith('narration_') || file.startsWith('chatterbox_')) && file.endsWith('.wav')) {
-          const filePath = path.join(this.audioDir, file);
-          const stats = await fs.stat(filePath);
-          
-          if (now - stats.mtime.getTime() > threshold) {
-            await fs.remove(filePath);
-            cleaned++;
-          }
-        }
-      }
-
-      if (cleaned > 0) {
-        console.log(`🧹 Cleaned up ${cleaned} old audio files`);
-      }
-
-      return { cleaned, total: files.length };
-    } catch (error) {
-      console.error('❌ Cleanup error:', error);
-      return { cleaned: 0, total: 0, error: error.message };
-    }
+    return await this.ttsService.cleanupOldFiles(olderThanHours);
   }
 }
 

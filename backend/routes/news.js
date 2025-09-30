@@ -7,11 +7,15 @@ import express from 'express';
 import Database from 'better-sqlite3';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import TTSWrapper from '../services/TTSWrapper.js';
+import OllamaService from '../services/OllamaService.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const router = express.Router();
+const ttsService = new TTSWrapper();
+const ollamaService = new OllamaService();
 
 // Initialize database connection
 const dbPath = path.join(__dirname, '../database.db');
@@ -274,6 +278,91 @@ router.get('/stats', async (req, res) => {
   } catch (error) {
     console.error('❌ Error fetching stats:', error.message);
     res.status(500).json({ error: 'Failed to fetch stats' });
+  }
+});
+
+/**
+ * POST /api/news/generate-audio
+ * Generate audio narration for a news article using Cartesia AI
+ */
+router.post('/generate-audio', async (req, res) => {
+  try {
+    const {
+      articleId,
+      voice = 'bf991597-6c13-4d2c-8d3d-2f4f2a4c9e4e', // Default: Newslady
+      podcastStyle = 'news',
+      includeTitle = true
+    } = req.body;
+
+    if (!articleId) {
+      return res.status(400).json({ error: 'Article ID is required' });
+    }
+
+    if (!db) {
+      return res.status(500).json({ error: 'Database not available' });
+    }
+
+    // Fetch article
+    const article = db.prepare(`
+      SELECT
+        a.*,
+        s.name as source_name
+      FROM news_articles a
+      LEFT JOIN news_sources s ON a.source_id = s.id
+      WHERE a.id = ?
+    `).get(articleId);
+
+    if (!article) {
+      return res.status(404).json({ error: 'Article not found' });
+    }
+
+    console.log(`🎙️  Generating audio for news article: ${article.title}`);
+
+    // Prepare narration text
+    let narrationText = '';
+    if (includeTitle) {
+      narrationText = `${article.title}. `;
+    }
+
+    // Use summary if available, otherwise use content excerpt
+    if (article.summary) {
+      narrationText += article.summary;
+    } else if (article.content) {
+      // Take first 500 characters of content
+      const contentExcerpt = article.content.substring(0, 500);
+      narrationText += contentExcerpt + (article.content.length > 500 ? '...' : '');
+    } else {
+      return res.status(400).json({ error: 'Article has no content to narrate' });
+    }
+
+    // Generate audio with Cartesia TTS
+    const audioResult = await ttsService.generateAudio(narrationText, {
+      voice,
+      podcastStyle,
+      speed: 1.0
+    });
+
+    if (!audioResult.success) {
+      throw new Error(`Audio generation failed: ${audioResult.error}`);
+    }
+
+    console.log(`✅ Audio generated for article ${articleId}: ${audioResult.fileName}`);
+
+    res.json({
+      success: true,
+      articleId,
+      audioUrl: audioResult.audioUrl,
+      audioFile: audioResult.fileName,
+      duration: audioResult.duration,
+      voice: audioResult.voice,
+      voiceId: audioResult.voiceId,
+      podcastStyle: audioResult.podcastStyle,
+      provider: audioResult.provider
+    });
+
+  } catch (error) {
+    console.error('❌ Error generating news audio:', error.message);
+    res.status(500).json({ error: 'Failed to generate news audio', message: error.message });
   }
 });
 

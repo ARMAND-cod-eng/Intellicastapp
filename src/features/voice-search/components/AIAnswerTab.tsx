@@ -26,13 +26,15 @@ interface AIAnswerTabProps {
   isLoading?: boolean;
   onFollowUpSearch?: (query: string) => void;
   onSaveEpisode?: () => void;
+  mode?: 'simple' | 'detailed';
 }
 
 const AIAnswerTab: React.FC<AIAnswerTabProps> = ({
   searchData,
   isLoading = false,
   onFollowUpSearch,
-  onSaveEpisode
+  onSaveEpisode,
+  mode = 'simple'
 }) => {
   const { theme } = useTheme();
   const [isExpanded, setIsExpanded] = useState(true);
@@ -83,25 +85,59 @@ const AIAnswerTab: React.FC<AIAnswerTabProps> = ({
 
     let formatted = answer;
 
-    // Format headers (## Text)
-    formatted = formatted.replace(/^## (.+)$/gm, '<h3 class="answer-header">$1</h3>');
+    if (mode === 'detailed') {
+      // Detailed mode: Perplexity-style with enhanced formatting
 
-    // Format paragraphs
-    formatted = formatted.replace(/\n\n/g, '</p><p class="answer-paragraph">');
+      // Format headers (## Text) with more prominent styling
+      formatted = formatted.replace(/^## (.+)$/gm, '<h3 class="answer-header-detailed">$1</h3>');
 
-    // Wrap in paragraph tags if not already formatted
-    if (!formatted.includes('<p class="answer-paragraph">')) {
-      formatted = '<p class="answer-paragraph">' + formatted + '</p>';
+      // Format subheaders (### Text)
+      formatted = formatted.replace(/^### (.+)$/gm, '<h4 class="answer-subheader">$1</h4>');
+
+      // Format bold text (**text**)
+      formatted = formatted.replace(/\*\*(.+?)\*\*/g, '<strong class="answer-bold">$1</strong>');
+
+      // Format italic text (*text*)
+      formatted = formatted.replace(/\*(.+?)\*/g, '<em class="answer-italic">$1</em>');
+
+      // Format bullet points
+      formatted = formatted.replace(/^[•\-*]\s+(.+)$/gm, '<li class="answer-list-item">$1</li>');
+      formatted = formatted.replace(/(<li class="answer-list-item">.*?<\/li>\s*)+/g, '<ul class="answer-list">$&</ul>');
+
+      // Format paragraphs with better spacing
+      formatted = formatted.replace(/\n\n/g, '</p><p class="answer-paragraph-detailed">');
+
+      // Format citations with Perplexity-style inline references
+      formatted = formatted.replace(/\[(\d+)\]/g, (match, num) => {
+        const citationNum = parseInt(num);
+        const source = searchData.results?.[citationNum - 1];
+        const domain = source ? new URL(source.url).hostname.replace('www.', '') : '';
+        return `<sup class="citation-perplexity" data-citation="${citationNum}" onclick="scrollToCitation(${citationNum - 1})"><span class="citation-number">${citationNum}</span><span class="citation-domain">${domain}</span></sup>`;
+      });
+
+    } else {
+      // Simple mode: Keep it clean like Tavily (no modifications)
+      // Format headers (## Text)
+      formatted = formatted.replace(/^## (.+)$/gm, '<h3 class="answer-header">$1</h3>');
+
+      // Format paragraphs
+      formatted = formatted.replace(/\n\n/g, '</p><p class="answer-paragraph">');
+
+      // Format citations with simple styling
+      formatted = formatted.replace(/\[(\d+)\]/g, (match, num) => {
+        const citationNum = parseInt(num);
+        return `<sup class="citation-interactive" data-citation="${citationNum}" onclick="scrollToCitation(${citationNum - 1})">[${citationNum}]</sup>`;
+      });
     }
 
-    // Format citations with interactive elements
-    formatted = formatted.replace(/\[(\d+)\]/g, (match, num) => {
-      const citationNum = parseInt(num);
-      return `<sup class="citation-interactive" data-citation="${citationNum}" onclick="scrollToCitation(${citationNum - 1})">[${citationNum}]</sup>`;
-    });
+    // Wrap in paragraph tags if not already formatted
+    if (!formatted.includes('<p class="answer-paragraph')) {
+      const paragraphClass = mode === 'detailed' ? 'answer-paragraph-detailed' : 'answer-paragraph';
+      formatted = `<p class="${paragraphClass}">` + formatted + '</p>';
+    }
 
     // Clean up empty paragraphs
-    formatted = formatted.replace(/<p class="answer-paragraph">\s*<\/p>/g, '');
+    formatted = formatted.replace(/<p class="[^"]*">\s*<\/p>/g, '');
 
     return formatted;
   };
@@ -238,6 +274,8 @@ const AIAnswerTab: React.FC<AIAnswerTabProps> = ({
                 setCurrentTime={setCurrentTime}
                 duration={estimatedDuration}
                 theme={theme}
+                searchData={searchData}
+                mode={mode}
               />
 
               {/* Action Buttons */}
@@ -387,42 +425,128 @@ const PodcastPlayer: React.FC<{
   setCurrentTime: (time: number) => void;
   duration: number;
   theme: string;
-}> = ({ isPlaying, setIsPlaying, currentTime, setCurrentTime, duration, theme }) => (
-  <div
-    className="rounded-2xl p-6 border"
-    style={{
-      background: theme === 'professional-dark'
-        ? 'linear-gradient(135deg, rgba(55, 65, 81, 0.5), rgba(75, 85, 99, 0.3))'
-        : 'linear-gradient(135deg, rgba(249, 250, 251, 0.8), rgba(243, 244, 246, 0.6))',
-      borderColor: theme === 'professional-dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
-      backdropFilter: 'blur(10px)',
-    }}
-  >
-    <div className="flex items-center space-x-4">
-      {/* Play Button */}
-      <button
-        className="relative p-4 rounded-full shadow-lg transition-all duration-300 hover:scale-110 group"
-        style={{
-          background: 'linear-gradient(135deg, #8B5CF6, #06B6D4)',
-        }}
-        title="Audio coming soon"
-      >
-        {isPlaying ? (
-          <Pause className="w-6 h-6 text-white" />
-        ) : (
-          <Play className="w-6 h-6 text-white ml-1" />
-        )}
+  searchData?: TavilySearchResponse;
+  mode?: string;
+}> = ({ isPlaying, setIsPlaying, currentTime, setCurrentTime, duration, theme, searchData, mode }) => {
+  const [audioUrl, setAudioUrl] = React.useState<string | null>(null);
+  const [isGenerating, setIsGenerating] = React.useState(false);
+  const [audioElement, setAudioElement] = React.useState<HTMLAudioElement | null>(null);
+  const [error, setError] = React.useState<string | null>(null);
 
-        {/* Pulse animation when playing */}
-        {isPlaying && (
-          <div className="absolute inset-0 rounded-full bg-gradient-to-r from-purple-400 to-blue-400 animate-ping opacity-20" />
-        )}
+  const generateAudio = async () => {
+    if (!searchData?.answer) return;
 
-        {/* Tooltip */}
-        <div className="absolute -top-12 left-1/2 transform -translate-x-1/2 px-3 py-1 bg-black text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap">
-          Audio coming soon
-        </div>
-      </button>
+    setIsGenerating(true);
+    setError(null);
+
+    try {
+      const response = await fetch('http://localhost:3004/api/search/generate-audio', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          text: searchData.answer,
+          query: searchData.query,
+          voice: '829ccd10-f8b3-43cd-b8a0-4aeaa81f3b30', // Linda - Conversational Guide
+          podcastStyle: mode === 'detailed' ? 'educational' : 'professional',
+          speed: 1.0,
+          mode: mode || 'simple'
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to generate audio');
+      }
+
+      const data = await response.json();
+
+      if (data.success && data.audioUrl) {
+        const fullAudioUrl = `http://localhost:3004${data.audioUrl}`;
+        setAudioUrl(fullAudioUrl);
+
+        // Create audio element
+        const audio = new Audio(fullAudioUrl);
+        audio.onloadeddata = () => {
+          setAudioElement(audio);
+          audio.play();
+          setIsPlaying(true);
+        };
+        audio.ontimeupdate = () => {
+          setCurrentTime(Math.floor(audio.currentTime));
+        };
+        audio.onended = () => {
+          setIsPlaying(false);
+          setCurrentTime(0);
+        };
+        audio.onerror = () => {
+          setError('Failed to load audio');
+          setIsPlaying(false);
+        };
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to generate audio');
+      console.error('Audio generation error:', err);
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handlePlayPause = () => {
+    if (!audioUrl) {
+      // Generate audio on first play
+      generateAudio();
+    } else if (audioElement) {
+      if (isPlaying) {
+        audioElement.pause();
+        setIsPlaying(false);
+      } else {
+        audioElement.play();
+        setIsPlaying(true);
+      }
+    }
+  };
+
+  return (
+    <div
+      className="rounded-2xl p-6 border"
+      style={{
+        background: theme === 'professional-dark'
+          ? 'linear-gradient(135deg, rgba(55, 65, 81, 0.5), rgba(75, 85, 99, 0.3))'
+          : 'linear-gradient(135deg, rgba(249, 250, 251, 0.8), rgba(243, 244, 246, 0.6))',
+        borderColor: theme === 'professional-dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
+        backdropFilter: 'blur(10px)',
+      }}
+    >
+      <div className="flex items-center space-x-4">
+        {/* Play Button */}
+        <button
+          onClick={handlePlayPause}
+          disabled={isGenerating}
+          className="relative p-4 rounded-full shadow-lg transition-all duration-300 hover:scale-110 group disabled:opacity-50 disabled:cursor-not-allowed"
+          style={{
+            background: isGenerating ? 'linear-gradient(135deg, #6B7280, #4B5563)' : 'linear-gradient(135deg, #8B5CF6, #06B6D4)',
+          }}
+          title={isGenerating ? 'Generating audio...' : audioUrl ? (isPlaying ? 'Pause' : 'Play') : 'Generate audio'}
+        >
+          {isGenerating ? (
+            <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
+          ) : isPlaying ? (
+            <Pause className="w-6 h-6 text-white" />
+          ) : (
+            <Play className="w-6 h-6 text-white ml-1" />
+          )}
+
+          {/* Pulse animation when playing */}
+          {isPlaying && !isGenerating && (
+            <div className="absolute inset-0 rounded-full bg-gradient-to-r from-purple-400 to-blue-400 animate-ping opacity-20" />
+          )}
+
+          {/* Tooltip */}
+          <div className="absolute -top-12 left-1/2 transform -translate-x-1/2 px-3 py-1 bg-black text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap">
+            {isGenerating ? 'Generating with Cartesia AI...' : audioUrl ? (isPlaying ? 'Pause' : 'Play') : 'Generate Audio with Cartesia AI'}
+          </div>
+        </button>
 
       {/* Waveform Visualization */}
       <div className="flex-1 flex items-center space-x-1">
@@ -462,18 +586,49 @@ const PodcastPlayer: React.FC<{
 
       {/* Download Button */}
       <button
-        className="p-2 rounded-lg transition-all duration-300 hover:scale-110"
+        onClick={() => {
+          if (audioUrl && audioElement) {
+            const link = document.createElement('a');
+            link.href = audioUrl;
+            link.download = `search-audio-${Date.now()}.wav`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+          }
+        }}
+        disabled={!audioUrl}
+        className="p-2 rounded-lg transition-all duration-300 hover:scale-110 disabled:opacity-50 disabled:cursor-not-allowed"
         style={{
           backgroundColor: theme === 'professional-dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)',
           color: theme === 'professional-dark' ? '#E5E7EB' : '#374151',
         }}
-        title="Download audio (coming soon)"
+        title={audioUrl ? 'Download audio' : 'Generate audio first'}
       >
         <Download className="w-4 h-4" />
       </button>
     </div>
+
+    {/* Error Message */}
+    {error && (
+      <div className="mt-4 p-3 rounded-lg bg-red-100 border border-red-300 text-red-700 text-sm">
+        <p className="font-medium">Audio Error:</p>
+        <p>{error}</p>
+      </div>
+    )}
+
+    {/* Audio Info */}
+    {audioUrl && !error && (
+      <div className="mt-4 p-3 rounded-lg" style={{
+        backgroundColor: theme === 'professional-dark' ? 'rgba(59, 130, 246, 0.1)' : 'rgba(59, 130, 246, 0.05)',
+        borderLeft: '3px solid #60A5FA'
+      }}>
+        <p className="text-xs font-medium" style={{ color: theme === 'professional-dark' ? '#E5E7EB' : '#374151' }}>
+          🎙️ Audio generated with Cartesia AI • High-quality voice synthesis
+        </p>
+      </div>
+    )}
   </div>
-);
+);};
 
 // Citation Cards Component
 const CitationCards: React.FC<{
