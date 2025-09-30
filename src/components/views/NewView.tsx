@@ -3,6 +3,7 @@ import { FileText, Link, Sparkles, Check } from 'lucide-react';
 import type { DocumentContent } from '../../types/document';
 import { useTheme } from '../../contexts/ThemeContext';
 import SingleVoiceNarrationPanel from '../narration/SingleVoiceNarrationPanel';
+import MultiVoiceConversationPanel from '../narration/MultiVoiceConversationPanel';
 import ModernAudioPlayer from '../audio/ModernAudioPlayer';
 
 interface NewViewProps {
@@ -16,6 +17,8 @@ const NewView: React.FC<NewViewProps> = ({ currentView, onOpenUpload, uploadedCo
   const { theme } = useTheme();
   const [isSingleVoicePanelOpen, setIsSingleVoicePanelOpen] = useState(false);
   const [isSingleVoicePanelMinimized, setIsSingleVoicePanelMinimized] = useState(false);
+  const [isMultiVoicePanelOpen, setIsMultiVoicePanelOpen] = useState(false);
+  const [isMultiVoicePanelMinimized, setIsMultiVoicePanelMinimized] = useState(false);
   const [persistentAudioData, setPersistentAudioData] = useState<{
     id: string;
     audioUrl: string;
@@ -74,7 +77,10 @@ const NewView: React.FC<NewViewProps> = ({ currentView, onOpenUpload, uploadedCo
       description: 'Dynamic discussion between 2-4 AI speakers about your content',
       features: ['Natural interruptions', 'Emotional responses', 'Engaging dialogue'],
       recommended: true,
-      action: () => {},
+      action: () => {
+        setIsMultiVoicePanelOpen(true);
+        setIsMultiVoicePanelMinimized(false);
+      },
     },
     {
       title: 'Expert Panel Discussion',
@@ -88,7 +94,7 @@ const NewView: React.FC<NewViewProps> = ({ currentView, onOpenUpload, uploadedCo
   return (
     <>
       <div className={`p-8 space-y-8 transition-all duration-300 ${
-        isSingleVoicePanelOpen && !isSingleVoicePanelMinimized ? 'mr-1/2' : ''
+        (isSingleVoicePanelOpen && !isSingleVoicePanelMinimized) || (isMultiVoicePanelOpen && !isMultiVoicePanelMinimized) ? 'mr-1/2' : ''
       }`}>
       {/* Hero Section */}
       <section className="text-center mb-12">
@@ -303,6 +309,21 @@ const NewView: React.FC<NewViewProps> = ({ currentView, onOpenUpload, uploadedCo
           </div>
         </div>
       )}
+
+      {/* Multi-Voice Conversation Panel */}
+      <MultiVoiceConversationPanel
+        isOpen={isMultiVoicePanelOpen}
+        isMinimized={isMultiVoicePanelMinimized}
+        onClose={() => {
+          setIsMultiVoicePanelOpen(false);
+          setIsMultiVoicePanelMinimized(false);
+        }}
+        onMinimize={() => {
+          setIsMultiVoicePanelMinimized(!isMultiVoicePanelMinimized);
+        }}
+        uploadedContent={uploadedContent}
+        uploadedFiles={uploadedFiles}
+      />
     </>
   );
 };
