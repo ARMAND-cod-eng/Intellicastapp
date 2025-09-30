@@ -24,8 +24,8 @@ router.get('/', async (req, res) => {
       console.log('🔄 Providing fallback voice data...');
       voicesData = [
         {
-          id: 'bf991597-6c13-4d2c-8d3d-2f4f2a4c9e4e',
-          name: 'Newslady',
+          id: '829ccd10-f8b3-43cd-b8a0-4aeaa81f3b30',
+          name: 'Linda - Conversational Guide',
           gender: 'female',
           language: 'en',
           provider: 'Cartesia'

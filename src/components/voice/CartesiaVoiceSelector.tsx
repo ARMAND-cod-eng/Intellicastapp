@@ -26,9 +26,11 @@ const CartesiaVoiceSelector: React.FC<CartesiaVoiceSelectorProps> = ({
   ];
 
   const voices = [
-    { id: 'bf991597-6c13-4d2c-8d3d-2f4f2a4c9e4e', name: 'Newslady', gender: 'female', language: 'en', provider: 'Cartesia' },
-    { id: 'a0e99841-438c-4a64-b679-ae501e7d6091', name: 'Barbershop Man', gender: 'male', language: 'en', provider: 'Cartesia' },
-    { id: '2ee87190-8f84-4925-97da-e52547f9462c', name: 'Calm Lady', gender: 'female', language: 'en', provider: 'Cartesia' }
+    { id: '829ccd10-f8b3-43cd-b8a0-4aeaa81f3b30', name: 'Linda - Conversational Guide', gender: 'female', language: 'en', provider: 'Cartesia' },
+    { id: 'e07c00bc-4134-4eae-9ea4-1a55fb45746b', name: 'Brooke - Big Sister', gender: 'female', language: 'en', provider: 'Cartesia' },
+    { id: 'a167e0f3-df7e-4d52-a9c3-f949145efdab', name: 'Blake - Helpful Agent', gender: 'male', language: 'en', provider: 'Cartesia' },
+    { id: '694f9389-aac1-45b6-b726-9d9369183238', name: 'Sarah - Mindful Woman', gender: 'female', language: 'en', provider: 'Cartesia' },
+    { id: '5ee9feff-1265-424a-9d7f-8e4d431a12c7', name: 'Ronald - Thinker', gender: 'male', language: 'en', provider: 'Cartesia' }
   ];
 
   const getVoiceIcon = (gender: string) => {
