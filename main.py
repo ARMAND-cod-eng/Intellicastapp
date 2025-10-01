@@ -27,6 +27,7 @@ class PodcastOptions:
     length: str = "10min"  # "5min", "10min", "15min", "20min"
     host_voice: str = "host_male_friendly"
     guest_voice: str = "guest_female_expert"
+    style: str = "conversational"  # "conversational", "expert-panel", "debate", "interview"
     output_format: str = "mp3"  # "wav", "mp3", "ogg"
     add_pauses: bool = True
     normalize_audio: bool = True
@@ -116,18 +117,21 @@ class TogetherNotebookLM:
 
         return text
 
-    def enhance_dialogue(self, dialogue: PodcastDialogue) -> List[Dict[str, str]]:
+    def enhance_dialogue(self, dialogue: PodcastDialogue, style: str = "conversational") -> List[Dict[str, str]]:
         """
         Enhance dialogue with natural conversation elements
 
         Args:
             dialogue: Generated podcast dialogue
+            style: Conversation style to apply voice mapping
 
         Returns:
             Enhanced dialogue list
         """
         enhanced = []
 
+        # For debate style, ensure host and guest have opposing gender voices
+        # This creates clearer distinction between competing viewpoints
         for i, turn in enumerate(dialogue.turns):
             # Convert to dictionary format
             turn_dict = {
@@ -237,12 +241,14 @@ class TogetherNotebookLM:
             # Step 2: Generate script
             print(f"\n[GEN]  Step 2/5: Generating conversation script...")
             print(f"   Target length: {options.length}")
+            print(f"   Style: {options.style}")
             print(f"   Model: {self.llm_generator.model}")
 
             dialogue = self.llm_generator.generate_podcast_dialogue(
                 document_text=document_text,
                 length=options.length,
-                temperature=options.temperature
+                temperature=options.temperature,
+                style=options.style
             )
 
             # Validate dialogue
@@ -251,7 +257,7 @@ class TogetherNotebookLM:
 
             # Step 3: Enhance dialogue
             print(f"\n[ENHANCE] Step 3/5: Enhancing dialogue...")
-            enhanced_dialogue = self.enhance_dialogue(dialogue)
+            enhanced_dialogue = self.enhance_dialogue(dialogue, style=options.style)
             print(f"   [OK] Added natural conversation elements")
 
             # Save script if requested
@@ -266,10 +272,30 @@ class TogetherNotebookLM:
             print(f"   Guest voice: {options.guest_voice}")
 
             # Configure TTS with selected voices
+            # For debate style, ensure opposing genders for clarity
+            host_voice = options.host_voice
+            guest_voice = options.guest_voice
+
+            if options.style == "debate":
+                # Ensure male/female distinction for debates
+                # Check if both voices are same gender, if so swap one
+                from tts_generator import CartesiaTTSGenerator as TTS
+                host_config = TTS.VOICE_PRESETS.get(host_voice)
+                guest_config = TTS.VOICE_PRESETS.get(guest_voice)
+
+                if host_config and guest_config:
+                    if host_config.gender == guest_config.gender:
+                        # Swap to opposite gender
+                        if host_config.gender == "male":
+                            guest_voice = "guest_female_expert"
+                        else:
+                            guest_voice = "guest_male"
+                        print(f"   [DEBATE] Auto-adjusted voices for gender contrast")
+
             self.tts_generator = CartesiaTTSGenerator(
                 api_key=self.cartesia_api_key,
-                host_voice=options.host_voice,
-                guest_voice=options.guest_voice
+                host_voice=host_voice,
+                guest_voice=guest_voice
             )
 
             # Generate audio

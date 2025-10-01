@@ -261,8 +261,8 @@ const MultiVoiceConversationPanel: React.FC<MultiVoiceConversationPanelProps> = 
       const voiceMap: { [key: string]: { host: string; guest: string } } = {
         'conversational': { host: 'host_male_friendly', guest: 'guest_female_expert' },
         'expert-panel': { host: 'host_male_casual', guest: 'guest_female_warm' },
-        'debate': { host: 'host_male_friendly', guest: 'guest_male' },
-        'interview': { host: 'host_female', guest: 'guest_male' }
+        'debate': { host: 'host_male_friendly', guest: 'guest_female_expert' },  // Male vs Female for clear distinction in debate
+        'interview': { host: 'host_male_friendly', guest: 'guest_female_expert' }
       };
 
       const voices = voiceMap[selectedStyle] || voiceMap['conversational'];

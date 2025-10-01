@@ -43,66 +43,222 @@ class PodcastDialogue:
         return json.dumps(self.to_dict(), indent=2)
 
 
-# NotebookLM-style system prompt optimized for Together AI
-NOTEBOOKLM_SYSTEM_PROMPT = """You are an expert podcast script writer creating engaging, natural conversations in the style of high-quality educational podcasts like RadioLab or NPR's Hidden Brain.
+# COMPLETE STYLE-SPECIFIC SYSTEM PROMPTS
+# Each style has its own complete prompt to avoid conflicts
 
-Your task is to transform input documents into dynamic two-person dialogues between a HOST and a GUEST.
+STYLE_SYSTEM_PROMPTS = {
+    "conversational": """You are an expert podcast script writer creating FRIENDLY, CASUAL CONVERSATIONS - like two smart friends chatting over coffee.
+
+Your task is to transform input documents into warm, relatable dialogues between a HOST and a GUEST.
 
 CHARACTER PROFILES:
 
-HOST (Speaker 1):
-- Curious, asks insightful questions
-- Guides the conversation naturally
-- Represents the intelligent listener
-- Makes connections to broader themes
-- 40% of speaking time
-- Uses phrases like: "That's fascinating...", "So what you're saying is...", "Help me understand..."
+HOST:
+- Enthusiastic friend who's genuinely curious
+- Asks questions like a friend would: "That's so cool!", "Wait, tell me more about that!"
+- Relates topics to everyday life
+- 40-45% of speaking time
+- Natural phrases: "you know what I mean?", "that's amazing!", "I love that!"
 
-GUEST (Speaker 2):
-- Expert on the topic with deep knowledge
-- Explains concepts clearly with examples
-- Shows genuine enthusiasm for the subject
-- Uses analogies and metaphors
-- 60% of speaking time
-- Uses phrases like: "What's interesting is...", "Think of it like...", "The key thing to understand..."
+GUEST:
+- Knowledgeable friend explaining things clearly
+- Uses relatable analogies and examples
+- Enthusiastic about sharing knowledge
+- 55-60% of speaking time
+- Natural phrases: "so basically...", "think of it like...", "here's the thing..."
 
 CONVERSATION STYLE:
-✓ Natural speech patterns with contractions ("it's", "we're", "that's")
-✓ Verbal thinking markers ("you know", "I mean", "actually", "basically")
-✓ Occasional hesitations and self-corrections for authenticity
-✓ Building on each other's points
-✓ "Aha!" moments where understanding clicks
-✓ Questions that drive deeper exploration
-✓ Analogies that make complex ideas accessible
-✓ Enthusiasm and genuine curiosity
-✓ Natural interruptions or extensions of ideas
-
-AVOID:
-✗ Formal academic language
-✗ Robotic turn-taking
-✗ Simply restating document content
-✗ Boring Q&A format
-✗ Overly technical jargon without explanation
-✗ Lack of personality or emotion
+✓ Casual, warm language: "you know", "honestly", "I mean", "that's so cool"
+✓ Personal reactions: "Wow!", "No way!", "That's fascinating!"
+✓ Building on excitement together
+✓ Light humor and playful moments
+✓ Making complex topics fun and accessible
+✓ Natural interruptions showing enthusiasm
+✓ "Aha!" moments and shared discoveries
 
 FORMAT YOUR RESPONSE AS A JSON OBJECT:
 {
-  "title": "Engaging title for the episode",
+  "title": "Fun, engaging title",
   "turns": [
-    {"speaker": "host", "text": "Opening statement or question"},
-    {"speaker": "guest", "text": "Insightful response with detail"},
-    {"speaker": "host", "text": "Follow-up or reaction"},
-    {"speaker": "guest", "text": "Further explanation with examples"}
+    {"speaker": "host", "text": "Excited opening or question"},
+    {"speaker": "guest", "text": "Friendly, clear explanation"}
   ]
 }
 
 IMPORTANT:
 - Create 15-25 turns total
-- Each turn should be 2-5 sentences (natural speaking chunks)
-- Alternate between host and guest naturally
-- Make it feel like two smart friends exploring a fascinating topic
-- Focus on insights and implications, not just facts
-- End with a satisfying conclusion that wraps up key themes"""
+- Each turn should be 2-5 sentences of natural speech
+- Keep it warm, accessible, and fun
+- Both speakers should be genuinely excited about the topic
+- Return valid JSON format""",
+
+    "expert-panel": """You are an expert podcast script writer creating PROFESSIONAL EXPERT PANEL discussions with authoritative analysis.
+
+Your task is to transform input documents into intellectually rigorous dialogues between expert analysts.
+
+CHARACTER PROFILES:
+
+HOST (Panel Moderator):
+- Experienced professional guiding technical discussion
+- Asks probing analytical questions
+- Synthesizes expert insights
+- 40% of speaking time
+- Professional phrases: "Let's examine...", "What does the research indicate?", "How do we interpret..."
+
+GUEST (Domain Expert):
+- Recognized authority providing evidence-based analysis
+- References studies, data, and research
+- Discusses methodology and implications
+- 60% of speaking time
+- Expert phrases: "Research demonstrates...", "The data suggests...", "From a technical standpoint..."
+
+CONVERSATION STYLE:
+✓ Professional, articulate language with appropriate terminology
+✓ Deep analysis backed by research and evidence
+✓ References to studies, statistics, expert opinions
+✓ Comparison of methodologies and approaches
+✓ Discussion of implications, challenges, future trends
+✓ Measured tone while remaining engaging
+✓ Technical accuracy with clarity
+
+AVOID:
+✗ Overly casual language
+✗ Unsupported claims
+✗ Superficial analysis
+✗ Personal anecdotes without professional context
+
+FORMAT YOUR RESPONSE AS A JSON OBJECT:
+{
+  "title": "Professional, authoritative title",
+  "turns": [
+    {"speaker": "host", "text": "Analytical question or framework"},
+    {"speaker": "guest", "text": "Evidence-based expert analysis"}
+  ]
+}
+
+IMPORTANT:
+- Create 15-25 turns total
+- Each turn should be 2-5 sentences
+- Maintain professional credibility throughout
+- Include references to research, data, expert consensus
+- Return valid JSON format""",
+
+    "debate": """You are an expert podcast script writer creating ADVERSARIAL INTELLECTUAL DEBATES with OPPOSING VIEWPOINTS.
+
+CRITICAL: HOST and GUEST represent COMPETING perspectives and MUST DISAGREE on fundamental aspects.
+
+Your task is to transform input documents into dynamic debates where speakers challenge each other's positions.
+
+CHARACTER PROFILES:
+
+HOST (Position A Advocate):
+- Argues FOR Position A with conviction
+- Challenges Position B directly
+- Defends their stance with evidence
+- 50% of speaking time
+- Debate phrases: "I strongly disagree because...", "That's fundamentally flawed...", "The evidence clearly shows..."
+
+GUEST (Position B Advocate):
+- Argues FOR Position B, AGAINST Position A
+- Counters host's arguments directly
+- Presents opposing evidence
+- 50% of speaking time
+- Debate phrases: "On the contrary...", "You're missing the point...", "Actually, the data contradicts that..."
+
+DEBATE DYNAMICS:
+✓ Direct disagreement on fundamental points
+✓ Counter-arguments: "That's wrong because...", "I completely disagree..."
+✓ Challenging assumptions: "That's a flawed premise...", "Your logic breaks down when..."
+✓ Defending positions: "Let me push back...", "Here's why you're incorrect..."
+✓ Acknowledging valid points while maintaining opposition: "Fair point, BUT...", "I grant that, HOWEVER..."
+✓ Intellectual tension and rigorous argumentation
+✓ Contrasting interpretations of same facts
+
+MANDATORY REQUIREMENTS:
+✓ Speakers MUST take opposing positions
+✓ Each turn should challenge or counter the previous speaker
+✓ No polite agreement or building on each other's points
+✓ Create genuine intellectual conflict
+
+AVOID:
+✗ Agreement or consensus
+✗ Both speakers having same opinion
+✗ Question-answer without disagreement
+✗ Lack of genuine opposition
+
+FORMAT YOUR RESPONSE AS A JSON OBJECT:
+{
+  "title": "Debate-focused title",
+  "turns": [
+    {"speaker": "host", "text": "Position A argument or challenge to B"},
+    {"speaker": "guest", "text": "Position B counter-argument or challenge to A"}
+  ]
+}
+
+EXAMPLE PATTERN:
+Host: "The evidence clearly demonstrates X is superior because..."
+Guest: "I completely disagree. X is actually problematic because..."
+Host: "But you're ignoring the key data that..."
+Guest: "No, YOU'RE cherry-picking data. The comprehensive analysis shows..."
+
+IMPORTANT:
+- Create 15-25 turns of ADVERSARIAL exchanges
+- Each turn must challenge or counter previous speaker
+- Maintain respectful but rigorous intellectual opposition
+- Return valid JSON format""",
+
+    "interview": """You are an expert podcast script writer creating IN-DEPTH PROFESSIONAL INTERVIEWS exploring expertise and experience.
+
+Your task is to transform input documents into revealing Q&A dialogues that uncover insights.
+
+CHARACTER PROFILES:
+
+HOST (Skilled Interviewer):
+- Asks probing, insightful questions
+- Follows up on interesting points
+- Guides narrative arc
+- Actively listens and responds
+- 40% of speaking time
+- Interview phrases: "Tell me more about...", "Walk me through...", "What led you to...", "How did that feel?"
+
+GUEST (Subject/Expert):
+- Shares knowledge, experiences, personal stories
+- Provides detailed, thoughtful answers
+- Reveals behind-the-scenes insights
+- 60% of speaking time
+- Response phrases: "What's interesting is...", "When I first...", "The key moment was..."
+
+INTERVIEW STYLE:
+✓ Probing questions building on answers
+✓ Personal anecdotes and stories
+✓ Behind-the-scenes details
+✓ Occasional summaries and reflections
+✓ Creating intimate, revealing moments
+✓ Building narrative through questioning
+✓ Allowing guest to fully develop answers
+
+AVOID:
+✗ Surface-level questions
+✗ Interrupting guest's stories
+✗ Debate or disagreement
+✗ Making it about the interviewer
+
+FORMAT YOUR RESPONSE AS A JSON OBJECT:
+{
+  "title": "Interview-style title",
+  "turns": [
+    {"speaker": "host", "text": "Probing question or follow-up"},
+    {"speaker": "guest", "text": "Detailed answer with story or insight"}
+  ]
+}
+
+IMPORTANT:
+- Create 15-25 turns total
+- Questions should build on previous answers
+- Allow guest to tell stories and share insights
+- Create a revealing, intimate conversation
+- Return valid JSON format"""
+}
 
 
 class TogetherLLMGenerator:
@@ -149,7 +305,8 @@ class TogetherLLMGenerator:
         document_text: str,
         length: str = "10min",
         temperature: float = 0.8,
-        custom_prompt: Optional[str] = None
+        custom_prompt: Optional[str] = None,
+        style: str = "conversational"
     ) -> PodcastDialogue:
         """
         Generate podcast dialogue from document text
@@ -159,6 +316,7 @@ class TogetherLLMGenerator:
             length: Target length ("5min", "10min", "15min", "20min")
             temperature: Sampling temperature (0.0-1.0, higher = more creative)
             custom_prompt: Optional custom system prompt (overrides default)
+            style: Conversation style ("conversational", "expert-panel", "debate", "interview")
 
         Returns:
             PodcastDialogue object with structured turns
@@ -174,14 +332,23 @@ class TogetherLLMGenerator:
         if length not in self.LENGTH_CONFIGS:
             raise ValueError(f"Length must be one of: {list(self.LENGTH_CONFIGS.keys())}")
 
+        if style not in STYLE_SYSTEM_PROMPTS:
+            raise ValueError(f"Style must be one of: {list(STYLE_SYSTEM_PROMPTS.keys())}")
+
         # Get configuration
         config = self.LENGTH_CONFIGS[length]
-        system_prompt = custom_prompt or NOTEBOOKLM_SYSTEM_PROMPT
+
+        # Get style-specific system prompt (no mixing/appending)
+        if custom_prompt:
+            system_prompt = custom_prompt
+        else:
+            system_prompt = STYLE_SYSTEM_PROMPTS[style]
+            print(f"[STYLE] Using '{style}' conversation style")
 
         # Prepare messages
         messages = [
             {"role": "system", "content": system_prompt},
-            {"role": "user", "content": self._create_user_prompt(document_text, config)}
+            {"role": "user", "content": self._create_user_prompt(document_text, config, style)}
         ]
 
         # Generate with retry logic
@@ -217,26 +384,28 @@ class TogetherLLMGenerator:
                 else:
                     raise RuntimeError(f"Failed to generate dialogue after {self.MAX_RETRIES} attempts: {e}")
 
-    def _create_user_prompt(self, document_text: str, config: Dict) -> str:
-        """Create user prompt with document and instructions"""
+    def _create_user_prompt(self, document_text: str, config: Dict, style: str) -> str:
+        """Create user prompt with document and style-specific instructions"""
         min_turns, max_turns = config["turns"]
 
-        return f"""Transform the following document into an engaging podcast conversation.
+        # Style-specific user instructions
+        style_instructions = {
+            "conversational": "Make it warm, fun, and accessible. Show genuine excitement and curiosity!",
+            "expert-panel": "Provide deep, evidence-based analysis. Reference research and expert consensus.",
+            "debate": "CREATE OPPOSING VIEWPOINTS. Speakers MUST DISAGREE and challenge each other's positions directly!",
+            "interview": "Ask probing questions that reveal insights and stories. Build a narrative arc."
+        }
 
-TARGET: {min_turns}-{max_turns} conversational turns between host and guest.
+        return f"""Transform the following document into a podcast {style} dialogue.
+
+TARGET: {min_turns}-{max_turns} conversational turns.
+
+STYLE REMINDER: {style_instructions.get(style, '')}
 
 DOCUMENT:
 {document_text}
 
-Remember:
-- Make it conversational and natural
-- Include verbal thinking and reactions
-- Use analogies to explain complex ideas
-- Show genuine curiosity and enthusiasm
-- Build insights, don't just summarize
-- Return valid JSON format as specified
-
-Generate the podcast dialogue now:"""
+Generate the podcast dialogue now as valid JSON."""
 
     def _call_together_api(
         self,
@@ -258,8 +427,6 @@ Generate the podcast dialogue now:"""
         self.total_requests += 1
 
         try:
-            # Note: Together AI SDK doesn't support response_format in chat.completions
-            # We'll use prompt engineering to encourage JSON output
             response = self.client.chat.completions.create(
                 model=self.model,
                 messages=messages,
@@ -448,88 +615,5 @@ Generate the podcast dialogue now:"""
         self.total_tokens = 0
 
 
-def main():
-    """Test the LLM generator"""
-
-    # Sample document
-    sample_doc = """
-The Science of Sleep and Memory
-
-Recent neuroscience research has revealed that sleep plays a crucial role in memory consolidation,
-but the mechanisms are more sophisticated than previously thought.
-
-During deep sleep, the brain replays experiences from the day, strengthening neural connections
-associated with important memories while pruning away less relevant ones. This process, called
-synaptic homeostasis, prevents the brain from becoming saturated with information.
-
-The hippocampus, often called the brain's "save button," transfers temporary memories to the
-cortex for long-term storage during specific sleep stages. REM sleep appears particularly
-important for emotional memory processing and creative problem-solving.
-
-Interestingly, studies show that targeted memory reactivation—playing sounds or scents
-associated with learning during sleep—can enhance memory consolidation. This opens
-possibilities for optimizing learning through sleep interventions.
-
-The modern epidemic of sleep deprivation has serious cognitive consequences. Even moderate
-sleep loss impairs memory formation, decision-making, and emotional regulation. The brain
-simply cannot perform its essential maintenance functions without adequate sleep.
-"""
-
-    print("="*70)
-    print("Together AI LLM Generator - Test")
-    print("="*70 + "\n")
-
-    # Initialize generator
-    generator = TogetherLLMGenerator()
-
-    # Test 1: Generate 10-minute dialogue
-    print("Test 1: Generating 10-minute podcast dialogue...\n")
-
-    try:
-        dialogue = generator.generate_podcast_dialogue(
-            document_text=sample_doc,
-            length="10min",
-            temperature=0.8
-        )
-
-        print(f"\n{'='*70}")
-        print(f"GENERATED DIALOGUE")
-        print(f"{'='*70}\n")
-        print(f"Title: {dialogue.title}")
-        print(f"Total Turns: {len(dialogue.turns)}\n")
-
-        for turn in dialogue.turns[:5]:  # Show first 5 turns
-            speaker_name = turn.speaker.upper()
-            print(f"[{speaker_name}] {turn.text}\n")
-
-        if len(dialogue.turns) > 5:
-            print(f"... ({len(dialogue.turns) - 5} more turns)\n")
-
-        # Export to JSON
-        json_output = dialogue.to_json()
-        output_path = "backend/audio/test/generated_dialogue.json"
-        os.makedirs(os.path.dirname(output_path), exist_ok=True)
-
-        with open(output_path, 'w', encoding='utf-8') as f:
-            f.write(json_output)
-
-        print(f"✓ Saved to: {output_path}")
-
-        # Show statistics
-        stats = generator.get_statistics()
-        print(f"\nStatistics:")
-        print(f"  Requests: {stats['total_requests']}")
-        print(f"  Success Rate: {stats['success_rate']:.1f}%")
-        print(f"  Total Tokens: {stats['total_tokens']}")
-        print(f"  Model: {stats['current_model']}")
-
-    except Exception as e:
-        print(f"✗ Error: {e}")
-        import traceback
-        traceback.print_exc()
-
-    print(f"\n{'='*70}\n")
-
-
 if __name__ == "__main__":
-    main()
+    print("LLM Generator with Style-Specific Prompts ready")

@@ -26,7 +26,7 @@ app = FastAPI(title="Together AI Podcast Generator API")
 # CORS middleware - Allow all localhost ports for development
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5175", "http://localhost:5174", "http://localhost:5173", "http://localhost:3004", "http://localhost:3000"],
+    allow_origins=["http://localhost:5177", "http://localhost:5176", "http://localhost:5175", "http://localhost:5174", "http://localhost:5173", "http://localhost:3004", "http://localhost:3000"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -142,6 +142,7 @@ async def generate_podcast(request: PodcastGenerationRequest, background_tasks: 
             length=request.length,
             host_voice=request.host_voice,
             guest_voice=request.guest_voice,
+            style=request.style,
             output_format=request.output_format,
             add_pauses=True,
             normalize_audio=True,
@@ -207,6 +208,7 @@ async def generate_podcast_sync(request: PodcastGenerationRequest):
             length=request.length,
             host_voice=request.host_voice,
             guest_voice=request.guest_voice,
+            style=request.style,
             output_format=request.output_format,
             add_pauses=True,
             normalize_audio=True,
