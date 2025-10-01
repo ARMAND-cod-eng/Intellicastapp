@@ -121,11 +121,11 @@ def main():
         import uvicorn
         from backend.podcast_api import app
 
+        # When reload=False, we can pass the app object directly
         uvicorn.run(
-            "backend.podcast_api:app",
+            app,
             host="0.0.0.0",
             port=8000,
-            reload=True,
             log_level="info"
         )
 

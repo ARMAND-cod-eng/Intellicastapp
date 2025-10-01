@@ -284,4 +284,57 @@ export class NarrationAPI {
       };
     }
   }
+
+  // AI-Powered Style Recommendation Methods
+  static async recommendPodcastStyle(documentText: string): Promise<any> {
+    try {
+      const response = await fetch('http://localhost:8000/api/podcast/recommend-style', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          document_text: documentText
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`Style recommendation failed: ${response.statusText}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Style recommendation error:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      };
+    }
+  }
+
+  static async analyzeDocumentContent(documentText: string): Promise<any> {
+    try {
+      const response = await fetch('http://localhost:8000/api/podcast/analyze-content', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          document_text: documentText
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`Content analysis failed: ${response.statusText}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Content analysis error:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      };
+    }
+  }
 }

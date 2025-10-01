@@ -37,6 +37,9 @@ const MultiVoiceConversationPanel: React.FC<MultiVoiceConversationPanelProps> = 
   const [summaryType, setSummaryType] = useState<'quick' | 'detailed' | 'full'>('detailed');
   const [podcastAudioUrl, setPodcastAudioUrl] = useState<string | null>(null);
   const [podcastMetadata, setPodcastMetadata] = useState<any>(null);
+  const [aiRecommendation, setAiRecommendation] = useState<any>(null);
+  const [isAnalyzingContent, setIsAnalyzingContent] = useState(false);
+  const [showAiInsights, setShowAiInsights] = useState(false);
 
   const podcastStyles = [
     {
@@ -62,6 +65,13 @@ const MultiVoiceConversationPanel: React.FC<MultiVoiceConversationPanelProps> = 
       name: 'Interview Format',
       description: 'Host interviewing an expert guest',
       icon: '🎙️',
+    },
+    {
+      id: 'ai-smart',
+      name: 'AI Smart Selection',
+      description: 'Let AI analyze your content and choose the perfect style',
+      icon: '✨',
+      isSpecial: true
     },
   ];
 
@@ -218,6 +228,62 @@ const MultiVoiceConversationPanel: React.FC<MultiVoiceConversationPanelProps> = 
       return uploadedFiles[0].name.replace(/\.[^/.]+$/, '') || 'Document';
     }
     return 'Document';
+  };
+
+  // Get AI recommendation for podcast style
+  const getAiStyleRecommendation = async () => {
+    let content = '';
+
+    if (backendProcessedContent) {
+      content = backendProcessedContent;
+    } else if (uploadedContent && uploadedContent.length > 0) {
+      content = uploadedContent[0].content;
+    } else if (internalUploadedFiles || uploadedFiles) {
+      const processedText = await processDocumentThroughBackend();
+      content = processedText || '';
+    }
+
+    if (!content) {
+      alert('Please upload a document first to get AI recommendations');
+      return;
+    }
+
+    setIsAnalyzingContent(true);
+    try {
+      const response = await NarrationAPI.recommendPodcastStyle(content);
+
+      if (response.success) {
+        setAiRecommendation(response.recommendation);
+        setShowAiInsights(true);
+
+        // Auto-apply the recommended style
+        const recommendedStyle = response.recommendation.style;
+        setSelectedStyle(recommendedStyle);
+        setConversationTone(response.recommendation.tone_suggestion || conversationTone);
+        setNumberOfSpeakers(response.recommendation.num_speakers || numberOfSpeakers);
+
+        console.log('AI Recommendation:', response.recommendation);
+      } else {
+        console.error('AI recommendation failed:', response);
+        alert('Failed to get AI recommendation. Using conversational style as default.');
+        setSelectedStyle('conversational');
+      }
+    } catch (error) {
+      console.error('Error getting AI recommendation:', error);
+      alert('Error getting AI recommendation. Please try again or select a style manually.');
+    } finally {
+      setIsAnalyzingContent(false);
+    }
+  };
+
+  // Handle style selection
+  const handleStyleSelection = async (styleId: string) => {
+    if (styleId === 'ai-smart') {
+      await getAiStyleRecommendation();
+    } else {
+      setSelectedStyle(styleId);
+      setShowAiInsights(false);
+    }
   };
 
   // Generate summary when document is loaded
@@ -607,37 +673,111 @@ const MultiVoiceConversationPanel: React.FC<MultiVoiceConversationPanelProps> = 
             <h2 className="text-xl font-bold mb-4" style={{
               color: theme === 'professional-dark' ? '#E8EAED' : theme === 'dark' ? '#FFFFFF' : '#1F2937'
             }}>Choose Conversation Style</h2>
+
             <div className="grid grid-cols-2 gap-4">
-              {podcastStyles.map((style) => (
+              {podcastStyles.map((style: any) => (
                 <button
                   key={style.id}
-                  onClick={() => setSelectedStyle(style.id)}
+                  onClick={() => handleStyleSelection(style.id)}
+                  disabled={isAnalyzingContent && style.id === 'ai-smart'}
                   className={`p-4 rounded-xl border-2 transition-all text-left ${
-                    selectedStyle === style.id
+                    selectedStyle === style.id || (style.id === 'ai-smart' && showAiInsights)
                       ? 'border-blue-500 bg-blue-500/20'
                       : 'border-gray-300/30 bg-transparent hover:bg-gray-500/10'
-                  }`}
+                  } ${style.isSpecial ? 'relative overflow-hidden' : ''}`}
                   style={{
-                    borderColor: selectedStyle === style.id
+                    borderColor: (selectedStyle === style.id || (style.id === 'ai-smart' && showAiInsights))
                       ? (theme === 'professional-dark' ? '#2563EB' : theme === 'dark' ? '#6366F1' : '#60A5FA')
                       : (theme === 'professional-dark' ? '#3C4043' : theme === 'dark' ? 'rgba(255, 255, 255, 0.2)' : 'rgba(156, 163, 175, 0.3)'),
-                    backgroundColor: selectedStyle === style.id
+                    backgroundColor: (selectedStyle === style.id || (style.id === 'ai-smart' && showAiInsights))
                       ? (theme === 'professional-dark' ? 'rgba(37, 99, 235, 0.2)' : theme === 'dark' ? 'rgba(99, 102, 241, 0.2)' : 'rgba(96, 165, 250, 0.1)')
                       : 'transparent'
                   }}
                 >
+                  {style.isSpecial && (
+                    <div className="absolute top-0 right-0 px-2 py-1 bg-gradient-to-r from-purple-500 to-blue-500 text-white text-xs rounded-bl-lg">
+                      AI
+                    </div>
+                  )}
                   <div className="flex items-center gap-3 mb-2">
-                    <span className="text-2xl">{style.icon}</span>
+                    <span className="text-2xl">{isAnalyzingContent && style.id === 'ai-smart' ? '🔄' : style.icon}</span>
                     <h3 className="font-semibold" style={{
                       color: theme === 'professional-dark' ? '#E8EAED' : theme === 'dark' ? '#FFFFFF' : '#1F2937'
                     }}>{style.name}</h3>
                   </div>
                   <p className="text-sm" style={{
                     color: theme === 'professional-dark' ? '#9AA0A6' : theme === 'dark' ? 'rgba(255, 255, 255, 0.7)' : '#4B5563'
-                  }}>{style.description}</p>
+                  }}>
+                    {isAnalyzingContent && style.id === 'ai-smart' ? 'Analyzing your content...' : style.description}
+                  </p>
                 </button>
               ))}
             </div>
+
+            {/* AI Insights Panel */}
+            <AnimatePresence>
+              {showAiInsights && aiRecommendation && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="mt-4 p-4 rounded-lg border"
+                  style={{
+                    backgroundColor: theme === 'professional-dark' ? 'rgba(37, 99, 235, 0.1)' : theme === 'dark' ? 'rgba(99, 102, 241, 0.1)' : 'rgba(96, 165, 250, 0.05)',
+                    borderColor: theme === 'professional-dark' ? '#2563EB' : theme === 'dark' ? '#6366F1' : '#60A5FA'
+                  }}
+                >
+                  <div className="flex items-start gap-3">
+                    <Sparkles className="w-5 h-5 text-blue-500 mt-0.5" />
+                    <div className="flex-1">
+                      <h4 className="font-semibold mb-2" style={{
+                        color: theme === 'professional-dark' ? '#2563EB' : theme === 'dark' ? '#C4B5FD' : '#60A5FA'
+                      }}>
+                        AI Analysis Results
+                      </h4>
+                      <p className="text-sm mb-3" style={{
+                        color: theme === 'professional-dark' ? '#E8EAED' : theme === 'dark' ? 'rgba(255, 255, 255, 0.9)' : '#1F2937'
+                      }}>
+                        {aiRecommendation.reasoning}
+                      </p>
+                      <div className="grid grid-cols-2 gap-2 text-xs">
+                        <div className="p-2 rounded" style={{
+                          backgroundColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)'
+                        }}>
+                          <span className="opacity-70">Recommended Style:</span>
+                          <div className="font-semibold capitalize mt-1">{aiRecommendation.style.replace('-', ' ')}</div>
+                        </div>
+                        <div className="p-2 rounded" style={{
+                          backgroundColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)'
+                        }}>
+                          <span className="opacity-70">Confidence:</span>
+                          <div className="font-semibold mt-1">{Math.round(aiRecommendation.confidence * 100)}%</div>
+                        </div>
+                      </div>
+                      {aiRecommendation.key_themes && aiRecommendation.key_themes.length > 0 && (
+                        <div className="mt-3">
+                          <span className="text-xs opacity-70">Key Themes:</span>
+                          <div className="flex flex-wrap gap-2 mt-1">
+                            {aiRecommendation.key_themes.map((theme: string, idx: number) => (
+                              <span
+                                key={idx}
+                                className="px-2 py-1 rounded-full text-xs"
+                                style={{
+                                  backgroundColor: theme === 'dark' ? 'rgba(99, 102, 241, 0.2)' : 'rgba(96, 165, 250, 0.2)',
+                                  color: theme === 'dark' ? '#C4B5FD' : '#60A5FA'
+                                }}
+                              >
+                                {theme}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </GlassCard>
 
           {/* Configuration Options */}

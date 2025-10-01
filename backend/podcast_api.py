@@ -20,14 +20,15 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from main import TogetherNotebookLM, PodcastOptions, PodcastResult
 from usage_tracker import get_tracker
+from content_analyzer import get_analyzer
 
 app = FastAPI(title="Together AI Podcast Generator API")
 
-# CORS middleware - Allow all localhost ports for development
+# CORS middleware - Allow all origins for development
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5177", "http://localhost:5176", "http://localhost:5175", "http://localhost:5174", "http://localhost:5173", "http://localhost:3004", "http://localhost:3000"],
-    allow_credentials=True,
+    allow_origins=["*"],  # Allow all origins temporarily for debugging
+    allow_credentials=False,  # Must be False when using allow_origins=["*"]
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -290,6 +291,50 @@ async def get_usage_summary():
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+class StyleRecommendationRequest(BaseModel):
+    """Request model for AI-powered style recommendation"""
+    document_text: str
+
+
+@app.post("/api/podcast/recommend-style")
+async def recommend_podcast_style(request: StyleRecommendationRequest):
+    """
+    Intelligently recommend the best podcast style based on content analysis
+    Uses AI to analyze document content and suggest optimal conversation format
+    """
+    try:
+        analyzer = get_analyzer()
+        recommendation = analyzer.get_custom_podcast_config(request.document_text)
+
+        return {
+            "success": True,
+            "recommendation": recommendation,
+            "message": "AI-powered style recommendation generated successfully"
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Style recommendation failed: {str(e)}")
+
+
+@app.post("/api/podcast/analyze-content")
+async def analyze_document_content(request: StyleRecommendationRequest):
+    """
+    Analyze document content characteristics
+    Provides detailed analysis of content type, complexity, and themes
+    """
+    try:
+        analyzer = get_analyzer()
+        analysis = analyzer.analyze_content(request.document_text)
+        recommendation = analyzer.recommend_style(request.document_text)
+
+        return {
+            "success": True,
+            "analysis": analysis,
+            "recommendation": recommendation
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Content analysis failed: {str(e)}")
 
 
 @app.post("/api/upload/document")
