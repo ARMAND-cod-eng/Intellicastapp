@@ -168,11 +168,120 @@ export class NarrationAPI {
 
   static async checkHealth(): Promise<any> {
     const response = await fetch(`${API_BASE_URL}/narration/health`);
-    
+
     if (!response.ok) {
       throw new Error(`Health check failed: ${response.statusText}`);
     }
 
     return await response.json();
+  }
+
+  // NotebookLM Podcast Generation Methods
+  static async generatePodcastEstimate(documentText: string, length: string = '10min'): Promise<any> {
+    try {
+      const response = await fetch('http://localhost:8000/api/podcast/estimate-cost', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          document_text: documentText,
+          length: length
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`Estimate failed: ${response.statusText}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Podcast estimate error:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      };
+    }
+  }
+
+  static async generatePodcast(params: {
+    documentText: string;
+    length?: string;
+    hostVoice?: string;
+    guestVoice?: string;
+    style?: string;
+    tone?: string;
+    numSpeakers?: number;
+    outputFormat?: string;
+    saveScript?: boolean;
+  }): Promise<any> {
+    try {
+      const response = await fetch('http://localhost:8000/api/podcast/generate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          document_text: params.documentText,
+          length: params.length || '10min',
+          host_voice: params.hostVoice || 'host_male_friendly',
+          guest_voice: params.guestVoice || 'guest_female_expert',
+          style: params.style || 'conversational',
+          tone: params.tone || 'friendly',
+          num_speakers: params.numSpeakers || 2,
+          output_format: params.outputFormat || 'mp3',
+          save_script: params.saveScript !== false
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`Generation failed: ${response.statusText}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Podcast generation error:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      };
+    }
+  }
+
+  static async getPodcastStatus(jobId: string): Promise<any> {
+    try {
+      const response = await fetch(`http://localhost:8000/api/podcast/status/${jobId}`);
+
+      if (!response.ok) {
+        throw new Error(`Status check failed: ${response.statusText}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Status check error:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      };
+    }
+  }
+
+  static async getAvailableVoices(): Promise<any> {
+    try {
+      const response = await fetch('http://localhost:8000/api/podcast/voices');
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch voices: ${response.statusText}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Voice fetch error:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+        voices: []
+      };
+    }
   }
 }

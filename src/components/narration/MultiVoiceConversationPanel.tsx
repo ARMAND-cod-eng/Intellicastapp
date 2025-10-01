@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { X, Users, Minimize2, ChevronDown, Settings, Sparkles, FileText, Upload } from 'lucide-react';
+import { X, Users, Minimize2, ChevronDown, Settings, Sparkles, FileText, Upload, Play, Download, Mic } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useDropzone } from 'react-dropzone';
 import GlassCard from '../ui/GlassCard';
@@ -35,6 +35,8 @@ const MultiVoiceConversationPanel: React.FC<MultiVoiceConversationPanelProps> = 
   const [documentSummary, setDocumentSummary] = useState<string>('');
   const [isLoadingSummary, setIsLoadingSummary] = useState(false);
   const [summaryType, setSummaryType] = useState<'quick' | 'detailed' | 'full'>('detailed');
+  const [podcastAudioUrl, setPodcastAudioUrl] = useState<string | null>(null);
+  const [podcastMetadata, setPodcastMetadata] = useState<any>(null);
 
   const podcastStyles = [
     {
@@ -142,7 +144,19 @@ const MultiVoiceConversationPanel: React.FC<MultiVoiceConversationPanelProps> = 
     }
 
     if (!content) {
-      setDocumentSummary('No document content available for summary generation.');
+      setDocumentSummary('Processing your document... Please wait while we extract the content.');
+      // Try processing again after a brief delay
+      setTimeout(async () => {
+        if (internalUploadedFiles || uploadedFiles) {
+          const retryContent = await processDocumentThroughBackend();
+          if (retryContent) {
+            setBackendProcessedContent(retryContent);
+            generateDocumentSummary();
+          } else {
+            setDocumentSummary('Unable to process document. Please try uploading again or use a different file format.');
+          }
+        }
+      }, 1000);
       return;
     }
 
@@ -218,9 +232,115 @@ const MultiVoiceConversationPanel: React.FC<MultiVoiceConversationPanelProps> = 
 
   const handleGenerate = async () => {
     setIsGenerating(true);
-    // Simulate generation - replace with actual API call
-    await new Promise(resolve => setTimeout(resolve, 3000));
-    setIsGenerating(false);
+
+    try {
+      // Get document content
+      let content = '';
+      if (backendProcessedContent) {
+        content = backendProcessedContent;
+      } else if (uploadedContent && uploadedContent.length > 0) {
+        content = uploadedContent[0].content;
+      } else if (internalUploadedFiles || uploadedFiles) {
+        const processedText = await processDocumentThroughBackend();
+        content = processedText || '';
+      }
+
+      if (!content) {
+        alert('Please upload a document first');
+        setIsGenerating(false);
+        return;
+      }
+
+      // Map UI options to API parameters
+      const lengthMap: { [key: number]: string } = {
+        2: '10min',
+        3: '15min',
+        4: '20min'
+      };
+
+      const voiceMap: { [key: string]: { host: string; guest: string } } = {
+        'conversational': { host: 'host_male_friendly', guest: 'guest_female_expert' },
+        'expert-panel': { host: 'host_male_casual', guest: 'guest_female_warm' },
+        'debate': { host: 'host_male_friendly', guest: 'guest_male' },
+        'interview': { host: 'host_female', guest: 'guest_male' }
+      };
+
+      const voices = voiceMap[selectedStyle] || voiceMap['conversational'];
+
+      // Start podcast generation
+      console.log('Starting podcast generation...');
+
+      const response = await NarrationAPI.generatePodcast({
+        documentText: content,
+        length: lengthMap[numberOfSpeakers] || '10min',
+        hostVoice: voices.host,
+        guestVoice: voices.guest,
+        style: selectedStyle,
+        tone: conversationTone,
+        numSpeakers: numberOfSpeakers,
+        outputFormat: 'mp3',
+        saveScript: true
+      });
+
+      if (response.success) {
+        // Poll for completion
+        const jobId = response.job_id;
+        let completed = false;
+        let attempts = 0;
+        const maxAttempts = 60; // 5 minutes max
+
+        while (!completed && attempts < maxAttempts) {
+          await new Promise(resolve => setTimeout(resolve, 5000)); // Check every 5 seconds
+
+          const statusResponse = await NarrationAPI.getPodcastStatus(jobId);
+
+          if (statusResponse.success) {
+            const job = statusResponse.job;
+
+            if (job.status === 'completed') {
+              completed = true;
+
+              // Extract filename from path
+              const audioFile = job.result.audio_file;
+              const filename = audioFile.split(/[\/\\]/).pop(); // Handle both / and \ separators
+
+              // Set audio URL for the player
+              const audioUrl = `http://localhost:8000/api/podcast/download/${filename}`;
+              setPodcastAudioUrl(audioUrl);
+              setPodcastMetadata({
+                duration: job.result.duration_seconds,
+                cost: job.result.total_cost,
+                turns: job.result.metadata?.total_turns || 0,
+                voices: job.result.metadata?.voices || {},
+                title: job.result.metadata?.title || 'Podcast'
+              });
+
+              console.log('Podcast generated:', { audioUrl, metadata: job.result });
+
+            } else if (job.status === 'failed') {
+              throw new Error(job.message || 'Generation failed');
+            } else {
+              console.log(`Generation progress: ${job.message}`);
+            }
+          }
+
+          attempts++;
+        }
+
+        if (!completed) {
+          throw new Error('Generation timed out. Please try again.');
+        }
+
+      } else {
+        throw new Error(response.error || 'Generation failed');
+      }
+
+    } catch (error) {
+      console.error('Podcast generation error:', error);
+      alert(`Error generating podcast: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   if (!isOpen) return null;
@@ -641,6 +761,70 @@ const MultiVoiceConversationPanel: React.FC<MultiVoiceConversationPanelProps> = 
                     </motion.div>
                   </div>
                 </div>
+              </motion.div>
+            )}
+
+            {/* Audio Player */}
+            {podcastAudioUrl && podcastMetadata && !isGenerating && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 20 }}
+                className="mt-6"
+              >
+                <GlassCard className="p-6">
+                  <div className="space-y-4">
+                    {/* Podcast Title */}
+                    <div className="flex items-center gap-3">
+                      <div className="p-3 bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl">
+                        <Mic size={24} className="text-white" />
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-semibold text-white">
+                          {podcastMetadata.title || 'Your Podcast'}
+                        </h3>
+                        <p className="text-sm text-gray-400">
+                          {Math.floor(podcastMetadata.duration / 60)}:{String(Math.floor(podcastMetadata.duration % 60)).padStart(2, '0')} • {podcastMetadata.turns} segments
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Audio Player */}
+                    <audio
+                      controls
+                      src={podcastAudioUrl}
+                      className="w-full h-12 rounded-lg"
+                      style={{
+                        filter: theme === 'dark' ? 'invert(0.9) hue-rotate(180deg)' : 'none'
+                      }}
+                    />
+
+                    {/* Metadata */}
+                    <div className="flex items-center justify-between text-sm">
+                      <div className="flex gap-4">
+                        <span className="text-gray-400">
+                          Host: <span className="text-white">{podcastMetadata.voices.host || 'Unknown'}</span>
+                        </span>
+                        <span className="text-gray-400">
+                          Guest: <span className="text-white">{podcastMetadata.voices.guest || 'Unknown'}</span>
+                        </span>
+                      </div>
+                      <a
+                        href={podcastAudioUrl}
+                        download
+                        className="flex items-center gap-2 px-4 py-2 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 rounded-lg transition-colors"
+                      >
+                        <Download size={16} />
+                        Download
+                      </a>
+                    </div>
+
+                    {/* Cost */}
+                    <div className="text-xs text-gray-500 text-center">
+                      Generation cost: ${podcastMetadata.cost.toFixed(4)}
+                    </div>
+                  </div>
+                </GlassCard>
               </motion.div>
             )}
           </AnimatePresence>

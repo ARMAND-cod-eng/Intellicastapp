@@ -23,3 +23,25 @@ dist-ssr
 *.sln
 *.sw?
 backend/chatterbox/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Environment variables
+.env
+
+# Generated audio files
+backend/audio/*.wav
+backend/audio/podcasts/*.mp3
+backend/audio/podcasts/*.wav
+
+# Cache and uploads
+backend/cache/
+backend/uploads/
+backend/usage_logs/
+
+# Test files
+test_*.py
+nul
