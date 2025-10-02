@@ -27,7 +27,9 @@ class PodcastOptions:
     length: str = "10min"  # "5min", "10min", "15min", "20min"
     host_voice: str = "host_male_friendly"
     guest_voice: str = "guest_female_expert"
+    cohost_voice: str = "cohost_male_casual"  # Third speaker for 3-speaker podcasts
     style: str = "conversational"  # "conversational", "expert-panel", "debate", "interview"
+    num_speakers: int = 2  # 2 or 3 speakers
     output_format: str = "mp3"  # "wav", "mp3", "ogg"
     add_pauses: bool = True
     normalize_audio: bool = True
@@ -248,7 +250,8 @@ class TogetherNotebookLM:
                 document_text=document_text,
                 length=options.length,
                 temperature=options.temperature,
-                style=options.style
+                style=options.style,
+                num_speakers=options.num_speakers
             )
 
             # Validate dialogue
@@ -270,6 +273,8 @@ class TogetherNotebookLM:
             print(f"\n[AUDIO] Step 4/5: Generating podcast audio...")
             print(f"   Host voice: {options.host_voice}")
             print(f"   Guest voice: {options.guest_voice}")
+            if options.num_speakers == 3:
+                print(f"   Co-Host voice: {options.cohost_voice}")
 
             # Configure TTS with selected voices
             # For debate style, ensure opposing genders for clarity
@@ -292,11 +297,20 @@ class TogetherNotebookLM:
                             guest_voice = "guest_male"
                         print(f"   [DEBATE] Auto-adjusted voices for gender contrast")
 
-            self.tts_generator = CartesiaTTSGenerator(
-                api_key=self.cartesia_api_key,
-                host_voice=host_voice,
-                guest_voice=guest_voice
-            )
+            # Initialize TTS with cohost voice if 3 speakers
+            if options.num_speakers == 3:
+                self.tts_generator = CartesiaTTSGenerator(
+                    api_key=self.cartesia_api_key,
+                    host_voice=host_voice,
+                    guest_voice=guest_voice,
+                    cohost_voice=options.cohost_voice
+                )
+            else:
+                self.tts_generator = CartesiaTTSGenerator(
+                    api_key=self.cartesia_api_key,
+                    host_voice=host_voice,
+                    guest_voice=guest_voice
+                )
 
             # Generate audio
             audio_file, audio_metadata = self.tts_generator.generate_and_save(
@@ -385,7 +399,13 @@ class TogetherNotebookLM:
             f.write(f"**Generated:** {time.strftime('%Y-%m-%d %H:%M:%S')}\n\n")
 
             for turn in enhanced_dialogue:
-                speaker_name = "Host" if turn['speaker'] == 'host' else "Guest"
+                speaker = turn['speaker']
+                if speaker == 'host':
+                    speaker_name = "Host"
+                elif speaker == 'cohost':
+                    speaker_name = "Co-Host"
+                else:
+                    speaker_name = "Guest"
                 f.write(f"**{speaker_name}:** {turn['text']}\n\n")
 
         return str(script_file)
@@ -412,6 +432,8 @@ class TogetherNotebookLM:
         print(f"\n[AUDIO] Voices:")
         print(f"   Host: {result.metadata['voices']['host']}")
         print(f"   Guest: {result.metadata['voices']['guest']}")
+        if 'cohost' in result.metadata['voices']:
+            print(f"   Co-Host: {result.metadata['voices']['cohost']}")
 
         print(f"\n{'='*70}\n")
 

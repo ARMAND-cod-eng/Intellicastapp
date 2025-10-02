@@ -51,6 +51,7 @@ class PodcastGenerationRequest(BaseModel):
     length: str = "10min"
     host_voice: str = "host_male_friendly"
     guest_voice: str = "guest_female_expert"
+    cohost_voice: str = "cohost_male_casual"  # Third speaker for 3-speaker podcasts
     style: str = "conversational"
     tone: str = "friendly"
     num_speakers: int = 2
@@ -119,6 +120,17 @@ async def estimate_cost(request: CostEstimateRequest):
 async def generate_podcast(request: PodcastGenerationRequest, background_tasks: BackgroundTasks):
     """Generate podcast from document text"""
     try:
+        # Log incoming request
+        print(f"\n{'='*70}")
+        print(f"PODCAST GENERATION REQUEST")
+        print(f"{'='*70}")
+        print(f"Number of Speakers: {request.num_speakers}")
+        print(f"Style: {request.style}")
+        print(f"Host Voice: {request.host_voice}")
+        print(f"Guest Voice: {request.guest_voice}")
+        print(f"Co-Host Voice: {request.cohost_voice}")
+        print(f"{'='*70}\n")
+
         # Create unique job ID
         job_id = f"job_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
 
@@ -143,7 +155,9 @@ async def generate_podcast(request: PodcastGenerationRequest, background_tasks: 
             length=request.length,
             host_voice=request.host_voice,
             guest_voice=request.guest_voice,
+            cohost_voice=request.cohost_voice,
             style=request.style,
+            num_speakers=request.num_speakers,
             output_format=request.output_format,
             add_pauses=True,
             normalize_audio=True,
@@ -185,6 +199,10 @@ async def generate_podcast(request: PodcastGenerationRequest, background_tasks: 
         }
 
     except Exception as e:
+        import traceback
+        error_details = traceback.format_exc()
+        print(f"\nERROR in podcast generation:")
+        print(error_details)
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -209,7 +227,9 @@ async def generate_podcast_sync(request: PodcastGenerationRequest):
             length=request.length,
             host_voice=request.host_voice,
             guest_voice=request.guest_voice,
+            cohost_voice=request.cohost_voice,
             style=request.style,
+            num_speakers=request.num_speakers,
             output_format=request.output_format,
             add_pauses=True,
             normalize_audio=True,

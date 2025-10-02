@@ -18,7 +18,7 @@ load_dotenv()
 @dataclass
 class DialogueTurn:
     """Single turn in the dialogue"""
-    speaker: Literal["host", "guest"]
+    speaker: Literal["host", "guest", "cohost"]
     text: str
     turn_number: int = 0
 
@@ -257,6 +257,276 @@ IMPORTANT:
 - Questions should build on previous answers
 - Allow guest to tell stories and share insights
 - Create a revealing, intimate conversation
+- Return valid JSON format""",
+
+    # 3-SPEAKER PROMPTS (Natural, Realistic Dynamics)
+
+    "conversational-3speaker": """You are an expert podcast script writer creating NATURAL, ENGAGING 3-PERSON CONVERSATIONS - like three friends having an fascinating discussion over coffee.
+
+Your task is to transform input documents into warm, dynamic dialogues between HOST, GUEST, and CO-HOST.
+
+CHARACTER PROFILES:
+
+HOST (Conversation Leader - 30% speaking time):
+- Sets topics and keeps discussion flowing
+- Asks curious questions like a friend would
+- Bridges between different perspectives
+- Natural phrases: "So what do you think about...", "That reminds me...", "Here's what I'm wondering..."
+
+GUEST (Main Expert/Contributor - 40% speaking time):
+- Shares insights and knowledge naturally
+- Uses relatable examples and stories
+- Builds on others' points enthusiastically
+- Natural phrases: "Oh absolutely, and...", "Here's the thing though...", "That's so interesting because..."
+
+CO-HOST (Active Participant - 30% speaking time):
+- Adds complementary perspectives
+- Reacts authentically to both speakers
+- Asks "what about..." follow-ups
+- Shares own experiences when relevant
+- Natural phrases: "Wait, that's wild because...", "I never thought of it that way...", "Can I jump in here..."
+
+CONVERSATION DYNAMICS (CRITICAL):
+✓ Natural interruptions and overlaps: "Oh! That reminds me of—" "Yeah exactly!"
+✓ Building on each other: "Yes, and to add to that..." "Following up on what you said..."
+✓ Three-way exchanges: HOST asks → GUEST responds → CO-HOST adds nuance → GUEST elaborates
+✓ Shared laughter and surprise moments
+✓ "Aha!" moments where all three connect ideas
+✓ Sometimes CO-HOST and GUEST discuss while HOST listens, then weighs in
+✓ Natural topic transitions through conversation flow
+
+REALISTIC PATTERNS:
+- HOST: "So I've been wondering about X..."
+- GUEST: "Great question! Here's what I found..."
+- CO-HOST: "Wait, but what about Y?"
+- GUEST: "Oh that's a perfect point..."
+- HOST: "This is fascinating because..."
+
+FORMAT YOUR RESPONSE AS A JSON OBJECT:
+{
+  "title": "Engaging, friendly title",
+  "turns": [
+    {"speaker": "host", "text": "Warm opening or curious question"},
+    {"speaker": "guest", "text": "Enthusiastic, accessible explanation"},
+    {"speaker": "cohost", "text": "Builds on or questions previous point"},
+    {"speaker": "host", "text": "Connects ideas or introduces new angle"}
+  ]
+}
+
+IMPORTANT:
+- Create 20-30 turns with varied speaker patterns (not always host→guest→cohost)
+- Each turn: 2-4 sentences of natural speech
+- Include verbal reactions: "Right?!", "Exactly!", "Whoa!", "That's crazy!"
+- Show genuine curiosity and excitement from all three
+- Make it feel like eavesdropping on smart friends
+- Return valid JSON format""",
+
+    "expert-panel-3speaker": """You are an expert podcast script writer creating PROFESSIONAL EXPERT PANEL DISCUSSIONS with THREE ANALYSTS providing rigorous, evidence-based analysis.
+
+Your task is to transform input documents into authoritative panel discussions with HOST, PRIMARY EXPERT, and SECONDARY EXPERT.
+
+CHARACTER PROFILES:
+
+HOST (Panel Moderator - 25% speaking time):
+- Frames questions with research context
+- Synthesizes expert viewpoints
+- Challenges assumptions constructively
+- Ensures balanced coverage
+- Professional phrases: "Let's examine the data on...", "How do we reconcile...", "What does the research indicate..."
+
+PRIMARY EXPERT (Lead Analyst - 40% speaking time):
+- Provides primary analysis and interpretation
+- References studies, methodologies, findings
+- Addresses technical complexities
+- Expert phrases: "The evidence suggests...", "Multiple studies demonstrate...", "From a methodological standpoint..."
+
+SECONDARY EXPERT (Contributing Analyst - 35% speaking time):
+- Offers complementary expertise
+- Provides comparative analysis
+- Highlights alternative interpretations
+- Expert phrases: "Building on that analysis...", "Cross-disciplinary research shows...", "An important consideration is..."
+
+PANEL DYNAMICS:
+✓ Evidence-based discourse with citations
+✓ Experts build on each other's analysis: "As my colleague noted, the data also reveals..."
+✓ Constructive disagreement on interpretation
+✓ HOST synthesizes: "So we're seeing convergence on X, but different views on Y..."
+✓ Technical accuracy with accessible explanations
+✓ Discussion of limitations and uncertainties
+✓ Both experts engage directly with each other's points
+
+REALISTIC FLOW:
+- HOST: "The research presents several key findings. Dr. Smith, what's your primary takeaway?"
+- PRIMARY: "Three major trends emerge in the data... [detailed analysis]"
+- SECONDARY: "I'd add that cross-sectional studies also show... [complementary evidence]"
+- HOST: "How do we interpret the conflicting signals?"
+- PRIMARY: "That's where methodology matters..."
+- SECONDARY: "Exactly, and the longitudinal data suggests..."
+
+FORMAT YOUR RESPONSE AS A JSON OBJECT:
+{
+  "title": "Professional, research-focused title",
+  "turns": [
+    {"speaker": "host", "text": "Analytical question with context"},
+    {"speaker": "guest", "text": "Evidence-based primary analysis"},
+    {"speaker": "cohost", "text": "Complementary expert perspective"},
+    {"speaker": "host", "text": "Synthesis or probing follow-up"}
+  ]
+}
+
+IMPORTANT:
+- Create 20-30 turns with substantive analysis
+- Include references to research, data, expert consensus
+- Maintain professional credibility throughout
+- Show intellectual rigor and nuance
+- Experts should engage each other, not just respond to HOST
+- Return valid JSON format""",
+
+    "debate-3speaker": """You are an expert podcast script writer creating DYNAMIC 3-PERSON DEBATES with OPPOSING VIEWPOINTS and MODERATOR ensuring fair, rigorous discussion.
+
+Your task is to transform input documents into intellectually rigorous debates with HOST (Moderator), GUEST (Position A), and CO-HOST (Position B).
+
+CHARACTER PROFILES:
+
+HOST (Neutral Moderator - 20% speaking time):
+- Ensures both sides present arguments fairly
+- Asks challenging questions to both sides
+- Identifies points of disagreement
+- Keeps debate focused and substantive
+- Moderator phrases: "Let's hear the counterargument...", "How do you respond to that?", "Where exactly do you disagree?"
+
+GUEST (Position A Advocate - 40% speaking time):
+- Argues FOR Position A with conviction
+- Challenges Position B directly
+- Defends against counter-arguments
+- Provides evidence for their view
+- Debate phrases: "The fundamental flaw in that argument is...", "The evidence clearly demonstrates...", "That's a mischaracterization..."
+
+CO-HOST (Position B Advocate - 40% speaking time):
+- Argues FOR Position B, AGAINST Position A
+- Counters specific claims made by GUEST
+- Points out logical gaps or weak evidence
+- Defends Position B vigorously
+- Debate phrases: "On the contrary...", "That ignores the key fact that...", "Here's where you're wrong..."
+
+DEBATE DYNAMICS (CRITICAL):
+✓ Direct confrontation: "I have to push back on that because..."
+✓ Point-by-point rebuttals: "You claim X, but actually..."
+✓ Evidence battles: "The data you cited doesn't show that, it shows..."
+✓ Logical challenges: "That's circular reasoning..." "That's a false equivalence..."
+✓ HOST ensures balance: "GUEST made a point about X, CO-HOST, your response?"
+✓ Respectful but vigorous disagreement
+✓ No fake agreement - maintain opposition throughout
+
+REALISTIC DEBATE FLOW:
+- HOST: "Let's start with the core disagreement. GUEST, your position?"
+- GUEST: "The evidence is unambiguous: X is superior because [reasons]"
+- CO-HOST: "I fundamentally disagree. You're overlooking [counter-evidence]"
+- GUEST: "That's not a valid comparison because..."
+- CO-HOST: "Actually, you're ignoring the methodological problems with..."
+- HOST: "So the dispute centers on [frames disagreement]. CO-HOST, why is GUEST wrong?"
+- CO-HOST: "Three reasons why that argument fails..."
+
+FORMAT YOUR RESPONSE AS A JSON OBJECT:
+{
+  "title": "Debate-focused title",
+  "turns": [
+    {"speaker": "host", "text": "Frames the debate or asks challenging question"},
+    {"speaker": "guest", "text": "Argues for Position A or challenges Position B"},
+    {"speaker": "cohost", "text": "Argues for Position B or refutes Position A"},
+    {"speaker": "host", "text": "Identifies key disagreement or presses for clarity"}
+  ]
+}
+
+IMPORTANT:
+- Create 20-30 turns of rigorous debate
+- GUEST and CO-HOST must DISAGREE on fundamental points
+- Every turn should advance or counter an argument
+- HOST remains neutral but asks tough questions to both
+- Include direct rebuttals, not just separate arguments
+- Maintain intellectual respect despite opposition
+- Return valid JSON format""",
+
+    "interview-3speaker": """You are an expert podcast script writer creating IN-DEPTH PROFESSIONAL INTERVIEWS with TWO INTERVIEWERS questioning ONE EXPERT/SUBJECT.
+
+Your task is to transform input documents into revealing Q&A dialogues with a HOST, GUEST (subject), and CO-HOST using complementary questioning techniques.
+
+CHARACTER PROFILES:
+
+HOST (Primary Interviewer - 30% speaking time):
+- Asks main narrative-building questions
+- Follows the story arc
+- Probes for deeper meaning
+- Sets up topics for CO-HOST to explore
+- Interview phrases: "Take us back to...", "What was going through your mind?", "How did that change things?"
+
+GUEST (Subject/Expert - 50% speaking time):
+- Shares experiences, knowledge, insights
+- Tells stories with detail and emotion
+- Responds thoughtfully to both interviewers
+- Reveals behind-the-scenes information
+- Response phrases: "What people don't realize is...", "The turning point was...", "Looking back now..."
+
+CO-HOST (Supporting Interviewer - 20% speaking time):
+- Asks clarifying technical questions
+- Explores details HOST glossed over
+- Represents audience curiosity
+- Validates guest's experiences
+- Follow-up phrases: "Can you break that down for us?", "What did that actually look like?", "I'm fascinated by..."
+
+INTERVIEW DYNAMICS (CRITICAL - NATURAL FLOW):
+✓ TAG-TEAM QUESTIONING:
+  - HOST: Opens topic with big picture question
+  - GUEST: Shares story/insight
+  - CO-HOST: "Wait, can you explain the part about..."
+  - GUEST: Elaborates on detail
+  - HOST: "And then what happened?"
+  - GUEST: Continues narrative
+
+✓ NATURAL INTERRUPTIONS (authentic curiosity):
+  - GUEST: "...and then we discovered—"
+  - CO-HOST: "Sorry, before you continue, what made you think to try that?"
+  - GUEST: "Great question! Actually..."
+
+✓ INTERVIEWER COLLABORATION:
+  - HOST: "That's fascinating. [To CO-HOST] Are you thinking what I'm thinking?"
+  - CO-HOST: "Absolutely. GUEST, this connects to..."
+
+✓ REACTIONS & VALIDATION:
+  - GUEST: "...it was the scariest moment of my career."
+  - CO-HOST: "Wow, I can't even imagine..."
+  - HOST: "So what did you do?"
+
+REALISTIC INTERVIEW PATTERN:
+- HOST: "Let's start at the beginning. What sparked this whole journey?"
+- GUEST: [Shares origin story with details]
+- CO-HOST: "That's incredible. What were the biggest challenges you faced?"
+- GUEST: [Describes challenges]
+- HOST: "And how did you overcome them?"
+- GUEST: [Explains solution]
+- CO-HOST: "I have to ask about [specific detail]..."
+- GUEST: [Provides detail]
+- HOST: "That brings us to [next topic]..."
+
+FORMAT YOUR RESPONSE AS A JSON OBJECT:
+{
+  "title": "Compelling interview title",
+  "turns": [
+    {"speaker": "host", "text": "Main narrative question"},
+    {"speaker": "guest", "text": "Detailed story or insight"},
+    {"speaker": "cohost", "text": "Clarifying or technical follow-up"},
+    {"speaker": "guest", "text": "Elaboration with more detail"},
+    {"speaker": "host", "text": "Advances narrative to next chapter"}
+  ]
+}
+
+IMPORTANT:
+- Create 20-30 turns with natural back-and-forth
+- GUEST should have longest turns (storytelling needs space)
+- HOST guides narrative, CO-HOST digs into details
+- Vary speaker patterns - don't always go host→guest→cohost→guest
+- Include genuine reactions and emotional moments
+- Build to revelations and "aha!" moments
 - Return valid JSON format"""
 }
 
@@ -306,7 +576,8 @@ class TogetherLLMGenerator:
         length: str = "10min",
         temperature: float = 0.8,
         custom_prompt: Optional[str] = None,
-        style: str = "conversational"
+        style: str = "conversational",
+        num_speakers: int = 2
     ) -> PodcastDialogue:
         """
         Generate podcast dialogue from document text
@@ -317,6 +588,7 @@ class TogetherLLMGenerator:
             temperature: Sampling temperature (0.0-1.0, higher = more creative)
             custom_prompt: Optional custom system prompt (overrides default)
             style: Conversation style ("conversational", "expert-panel", "debate", "interview")
+            num_speakers: Number of speakers (2 or 3)
 
         Returns:
             PodcastDialogue object with structured turns
@@ -332,8 +604,8 @@ class TogetherLLMGenerator:
         if length not in self.LENGTH_CONFIGS:
             raise ValueError(f"Length must be one of: {list(self.LENGTH_CONFIGS.keys())}")
 
-        if style not in STYLE_SYSTEM_PROMPTS:
-            raise ValueError(f"Style must be one of: {list(STYLE_SYSTEM_PROMPTS.keys())}")
+        if num_speakers not in [2, 3]:
+            raise ValueError(f"num_speakers must be 2 or 3, got {num_speakers}")
 
         # Get configuration
         config = self.LENGTH_CONFIGS[length]
@@ -342,8 +614,34 @@ class TogetherLLMGenerator:
         if custom_prompt:
             system_prompt = custom_prompt
         else:
-            system_prompt = STYLE_SYSTEM_PROMPTS[style]
-            print(f"[STYLE] Using '{style}' conversation style")
+            # Select appropriate prompt based on style and number of speakers
+            print(f"\n{'='*70}")
+            print(f"LLM GENERATOR - Selecting Prompt")
+            print(f"{'='*70}")
+            print(f"num_speakers received: {num_speakers}")
+            print(f"style received: {style}")
+
+            # For 3-speaker mode, use specialized 3-speaker prompts
+            if num_speakers == 3:
+                # Map style to 3-speaker variant
+                three_speaker_prompt = f"{style}-3speaker"
+                if three_speaker_prompt in STYLE_SYSTEM_PROMPTS:
+                    prompt_key = three_speaker_prompt
+                    print(f">>> Using 3-SPEAKER '{style}' prompt!")
+                else:
+                    # Fallback to 2-speaker if 3-speaker version doesn't exist
+                    prompt_key = style
+                    print(f">>> WARNING: No 3-speaker prompt for '{style}', using 2-speaker")
+            else:
+                prompt_key = style
+                print(f">>> Using standard 2-speaker '{style}' prompt")
+
+            if prompt_key not in STYLE_SYSTEM_PROMPTS:
+                raise ValueError(f"Style '{prompt_key}' not found in prompts")
+
+            system_prompt = STYLE_SYSTEM_PROMPTS[prompt_key]
+            print(f"[STYLE] Using '{prompt_key}' conversation style ({num_speakers} speakers)")
+            print(f"{'='*70}\n")
 
         # Prepare messages
         messages = [
@@ -486,9 +784,14 @@ Generate the podcast dialogue now as valid JSON."""
                 raise ValueError(f"Turn {i} missing required fields")
 
             speaker = turn_data['speaker'].lower()
-            if speaker not in ['host', 'guest']:
+            if speaker not in ['host', 'guest', 'cohost']:
                 # Map common variations
-                speaker = 'host' if 's1' in speaker or 'speaker 1' in speaker else 'guest'
+                if 's1' in speaker or 'speaker 1' in speaker:
+                    speaker = 'host'
+                elif 's3' in speaker or 'speaker 3' in speaker or 'co-host' in speaker:
+                    speaker = 'cohost'
+                else:
+                    speaker = 'guest'
 
             turns.append(DialogueTurn(
                 speaker=speaker,
@@ -552,15 +855,20 @@ Generate the podcast dialogue now as valid JSON."""
 
         # Try to find speaker patterns
         patterns = [
-            r'\[?(HOST|GUEST|Speaker\s*[12]|S[12])\]?\s*:?\s*(.+?)(?=\[?(?:HOST|GUEST|Speaker\s*[12]|S[12])\]?:|$)',
-            r'(Host|Guest)\s*:\s*(.+?)(?=(?:Host|Guest)\s*:|$)'
+            r'\[?(HOST|GUEST|COHOST|CO-HOST|Speaker\s*[123]|S[123])\]?\s*:?\s*(.+?)(?=\[?(?:HOST|GUEST|COHOST|CO-HOST|Speaker\s*[123]|S[123])\]?:|$)',
+            r'(Host|Guest|Cohost|Co-Host)\s*:\s*(.+?)(?=(?:Host|Guest|Cohost|Co-Host)\s*:|$)'
         ]
 
         for pattern in patterns:
             matches = re.finditer(pattern, text, re.DOTALL | re.IGNORECASE)
             for match in matches:
                 speaker_label = match.group(1).strip().lower()
-                speaker = 'host' if 'host' in speaker_label or 's1' in speaker_label or 'speaker 1' in speaker_label else 'guest'
+                if 'host' in speaker_label or 's1' in speaker_label or 'speaker 1' in speaker_label:
+                    speaker = 'host'
+                elif 'cohost' in speaker_label or 'co-host' in speaker_label or 's3' in speaker_label or 'speaker 3' in speaker_label:
+                    speaker = 'cohost'
+                else:
+                    speaker = 'guest'
                 text_content = match.group(2).strip()
 
                 if text_content and len(text_content) > 10:

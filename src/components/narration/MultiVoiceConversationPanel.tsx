@@ -326,29 +326,47 @@ const MultiVoiceConversationPanel: React.FC<MultiVoiceConversationPanelProps> = 
         4: '20min'
       };
 
-      const voiceMap: { [key: string]: { host: string; guest: string } } = {
+      // Voice mapping for 2 and 3 speakers
+      const voiceMap2Speakers: { [key: string]: { host: string; guest: string } } = {
         'conversational': { host: 'host_male_friendly', guest: 'guest_female_expert' },
         'expert-panel': { host: 'host_male_casual', guest: 'guest_female_warm' },
-        'debate': { host: 'host_male_friendly', guest: 'guest_female_expert' },  // Male vs Female for clear distinction in debate
+        'debate': { host: 'host_male_friendly', guest: 'guest_female_expert' },
         'interview': { host: 'host_male_friendly', guest: 'guest_female_expert' }
       };
 
-      const voices = voiceMap[selectedStyle] || voiceMap['conversational'];
+      const voiceMap3Speakers: { [key: string]: { host: string; guest: string; cohost: string } } = {
+        'conversational': { host: 'host_male_friendly', guest: 'guest_female_expert', cohost: 'cohost_male_casual' },
+        'expert-panel': { host: 'host_female', guest: 'guest_male', cohost: 'cohost_female_casual' },
+        'debate': { host: 'host_male_friendly', guest: 'guest_female_expert', cohost: 'cohost_male_energetic' },
+        'interview': { host: 'host_male_friendly', guest: 'guest_female_expert', cohost: 'cohost_female_warm' }
+      };
+
+      const voices = numberOfSpeakers === 2
+        ? voiceMap2Speakers[selectedStyle] || voiceMap2Speakers['conversational']
+        : voiceMap3Speakers[selectedStyle] || voiceMap3Speakers['conversational'];
 
       // Start podcast generation
-      console.log('Starting podcast generation...');
+      console.log('🎙️ Starting podcast generation...');
+      console.log('📊 Number of Speakers:', numberOfSpeakers);
+      console.log('🎨 Style:', selectedStyle);
+      console.log('🎵 Voices:', voices);
 
-      const response = await NarrationAPI.generatePodcast({
+      const podcastParams = {
         documentText: content,
         length: lengthMap[numberOfSpeakers] || '10min',
         hostVoice: voices.host,
         guestVoice: voices.guest,
+        cohostVoice: numberOfSpeakers === 3 ? (voices as any).cohost : undefined,
         style: selectedStyle,
         tone: conversationTone,
         numSpeakers: numberOfSpeakers,
         outputFormat: 'mp3',
         saveScript: true
-      });
+      };
+
+      console.log('📤 Sending to API:', podcastParams);
+
+      const response = await NarrationAPI.generatePodcast(podcastParams);
 
       if (response.success) {
         // Poll for completion

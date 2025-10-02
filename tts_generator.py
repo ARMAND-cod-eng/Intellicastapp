@@ -84,6 +84,36 @@ class CartesiaTTSGenerator:
             gender="male",
             description="Knowledgeable male expert",
             speed=1.0
+        ),
+
+        # Co-Host voices (distinct from host/guest)
+        "cohost_male_casual": VoiceConfig(
+            id="b7d50908-b17c-442d-ad8d-810c63997ed9",
+            name="Casual Male Co-Host",
+            gender="male",
+            description="Relaxed, friendly male co-host",
+            speed=0.98
+        ),
+        "cohost_female_casual": VoiceConfig(
+            id="63ff761f-c1e8-414b-b969-d1833d1c870c",
+            name="Casual Female Co-Host",
+            gender="female",
+            description="Warm, engaging female co-host",
+            speed=0.98
+        ),
+        "cohost_male_energetic": VoiceConfig(
+            id="41534e16-2966-4c6b-9670-111411def906",
+            name="Energetic Male Co-Host",
+            gender="male",
+            description="Dynamic, enthusiastic male voice",
+            speed=1.05
+        ),
+        "cohost_female_warm": VoiceConfig(
+            id="2ee87190-8f84-4925-97da-e52547f9462c",
+            name="Warm Female Co-Host",
+            gender="female",
+            description="Gentle, warm female voice",
+            speed=0.95
         )
     }
 
@@ -102,7 +132,8 @@ class CartesiaTTSGenerator:
         self,
         api_key: Optional[str] = None,
         host_voice: str = "host_male_friendly",
-        guest_voice: str = "guest_female_expert"
+        guest_voice: str = "guest_female_expert",
+        cohost_voice: Optional[str] = None
     ):
         """
         Initialize Cartesia TTS generator
@@ -111,6 +142,7 @@ class CartesiaTTSGenerator:
             api_key: Cartesia API key (defaults to env var)
             host_voice: Voice preset for host
             guest_voice: Voice preset for guest
+            cohost_voice: Optional voice preset for co-host (3-speaker mode)
         """
         self.api_key = api_key or os.getenv('CARTESIA_API_KEY')
         if not self.api_key:
@@ -125,9 +157,15 @@ class CartesiaTTSGenerator:
             "guest": self.VOICE_PRESETS.get(guest_voice, self.VOICE_PRESETS["guest_female_expert"])
         }
 
+        # Add cohost if provided
+        if cohost_voice:
+            self.voices["cohost"] = self.VOICE_PRESETS.get(cohost_voice, self.VOICE_PRESETS["cohost_male_casual"])
+
         print(f"[VOICE] Configured voices:")
         print(f"   Host: {self.voices['host'].name}")
         print(f"   Guest: {self.voices['guest'].name}")
+        if cohost_voice:
+            print(f"   Co-Host: {self.voices['cohost'].name}")
 
     def generate_speech(
         self,

@@ -211,6 +211,7 @@ export class NarrationAPI {
     length?: string;
     hostVoice?: string;
     guestVoice?: string;
+    cohostVoice?: string;
     style?: string;
     tone?: string;
     numSpeakers?: number;
@@ -218,22 +219,29 @@ export class NarrationAPI {
     saveScript?: boolean;
   }): Promise<any> {
     try {
+      const requestBody: any = {
+        document_text: params.documentText,
+        length: params.length || '10min',
+        host_voice: params.hostVoice || 'host_male_friendly',
+        guest_voice: params.guestVoice || 'guest_female_expert',
+        style: params.style || 'conversational',
+        tone: params.tone || 'friendly',
+        num_speakers: params.numSpeakers || 2,
+        output_format: params.outputFormat || 'mp3',
+        save_script: params.saveScript !== false
+      };
+
+      // Add cohost_voice only if 3 speakers
+      if (params.numSpeakers === 3 && params.cohostVoice) {
+        requestBody.cohost_voice = params.cohostVoice;
+      }
+
       const response = await fetch(ENDPOINTS.PODCAST.GENERATE, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          document_text: params.documentText,
-          length: params.length || '10min',
-          host_voice: params.hostVoice || 'host_male_friendly',
-          guest_voice: params.guestVoice || 'guest_female_expert',
-          style: params.style || 'conversational',
-          tone: params.tone || 'friendly',
-          num_speakers: params.numSpeakers || 2,
-          output_format: params.outputFormat || 'mp3',
-          save_script: params.saveScript !== false
-        })
+        body: JSON.stringify(requestBody)
       });
 
       if (!response.ok) {

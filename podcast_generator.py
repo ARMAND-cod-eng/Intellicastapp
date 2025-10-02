@@ -33,8 +33,8 @@ class NotebookLMPodcastGenerator:
     Uses Together AI's Llama-3-70b with optimized prompting
     """
 
-    # System prompt for NotebookLM-style podcast generation
-    SYSTEM_PROMPT = """You are a world-class podcast producer tasked with transforming the provided input text into an engaging and informative podcast dialogue between two hosts.
+    # System prompts for different podcast formats
+    SYSTEM_PROMPT_2_SPEAKERS = """You are a world-class podcast producer tasked with transforming the provided input text into an engaging and informative podcast dialogue between two hosts.
 
 The podcast should:
 - Be conversational, engaging, and accessible to a general audience
@@ -86,6 +86,78 @@ Guidelines:
 - Don't just summarize - analyze, question, and explore implications
 """
 
+    SYSTEM_PROMPT_3_SPEAKERS = """You are a world-class podcast producer tasked with transforming the provided input text into an engaging and dynamic podcast dialogue between THREE hosts.
+
+The podcast should:
+- Feature three distinct personalities with great chemistry and natural banter
+- Create a dynamic, multi-perspective conversation with varied viewpoints
+- Include natural speech patterns, interruptions, and cross-talk between all three
+- Distribute speaking time: Speaker 1 (25%), Speaker 2 (40%), Speaker 3 (35%)
+- Build on each other's insights with "Yes, and..." or "But also consider..."
+- Show spontaneous reactions, agreements, and respectful disagreements
+- Create moments where two speakers discuss while the third listens, then contributes
+- Include natural transitions between speakers
+- Use humor, enthusiasm, and genuine curiosity
+- Reference each other by role occasionally ("As the expert mentioned...", "Building on that...")
+
+Speaker 1 (Host/Moderator - 25% speaking time):
+- Guides the overall conversation flow
+- Asks clarifying questions for the audience
+- Connects different parts of the discussion
+- Moderates when speakers disagree
+- Keeps the conversation on track
+- Introduces new angles or topics
+- Summarizes key points
+
+Speaker 2 (Primary Expert/Main Guest - 40% speaking time):
+- Provides deep expertise and detailed explanations
+- Shares the most technical or specialized insights
+- Uses examples, case studies, and analogies
+- Responds to questions from both other speakers
+- Shows passion and authority on the subject
+- Challenges assumptions when appropriate
+
+Speaker 3 (Co-Host/Analyst - 35% speaking time):
+- Offers alternative perspectives and analysis
+- Plays devil's advocate when beneficial
+- Connects topics to broader contexts
+- Adds practical applications or real-world examples
+- Builds bridges between Speaker 1 and Speaker 2
+- Brings in complementary expertise
+- Adds energy and variety to the discussion
+
+Format your output EXACTLY as follows:
+[TITLE] A catchy, descriptive title for the podcast episode
+
+[INTRO] A brief 1-2 sentence introduction to the topic (spoken by S1)
+
+[DIALOGUE]
+[S1] Host's opening statement or question to frame the discussion
+[S2] Primary expert begins with core insights
+[S3] Co-host adds perspective or alternative angle
+[S1] Follow-up question or connects ideas
+[S2] Deeper explanation with examples
+[S3] Builds on or challenges the point
+[S1] Asks for clarification for listeners
+[S2] Responds with analogy or case study
+[S3] Adds practical application or implications
+... continue the dynamic three-way conversation ...
+
+[OUTRO] A brief 1-2 sentence conclusion (can involve all three wrapping up)
+
+Guidelines:
+- Aim for 20-30 conversational turns (more variety with 3 speakers)
+- Each turn should be 2-4 sentences (natural speaking length)
+- Vary the speaker order - don't always go S1→S2→S3
+- Include moments where S2 and S3 discuss directly
+- Show organic conversation flow with natural transitions
+- Use contractions and casual language
+- Include collaborative thinking: "That's exactly right, and...", "Interesting point, though I'd add..."
+- Create "light bulb" moments where speakers realize connections together
+- Make it feel like three smart, engaged people having a fascinating discussion
+- Don't just take turns - create real dialogue with responses to each other
+"""
+
     def __init__(self, api_key: Optional[str] = None):
         """Initialize the podcast generator"""
         self.api_key = api_key or os.getenv('TOGETHER_API_KEY')
@@ -132,6 +204,7 @@ Guidelines:
     def generate_podcast_script(
         self,
         document_text: str,
+        num_speakers: int = 2,
         temperature: float = 0.8,
         max_tokens: int = 4000
     ) -> PodcastScript:
@@ -140,17 +213,26 @@ Guidelines:
 
         Args:
             document_text: Input document to convert to podcast
+            num_speakers: Number of speakers (2 or 3)
             temperature: Sampling temperature (higher = more creative)
             max_tokens: Maximum tokens to generate
 
         Returns:
             PodcastScript object with structured dialogue
         """
+        # Validate num_speakers
+        if num_speakers not in [2, 3]:
+            raise ValueError("num_speakers must be 2 or 3")
+
+        # Select appropriate system prompt
+        system_prompt = self.SYSTEM_PROMPT_2_SPEAKERS if num_speakers == 2 else self.SYSTEM_PROMPT_3_SPEAKERS
+
         # Process document
         processed_text = self.process_document(document_text)
 
         # Create user prompt
-        user_prompt = f"""Transform the following text into an engaging podcast conversation:
+        speaker_text = "two hosts" if num_speakers == 2 else "three hosts"
+        user_prompt = f"""Transform the following text into an engaging podcast conversation with {speaker_text}:
 
 <document>
 {processed_text}
@@ -159,13 +241,13 @@ Guidelines:
 Create a natural, insightful dialogue that explores the key ideas, implications, and interesting aspects of this content. Make it conversational and engaging!"""
 
         # Generate with Together AI
-        print("🎙️  Generating podcast script with Llama-3-70b...")
+        print(f"🎙️  Generating {num_speakers}-speaker podcast script with Llama-3-70b...")
 
         try:
             response = self.client.chat.completions.create(
                 model=self.model,
                 messages=[
-                    {"role": "system", "content": self.SYSTEM_PROMPT},
+                    {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_prompt}
                 ],
                 max_tokens=max_tokens,
@@ -186,12 +268,13 @@ Create a natural, insightful dialogue that explores the key ideas, implications,
                     operation='podcast_script_generation',
                     metadata={
                         'input_length': len(processed_text),
-                        'temperature': temperature
+                        'temperature': temperature,
+                        'num_speakers': num_speakers
                     }
                 )
 
             # Parse the generated script
-            podcast_script = self._parse_script(script_text)
+            podcast_script = self._parse_script(script_text, num_speakers)
 
             print(f"✓ Generated {podcast_script.total_turns} turns")
             print(f"✓ Estimated duration: {podcast_script.estimated_duration}s")
@@ -201,12 +284,13 @@ Create a natural, insightful dialogue that explores the key ideas, implications,
         except Exception as e:
             raise Exception(f"Failed to generate podcast script: {e}")
 
-    def _parse_script(self, script_text: str) -> PodcastScript:
+    def _parse_script(self, script_text: str, num_speakers: int = 2) -> PodcastScript:
         """
         Parse the generated script into structured format
 
         Args:
             script_text: Raw script from LLM
+            num_speakers: Number of speakers in the podcast
 
         Returns:
             PodcastScript object
@@ -218,7 +302,7 @@ Create a natural, insightful dialogue that explores the key ideas, implications,
         dialogue_text = self._extract_section(script_text, 'DIALOGUE')
 
         # Parse dialogue turns
-        dialogue = self._parse_dialogue(dialogue_text)
+        dialogue = self._parse_dialogue(dialogue_text, num_speakers)
 
         # Estimate duration (average 150 words per minute, 5 chars per word)
         total_chars = sum(len(turn['text']) for turn in dialogue)
@@ -234,7 +318,8 @@ Create a natural, insightful dialogue that explores the key ideas, implications,
             estimated_duration=estimated_duration,
             metadata={
                 'model': self.model,
-                'total_characters': total_chars
+                'total_characters': total_chars,
+                'num_speakers': num_speakers
             }
         )
 
@@ -246,20 +331,25 @@ Create a natural, insightful dialogue that explores the key ideas, implications,
             return match.group(1).strip()
         return ""
 
-    def _parse_dialogue(self, dialogue_text: str) -> List[Dict[str, str]]:
+    def _parse_dialogue(self, dialogue_text: str, num_speakers: int = 2) -> List[Dict[str, str]]:
         """
         Parse dialogue into structured turns
 
         Args:
-            dialogue_text: Raw dialogue text with [S1] [S2] tags
+            dialogue_text: Raw dialogue text with [S1] [S2] or [S1] [S2] [S3] tags
+            num_speakers: Number of speakers (2 or 3)
 
         Returns:
             List of dialogue turns
         """
         dialogue = []
 
-        # Split by speaker tags
-        pattern = r'\[(S[12])\]\s*(.*?)(?=\[S[12]\]|$)'
+        # Build pattern based on number of speakers
+        if num_speakers == 2:
+            pattern = r'\[(S[12])\]\s*(.*?)(?=\[S[12]\]|$)'
+        else:  # 3 speakers
+            pattern = r'\[(S[123])\]\s*(.*?)(?=\[S[123]\]|$)'
+
         matches = re.finditer(pattern, dialogue_text, re.DOTALL)
 
         for match in matches:
@@ -285,10 +375,19 @@ Create a natural, insightful dialogue that explores the key ideas, implications,
         output_file = Path(output_path)
         output_file.parent.mkdir(parents=True, exist_ok=True)
 
+        # Determine speaker names based on number of speakers
+        num_speakers = script.metadata.get('num_speakers', 2)
+        speaker_names = {}
+        if num_speakers == 2:
+            speaker_names = {'S1': 'Host', 'S2': 'Guest'}
+        else:  # 3 speakers
+            speaker_names = {'S1': 'Host', 'S2': 'Expert', 'S3': 'Co-Host'}
+
         with open(output_file, 'w', encoding='utf-8') as f:
             f.write(f"# {script.title}\n\n")
             f.write(f"**Estimated Duration:** {script.estimated_duration // 60}m {script.estimated_duration % 60}s\n")
-            f.write(f"**Total Turns:** {script.total_turns}\n\n")
+            f.write(f"**Total Turns:** {script.total_turns}\n")
+            f.write(f"**Speakers:** {num_speakers}\n\n")
 
             if script.intro:
                 f.write(f"## Introduction\n\n{script.intro}\n\n")
@@ -296,7 +395,7 @@ Create a natural, insightful dialogue that explores the key ideas, implications,
             f.write(f"## Dialogue\n\n")
 
             for i, turn in enumerate(script.dialogue, 1):
-                speaker_name = "Host" if turn['speaker'] == 'S1' else "Guest"
+                speaker_name = speaker_names.get(turn['speaker'], turn['speaker'])
                 f.write(f"**{speaker_name}:** {turn['text']}\n\n")
 
             if script.outro:
