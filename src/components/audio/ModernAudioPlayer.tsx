@@ -1,15 +1,15 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Play, 
-  Pause, 
-  Volume2, 
-  VolumeX, 
-  SkipBack, 
-  SkipForward, 
-  Repeat, 
-  Shuffle, 
-  X, 
+import {
+  Play,
+  Pause,
+  Volume2,
+  VolumeX,
+  SkipBack,
+  SkipForward,
+  Repeat,
+  Shuffle,
+  X,
   Download,
   Heart,
   Share2,
@@ -19,7 +19,6 @@ import {
 import WaveformVisualizer from './WaveformVisualizer';
 import GlassCard from '../ui/GlassCard';
 import Button from '../ui/Button';
-import { useTheme } from '../../contexts/ThemeContext';
 
 interface ModernAudioPlayerProps {
   onClose?: () => void;
@@ -35,14 +34,13 @@ interface ModernAudioPlayerProps {
   onToggleMinimize?: () => void;
 }
 
-const ModernAudioPlayer: React.FC<ModernAudioPlayerProps> = ({ 
-  onClose, 
+const ModernAudioPlayer: React.FC<ModernAudioPlayerProps> = ({
+  onClose,
   audioUrl,
   trackData,
   isMinimized = false,
   onToggleMinimize
 }) => {
-  const { theme } = useTheme();
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(247); // Mock duration
@@ -174,49 +172,57 @@ const ModernAudioPlayer: React.FC<ModernAudioPlayerProps> = ({
         exit={{ y: 100, opacity: 0 }}
         className="fixed bottom-4 right-4 z-50"
       >
-        <GlassCard 
-          variant="dark"
-          className="p-4 w-80"
-          glow
+        <div
+          className="p-4 w-80 rounded-xl backdrop-blur-xl border cursor-pointer"
+          style={{
+            backgroundColor: '#14191a',
+            borderColor: 'rgba(255, 255, 255, 0.1)',
+            boxShadow: '0 0 20px rgba(0, 212, 228, 0.2)'
+          }}
           onClick={onToggleMinimize}
         >
           <div className="flex items-center space-x-3">
-            <img 
-              src={currentTrack.artwork} 
-              alt="Artwork" 
+            <img
+              src={currentTrack.artwork}
+              alt="Artwork"
               className="w-12 h-12 rounded-xl object-cover shadow-lg"
             />
             <div className="flex-1 min-w-0">
-              <h4 className="text-sm font-semibold truncate" style={{color: theme === 'dark' ? '#FFFFFF' : '#1F2937'}}>
+              <h4 className="text-sm font-semibold truncate" style={{color: '#FFFFFF'}}>
                 {currentTrack.title}
               </h4>
-              <p className="text-xs truncate" style={{color: theme === 'dark' ? 'rgba(255,255,255,0.7)' : '#4B5563'}}>
+              <p className="text-xs truncate" style={{color: 'rgba(255, 255, 255, 0.7)'}}>
                 {currentTrack.artist}
               </p>
             </div>
-            <Button
-              variant="glass"
-              size="sm"
+            <button
               onClick={(e) => {
                 e.stopPropagation();
                 handlePlayPause();
               }}
-              className="w-10 h-10 p-0 rounded-full"
+              className="w-10 h-10 p-0 rounded-full flex items-center justify-center transition-all"
+              style={{
+                backgroundColor: '#00D4E4',
+                color: '#000000'
+              }}
             >
               {isPlaying ? <Pause size={16} /> : <Play size={16} />}
-            </Button>
+            </button>
           </div>
-          
+
           {/* Mini progress bar */}
-          <div className={`mt-2 h-1 rounded-full overflow-hidden ${theme === 'dark' ? 'bg-white/20' : 'bg-gray-300/50'}`}>
-            <motion.div 
-              className="h-full bg-gradient-to-r from-primary-500 to-secondary-500 rounded-full"
-              style={{ width: `${(currentTime / duration) * 100}%` }}
+          <div className="mt-2 h-1 rounded-full overflow-hidden" style={{backgroundColor: 'rgba(255, 255, 255, 0.1)'}}>
+            <motion.div
+              className="h-full rounded-full"
+              style={{
+                width: `${(currentTime / duration) * 100}%`,
+                backgroundColor: '#00D4E4'
+              }}
               layout
             />
           </div>
-        </GlassCard>
-        
+        </div>
+
         {/* Hidden audio element */}
         <audio
           ref={audioRef}
@@ -235,55 +241,58 @@ const ModernAudioPlayer: React.FC<ModernAudioPlayerProps> = ({
         exit={{ y: 100, opacity: 0 }}
         className="fixed bottom-0 left-0 right-0 z-50"
       >
-        <GlassCard variant="dark" className="rounded-t-3xl rounded-b-none border-b-0 backdrop-blur-3xl">
+        <div className="rounded-t-3xl rounded-b-none border-b-0 backdrop-blur-3xl relative overflow-hidden">
           {/* Background gradient */}
           <div className="absolute inset-0 rounded-t-3xl" style={{
-            background: theme === 'dark' 
-              ? 'linear-gradient(to top, rgba(17, 24, 39, 0.95), rgba(55, 65, 81, 0.90), rgba(75, 85, 99, 0.85))'
-              : 'linear-gradient(to top, rgba(251, 245, 240, 0.95), rgba(251, 245, 240, 0.90), rgba(251, 245, 240, 0.85))'
+            background: 'linear-gradient(to top, #000000, #14191a)'
           }} />
-          
+
           {/* Animated background */}
-          <div className={`absolute inset-0 rounded-t-3xl ${theme === 'dark' ? 'mesh-gradient opacity-20' : 'opacity-10'}`} 
-               style={{
-                 background: theme === 'light' 
-                   ? 'linear-gradient(135deg, rgba(191,200,216,0.1) 0%, rgba(251,245,240,0.2) 100%)'
-                   : undefined
-               }} />
+          <div className="absolute inset-0 rounded-t-3xl opacity-10" style={{
+            background: 'radial-gradient(circle at center, rgba(0, 212, 228, 0.1) 0%, transparent 70%)'
+          }} />
           
           <div className="relative z-10 p-6">
             {/* Header */}
             <div className="flex items-center justify-between mb-6">
-              <motion.div 
+              <motion.div
                 className="flex items-center space-x-2"
                 initial={{ x: -20, opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
                 transition={{ delay: 0.1 }}
               >
-                <div className="w-2 h-2 rounded-full bg-primary-500 animate-pulse" />
-                <span className="text-sm font-medium" style={{color: theme === 'dark' ? 'rgba(255,255,255,0.7)' : '#4B5563'}}>Now Playing</span>
+                <div className="w-2 h-2 rounded-full animate-pulse" style={{backgroundColor: '#00D4E4'}} />
+                <span className="text-sm font-medium" style={{color: 'rgba(255, 255, 255, 0.7)'}}>Now Playing</span>
               </motion.div>
-              
+
               <div className="flex items-center space-x-2">
                 {onToggleMinimize && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
+                  <button
                     onClick={onToggleMinimize}
-                    className="w-8 h-8 p-0 rounded-full"
+                    className="w-8 h-8 p-0 rounded-full flex items-center justify-center transition-all"
+                    style={{
+                      backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                      color: '#FFFFFF'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(0, 212, 228, 0.1)'}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.05)'}
                   >
                     <Minimize2 size={14} />
-                  </Button>
+                  </button>
                 )}
                 {onClose && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
+                  <button
                     onClick={onClose}
-                    className="w-8 h-8 p-0 rounded-full"
+                    className="w-8 h-8 p-0 rounded-full flex items-center justify-center transition-all"
+                    style={{
+                      backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                      color: '#FFFFFF'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(0, 212, 228, 0.1)'}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.05)'}
                   >
                     <X size={14} />
-                  </Button>
+                  </button>
                 )}
               </div>
             </div>
@@ -303,7 +312,8 @@ const ModernAudioPlayer: React.FC<ModernAudioPlayerProps> = ({
                 />
                 {isPlaying && (
                   <motion.div
-                    className="absolute inset-0 rounded-2xl bg-gradient-to-br from-primary-500/30 to-secondary-500/30"
+                    className="absolute inset-0 rounded-2xl"
+                    style={{backgroundColor: 'rgba(0, 212, 228, 0.2)'}}
                     animate={{
                       opacity: [0.3, 0.6, 0.3],
                     }}
@@ -315,51 +325,65 @@ const ModernAudioPlayer: React.FC<ModernAudioPlayerProps> = ({
                   />
                 )}
               </motion.div>
-              
-              <motion.div 
+
+              <motion.div
                 className="flex-1 min-w-0"
                 initial={{ x: 20, opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
                 transition={{ delay: 0.3 }}
               >
-                <h3 className="text-xl font-bold mb-1 truncate" style={{color: theme === 'dark' ? '#FFFFFF' : '#1F2937'}}>
+                <h3 className="text-xl font-bold mb-1 truncate" style={{color: '#FFFFFF'}}>
                   {currentTrack.title}
                 </h3>
-                <p className="text-sm mb-2 truncate" style={{color: theme === 'dark' ? 'rgba(255,255,255,0.7)' : '#4B5563'}}>
+                <p className="text-sm mb-2 truncate" style={{color: 'rgba(255, 255, 255, 0.7)'}}>
                   {currentTrack.artist}
                 </p>
-                <p className="text-xs line-clamp-2" style={{color: theme === 'dark' ? 'rgba(255,255,255,0.5)' : '#6B7280'}}>
+                <p className="text-xs line-clamp-2" style={{color: 'rgba(255, 255, 255, 0.5)'}}>
                   {currentTrack.description}
                 </p>
                 
                 {/* Action buttons */}
                 <div className="flex items-center space-x-3 mt-4">
-                  <Button
-                    variant="ghost"
-                    size="sm"
+                  <button
                     onClick={() => setIsLiked(!isLiked)}
-                    className={`w-8 h-8 p-0 rounded-full ${
-                      isLiked ? 'text-red-500 hover:text-red-400' : ''
-                    }`}
+                    className="w-8 h-8 p-0 rounded-full flex items-center justify-center transition-all"
+                    style={{
+                      backgroundColor: isLiked ? 'rgba(239, 68, 68, 0.15)' : 'rgba(255, 255, 255, 0.05)',
+                      color: isLiked ? '#EF4444' : '#FFFFFF'
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!isLiked) e.currentTarget.style.backgroundColor = 'rgba(0, 212, 228, 0.1)';
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isLiked) e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.05)';
+                    }}
                   >
                     <Heart size={16} fill={isLiked ? 'currentColor' : 'none'} />
-                  </Button>
-                  
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="w-8 h-8 p-0 rounded-full"
+                  </button>
+
+                  <button
+                    className="w-8 h-8 p-0 rounded-full flex items-center justify-center transition-all"
+                    style={{
+                      backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                      color: '#FFFFFF'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(0, 212, 228, 0.1)'}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.05)'}
                   >
                     <Share2 size={16} />
-                  </Button>
-                  
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="w-8 h-8 p-0 rounded-full"
+                  </button>
+
+                  <button
+                    className="w-8 h-8 p-0 rounded-full flex items-center justify-center transition-all"
+                    style={{
+                      backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                      color: '#FFFFFF'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(0, 212, 228, 0.1)'}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.05)'}
                   >
                     <Download size={16} />
-                  </Button>
+                  </button>
                 </div>
               </motion.div>
             </div>
@@ -372,22 +396,24 @@ const ModernAudioPlayer: React.FC<ModernAudioPlayerProps> = ({
               className="mb-6"
             >
               <div className="flex items-center justify-between mb-3">
-                <span className="text-sm" style={{color: theme === 'dark' ? 'rgba(255,255,255,0.7)' : '#4B5563'}}>Waveform</span>
+                <span className="text-sm" style={{color: 'rgba(255, 255, 255, 0.7)'}}>Waveform</span>
                 <div className="flex space-x-1">
                   {(['bars', 'wave', 'spectrum'] as const).map((type) => (
-                    <Button
+                    <button
                       key={type}
-                      variant={visualizerType === type ? 'primary' : 'ghost'}
-                      size="sm"
                       onClick={() => setVisualizerType(type)}
-                      className="px-3 py-1 text-xs capitalize"
+                      className="px-3 py-1 text-xs capitalize rounded-lg transition-all"
+                      style={{
+                        backgroundColor: visualizerType === type ? '#00D4E4' : 'rgba(255, 255, 255, 0.05)',
+                        color: visualizerType === type ? '#000000' : '#FFFFFF'
+                      }}
                     >
                       {type}
-                    </Button>
+                    </button>
                   ))}
                 </div>
               </div>
-              
+
               <WaveformVisualizer
                 audioUrl={audioUrl}
                 isPlaying={isPlaying}
@@ -395,56 +421,66 @@ const ModernAudioPlayer: React.FC<ModernAudioPlayerProps> = ({
                 duration={duration}
                 onSeek={handleSeek}
                 variant={visualizerType}
-                color="#6366f1"
+                color="#00D4E4"
                 height={80}
                 className="rounded-xl overflow-hidden"
               />
             </motion.div>
 
             {/* Progress */}
-            <motion.div 
+            <motion.div
               className="mb-6"
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.5 }}
             >
-              <div className="flex items-center justify-between text-sm mb-2" style={{color: theme === 'dark' ? 'rgba(255,255,255,0.7)' : '#4B5563'}}>
+              <div className="flex items-center justify-between text-sm mb-2" style={{color: 'rgba(255, 255, 255, 0.7)'}}>
                 <span>{formatTime(currentTime)}</span>
                 <span>{formatTime(duration)}</span>
               </div>
-              
-              <div 
+
+              <div
                 ref={progressRef}
                 className="relative h-2 rounded-full cursor-pointer group overflow-hidden"
                 style={{
-                  backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.2)' : 'rgba(156,163,175,0.3)'
+                  backgroundColor: 'rgba(255, 255, 255, 0.1)'
                 }}
                 onClick={handleProgressClick}
               >
-                <motion.div 
-                  className="absolute left-0 top-0 h-full bg-gradient-to-r from-primary-500 to-secondary-500 rounded-full"
-                  style={{ width: `${(currentTime / duration) * 100}%` }}
+                <motion.div
+                  className="absolute left-0 top-0 h-full rounded-full"
+                  style={{
+                    width: `${(currentTime / duration) * 100}%`,
+                    backgroundColor: '#00D4E4'
+                  }}
                   layout
                 />
-                
+
                 {/* Glow effect */}
-                <motion.div 
-                  className="absolute left-0 top-0 h-full bg-gradient-to-r from-primary-400 to-secondary-400 rounded-full opacity-0 group-hover:opacity-50 blur-sm transition-opacity duration-200"
-                  style={{ width: `${(currentTime / duration) * 100}%` }}
+                <motion.div
+                  className="absolute left-0 top-0 h-full rounded-full opacity-0 group-hover:opacity-50 blur-sm transition-opacity duration-200"
+                  style={{
+                    width: `${(currentTime / duration) * 100}%`,
+                    backgroundColor: '#00D4E4'
+                  }}
                   layout
                 />
-                
+
                 {/* Progress handle */}
-                <motion.div 
-                  className="absolute top-1/2 -translate-y-1/2 w-4 h-4 bg-white rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                  style={{ left: `${(currentTime / duration) * 100}%`, marginLeft: '-8px' }}
+                <motion.div
+                  className="absolute top-1/2 -translate-y-1/2 w-4 h-4 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                  style={{
+                    left: `${(currentTime / duration) * 100}%`,
+                    marginLeft: '-8px',
+                    backgroundColor: '#FFFFFF'
+                  }}
                   layout
                 />
               </div>
             </motion.div>
 
             {/* Controls */}
-            <motion.div 
+            <motion.div
               className="flex items-center justify-between"
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
@@ -452,77 +488,102 @@ const ModernAudioPlayer: React.FC<ModernAudioPlayerProps> = ({
             >
               {/* Left controls */}
               <div className="flex items-center space-x-3">
-                <Button
-                  variant="ghost"
-                  size="sm"
+                <button
                   onClick={() => setIsShuffle(!isShuffle)}
-                  className={`w-10 h-10 p-0 rounded-full ${
-                    isShuffle ? 'text-primary-400' : ''
-                  }`}
+                  className="w-10 h-10 p-0 rounded-full flex items-center justify-center transition-all"
+                  style={{
+                    backgroundColor: isShuffle ? 'rgba(0, 212, 228, 0.15)' : 'rgba(255, 255, 255, 0.05)',
+                    color: isShuffle ? '#00D4E4' : '#FFFFFF'
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isShuffle) e.currentTarget.style.backgroundColor = 'rgba(0, 212, 228, 0.1)';
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isShuffle) e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.05)';
+                  }}
                 >
                   <Shuffle size={18} />
-                </Button>
-                
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="w-10 h-10 p-0 rounded-full"
+                </button>
+
+                <button
+                  className="w-10 h-10 p-0 rounded-full flex items-center justify-center transition-all"
+                  style={{
+                    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                    color: '#FFFFFF'
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(0, 212, 228, 0.1)'}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.05)'}
                 >
                   <SkipBack size={20} />
-                </Button>
+                </button>
               </div>
 
               {/* Center play button */}
-              <Button
-                variant="gradient"
-                size="lg"
+              <button
                 onClick={handlePlayPause}
-                className="w-16 h-16 p-0 rounded-full shadow-2xl"
-                glow
-                pulse={isPlaying}
+                className="w-16 h-16 p-0 rounded-full shadow-2xl flex items-center justify-center transition-all"
+                style={{
+                  backgroundColor: '#00D4E4',
+                  color: '#000000',
+                  boxShadow: isPlaying ? '0 0 30px rgba(0, 212, 228, 0.5)' : '0 10px 30px rgba(0, 0, 0, 0.3)'
+                }}
               >
                 {isPlaying ? <Pause size={24} /> : <Play size={24} className="ml-1" />}
-              </Button>
+              </button>
 
               {/* Right controls */}
               <div className="flex items-center space-x-3">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="w-10 h-10 p-0 rounded-full"
+                <button
+                  className="w-10 h-10 p-0 rounded-full flex items-center justify-center transition-all"
+                  style={{
+                    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                    color: '#FFFFFF'
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(0, 212, 228, 0.1)'}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.05)'}
                 >
                   <SkipForward size={20} />
-                </Button>
-                
-                <Button
-                  variant="ghost"
-                  size="sm"
+                </button>
+
+                <button
                   onClick={() => setIsRepeat(!isRepeat)}
-                  className={`w-10 h-10 p-0 rounded-full ${
-                    isRepeat ? 'text-primary-400' : ''
-                  }`}
+                  className="w-10 h-10 p-0 rounded-full flex items-center justify-center transition-all"
+                  style={{
+                    backgroundColor: isRepeat ? 'rgba(0, 212, 228, 0.15)' : 'rgba(255, 255, 255, 0.05)',
+                    color: isRepeat ? '#00D4E4' : '#FFFFFF'
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isRepeat) e.currentTarget.style.backgroundColor = 'rgba(0, 212, 228, 0.1)';
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isRepeat) e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.05)';
+                  }}
                 >
                   <Repeat size={18} />
-                </Button>
+                </button>
               </div>
             </motion.div>
 
             {/* Volume Control */}
-            <motion.div 
+            <motion.div
               className="flex items-center justify-center space-x-3 mt-4"
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.7 }}
             >
-              <Button
-                variant="ghost"
-                size="sm"
+              <button
                 onClick={toggleMute}
-                className="w-8 h-8 p-0 rounded-full"
+                className="w-8 h-8 p-0 rounded-full flex items-center justify-center transition-all"
+                style={{
+                  backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                  color: '#FFFFFF'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(0, 212, 228, 0.1)'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.05)'}
               >
                 {isMuted || volume === 0 ? <VolumeX size={18} /> : <Volume2 size={18} />}
-              </Button>
-              
+              </button>
+
               <div className="relative w-32">
                 <input
                   type="range"
@@ -533,17 +594,18 @@ const ModernAudioPlayer: React.FC<ModernAudioPlayerProps> = ({
                   onChange={handleVolumeChange}
                   className="w-full h-1 rounded-full appearance-none cursor-pointer slider"
                   style={{
-                    backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.2)' : 'rgba(156,163,175,0.3)'
+                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                    accentColor: '#00D4E4'
                   }}
                 />
               </div>
-              
-              <span className="text-xs w-8 text-center" style={{color: theme === 'dark' ? 'rgba(255,255,255,0.5)' : '#6B7280'}}>
+
+              <span className="text-xs w-8 text-center" style={{color: 'rgba(255, 255, 255, 0.5)'}}>
                 {Math.round((isMuted ? 0 : volume) * 100)}
               </span>
             </motion.div>
           </div>
-        </GlassCard>
+        </div>
         
         {/* Hidden audio element */}
         <audio

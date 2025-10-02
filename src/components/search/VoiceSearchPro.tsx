@@ -96,31 +96,41 @@ const VoiceSearchPro: React.FC<VoiceSearchProProps> = ({ query, onBack }) => {
         <div className="mb-8">
           <button
             onClick={onBack}
-            className="mb-4 px-4 py-2 rounded-lg transition-colors"
+            className="mb-4 px-4 py-2 rounded-lg transition-all duration-200 hover:scale-105"
             style={{
-              backgroundColor: theme === 'professional-dark' ? '#3C4043' : '#F3F4F6',
-              color: theme === 'professional-dark' ? '#E8EAED' : '#1F2937'
+              backgroundColor: '#14191a',
+              color: '#FFFFFF',
+              border: '1px solid rgba(0, 212, 228, 0.3)'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.borderColor = '#00D4E4';
+              e.currentTarget.style.boxShadow = '0 0 15px rgba(0, 212, 228, 0.3)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.borderColor = 'rgba(0, 212, 228, 0.3)';
+              e.currentTarget.style.boxShadow = '';
             }}
           >
             ← Back to Search
           </button>
 
           <div className="flex items-center space-x-3 mb-4">
-            <Search className="w-6 h-6" style={{ color: theme === 'professional-dark' ? '#60A5FA' : '#2563EB' }} />
-            <h1 className="text-2xl font-bold" style={{ color: theme === 'professional-dark' ? '#E8EAED' : '#1F2937' }}>
+            <Search className="w-6 h-6" style={{ color: '#00D4E4' }} />
+            <h1 className="text-2xl font-bold" style={{ color: '#FFFFFF' }}>
               "{query}"
             </h1>
           </div>
 
           {searchData && (
             <div className="flex items-center justify-between">
-              <p className="text-sm" style={{ color: theme === 'professional-dark' ? '#9AA0A6' : '#6B7280' }}>
+              <p className="text-sm" style={{ color: 'rgba(255, 255, 255, 0.7)' }}>
                 Found {searchData.results.length} results in {searchData.response_time.toFixed(2)}s
               </p>
               {searchData.metadata && (
                 <div className="text-xs px-3 py-1 rounded-full" style={{
-                  backgroundColor: theme === 'professional-dark' ? 'rgba(139, 92, 246, 0.2)' : 'rgba(139, 92, 246, 0.1)',
-                  color: '#8B5CF6'
+                  backgroundColor: 'rgba(0, 212, 228, 0.2)',
+                  color: '#00D4E4',
+                  border: '1px solid rgba(0, 212, 228, 0.3)'
                 }}>
                   {searchData.metadata.query_intent} • AI Enhanced
                 </div>
@@ -131,19 +141,19 @@ const VoiceSearchPro: React.FC<VoiceSearchProProps> = ({ query, onBack }) => {
 
         {/* Tab Navigation - 3 Tabs */}
         <div className="mb-8">
-          <div className="flex space-x-1 p-1 rounded-xl" style={getCardStyle()}>
+          <div className="flex space-x-1 p-1 rounded-xl" style={{
+            backgroundColor: '#14191a',
+            border: '1px solid rgba(255, 255, 255, 0.1)'
+          }}>
             <button
               onClick={() => setActiveTab('simple')}
               className={`flex-1 flex items-center justify-center space-x-2 py-3 px-4 rounded-lg transition-all duration-200 ${
                 activeTab === 'simple' ? 'transform scale-[1.02]' : ''
               }`}
               style={{
-                backgroundColor: activeTab === 'simple'
-                  ? (theme === 'professional-dark' ? '#2563EB' : '#60A5FA')
-                  : 'transparent',
-                color: activeTab === 'simple'
-                  ? 'white'
-                  : (theme === 'professional-dark' ? '#E8EAED' : '#1F2937')
+                backgroundColor: activeTab === 'simple' ? '#00D4E4' : 'transparent',
+                color: activeTab === 'simple' ? 'white' : 'rgba(255, 255, 255, 0.7)',
+                boxShadow: activeTab === 'simple' ? '0 0 20px rgba(0, 212, 228, 0.3)' : ''
               }}
             >
               <BookOpen className="w-4 h-4" />
@@ -156,12 +166,9 @@ const VoiceSearchPro: React.FC<VoiceSearchProProps> = ({ query, onBack }) => {
                 activeTab === 'detailed' ? 'transform scale-[1.02]' : ''
               }`}
               style={{
-                backgroundColor: activeTab === 'detailed'
-                  ? (theme === 'professional-dark' ? '#2563EB' : '#60A5FA')
-                  : 'transparent',
-                color: activeTab === 'detailed'
-                  ? 'white'
-                  : (theme === 'professional-dark' ? '#E8EAED' : '#1F2937')
+                backgroundColor: activeTab === 'detailed' ? '#00D4E4' : 'transparent',
+                color: activeTab === 'detailed' ? 'white' : 'rgba(255, 255, 255, 0.7)',
+                boxShadow: activeTab === 'detailed' ? '0 0 20px rgba(0, 212, 228, 0.3)' : ''
               }}
             >
               <BarChart3 className="w-4 h-4" />
@@ -174,12 +181,9 @@ const VoiceSearchPro: React.FC<VoiceSearchProProps> = ({ query, onBack }) => {
                 activeTab === 'web' ? 'transform scale-[1.02]' : ''
               }`}
               style={{
-                backgroundColor: activeTab === 'web'
-                  ? (theme === 'professional-dark' ? '#2563EB' : '#60A5FA')
-                  : 'transparent',
-                color: activeTab === 'web'
-                  ? 'white'
-                  : (theme === 'professional-dark' ? '#E8EAED' : '#1F2937')
+                backgroundColor: activeTab === 'web' ? '#00D4E4' : 'transparent',
+                color: activeTab === 'web' ? 'white' : 'rgba(255, 255, 255, 0.7)',
+                boxShadow: activeTab === 'web' ? '0 0 20px rgba(0, 212, 228, 0.3)' : ''
               }}
             >
               <Globe className="w-4 h-4" />

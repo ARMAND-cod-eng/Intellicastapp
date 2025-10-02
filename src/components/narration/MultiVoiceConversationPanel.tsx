@@ -1,10 +1,11 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { X, Users, Minimize2, ChevronDown, Settings, Sparkles, FileText, Upload, Play, Download, Mic } from 'lucide-react';
+import { X, Users, Minimize2, ChevronDown, Settings, Sparkles, FileText, Upload, Play, Download, Mic, Maximize2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useDropzone } from 'react-dropzone';
 import GlassCard from '../ui/GlassCard';
-import { useTheme } from '../../contexts/ThemeContext';
 import { NarrationAPI } from '../../services/narrationApi';
+import { useTheme } from '../../contexts/ThemeContext';
+import { getPodcastDownloadUrl } from '../../config/api';
 import type { DocumentContent } from '../../types/document';
 
 interface MultiVoiceConversationPanelProps {
@@ -40,6 +41,7 @@ const MultiVoiceConversationPanel: React.FC<MultiVoiceConversationPanelProps> = 
   const [aiRecommendation, setAiRecommendation] = useState<any>(null);
   const [isAnalyzingContent, setIsAnalyzingContent] = useState(false);
   const [showAiInsights, setShowAiInsights] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   const podcastStyles = [
     {
@@ -370,8 +372,8 @@ const MultiVoiceConversationPanel: React.FC<MultiVoiceConversationPanelProps> = 
               const audioFile = job.result.audio_file;
               const filename = audioFile.split(/[\/\\]/).pop(); // Handle both / and \ separators
 
-              // Set audio URL for the player
-              const audioUrl = `http://localhost:8000/api/podcast/download/${filename}`;
+              // Set audio URL for the player using centralized config
+              const audioUrl = getPodcastDownloadUrl(filename);
               setPodcastAudioUrl(audioUrl);
               setPodcastMetadata({
                 duration: job.result.duration_seconds,
@@ -417,17 +419,17 @@ const MultiVoiceConversationPanel: React.FC<MultiVoiceConversationPanelProps> = 
       <div className="fixed right-4 top-1/2 transform -translate-y-1/2 z-50">
         <div className="w-16 h-48 backdrop-blur-3xl border shadow-2xl rounded-xl overflow-hidden flex flex-col relative"
              style={{
-               backgroundColor: theme === 'professional-dark' ? '#252526' : theme === 'dark' ? 'rgba(15, 15, 35, 0.95)' : '#FFFFFF',
-               borderColor: theme === 'professional-dark' ? '#3C4043' : theme === 'dark' ? 'rgba(255, 255, 255, 0.1)' : '#E5E7EB'
+               backgroundColor: '#14191a',
+               borderColor: 'rgba(255, 255, 255, 0.1)'
              }}>
           <div className="p-3 backdrop-blur-md border-b flex flex-col items-center space-y-2"
                style={{
-                 backgroundColor: theme === 'professional-dark' ? '#2A2A2A' : theme === 'dark' ? 'rgba(255, 255, 255, 0.05)' : '#F8F9FA',
-                 borderColor: theme === 'professional-dark' ? '#3C4043' : theme === 'dark' ? 'rgba(255, 255, 255, 0.1)' : '#E5E7EB'
+                 backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                 borderColor: 'rgba(255, 255, 255, 0.1)'
                }}>
             <div className={`w-6 h-6 rounded-full flex items-center justify-center`}
                  style={{
-                   backgroundColor: theme === 'light' ? '#60A5FA' : theme === 'professional-dark' ? '#2563EB' : '#6366F1'
+                   backgroundColor: '#00D4E4'
                  }}>
               <Users className="w-3 h-3 text-white" />
             </div>
@@ -436,7 +438,7 @@ const MultiVoiceConversationPanel: React.FC<MultiVoiceConversationPanelProps> = 
                 onClick={onMinimize}
                 className="p-1 rounded transition-colors"
                 style={{
-                  color: theme === 'professional-dark' ? '#9AA0A6' : theme === 'dark' ? 'rgba(255, 255, 255, 0.7)' : '#6B7280'
+                  color: 'rgba(255, 255, 255, 0.7)'
                 }}
                 title="Expand Panel"
               >
@@ -446,7 +448,7 @@ const MultiVoiceConversationPanel: React.FC<MultiVoiceConversationPanelProps> = 
                 onClick={onClose}
                 className="p-1 rounded transition-colors"
                 style={{
-                  color: theme === 'professional-dark' ? '#9AA0A6' : theme === 'dark' ? 'rgba(255, 255, 255, 0.7)' : '#6B7280'
+                  color: 'rgba(255, 255, 255, 0.7)'
                 }}
                 title="Close Panel"
               >
@@ -465,18 +467,45 @@ const MultiVoiceConversationPanel: React.FC<MultiVoiceConversationPanelProps> = 
       <div className="flex-1 bg-black/30 backdrop-blur-sm" onClick={onClose} />
 
       {/* Main Panel Container - Half Screen */}
-      <div className="w-1/2 backdrop-blur-3xl border-l shadow-2xl overflow-hidden flex flex-col relative" style={{
-        backgroundColor: theme === 'professional-dark' ? '#202020' : theme === 'dark' ? 'rgba(15, 15, 35, 0.95)' : '#FFFFFF',
-        borderColor: theme === 'professional-dark' ? '#3C4043' : theme === 'dark' ? 'rgba(255, 255, 255, 0.1)' : '#E5E7EB'
+      <div className={`${isExpanded ? 'w-3/4' : 'w-1/2'} backdrop-blur-3xl border-l shadow-2xl overflow-hidden flex flex-col relative`} style={{
+        backgroundColor: '#000000',
+        borderColor: 'rgba(255, 255, 255, 0.1)',
+        transition: 'all 0.5s ease-in-out'
       }}>
         {/* Top Control Bar */}
         <div className="absolute top-6 left-6 z-[100] flex items-center space-x-3">
           <button
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="p-3 text-white rounded-lg transition-colors shadow-xl border"
+            style={{
+              backgroundColor: 'rgba(0, 212, 228, 0.1)',
+              borderColor: 'rgba(0, 212, 228, 0.3)',
+              color: '#00D4E4'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = 'rgba(0, 212, 228, 0.2)';
+              e.currentTarget.style.boxShadow = '0 0 20px rgba(0, 212, 228, 0.3)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'rgba(0, 212, 228, 0.1)';
+              e.currentTarget.style.boxShadow = '';
+            }}
+            title={isExpanded ? "Collapse Panel" : "Expand Panel"}
+          >
+            {isExpanded ? <Minimize2 className="w-6 h-6" /> : <Maximize2 className="w-6 h-6" />}
+          </button>
+          <button
             onClick={onMinimize || (() => console.log('Minimize clicked'))}
             className="p-3 text-white rounded-lg transition-colors shadow-xl border-2"
             style={{
-              backgroundColor: theme === 'light' ? '#60A5FA' : theme === 'professional-dark' ? '#2563EB' : '#6366F1',
-              borderColor: theme === 'light' ? '#60A5FA' : theme === 'professional-dark' ? '#2563EB' : '#6366F1'
+              backgroundColor: '#00D4E4',
+              borderColor: '#00D4E4'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = '#00E8FA';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = '#00D4E4';
             }}
             title="Minimize Panel"
           >
@@ -493,15 +522,15 @@ const MultiVoiceConversationPanel: React.FC<MultiVoiceConversationPanelProps> = 
 
         {/* Header */}
         <div className="relative flex items-center justify-between p-6 backdrop-blur-md border-b z-10" style={{
-          backgroundColor: theme === 'professional-dark' ? '#252526' : theme === 'dark' ? 'rgba(255, 255, 255, 0.05)' : '#FFFFFF',
-          borderColor: theme === 'professional-dark' ? '#3C4043' : theme === 'dark' ? 'rgba(255, 255, 255, 0.1)' : '#E5E7EB'
+          backgroundColor: '#14191a',
+          borderColor: 'rgba(255, 255, 255, 0.1)'
         }}>
           <h1 className="text-2xl font-bold flex items-center space-x-3" style={{
-            color: theme === 'professional-dark' ? '#E8EAED' : theme === 'dark' ? '#FFFFFF' : '#1F2937'
+            color: '#FFFFFF'
           }}>
             <div className={`w-8 h-8 rounded-full flex items-center justify-center`}
                  style={{
-                   backgroundColor: theme === 'light' ? '#60A5FA' : theme === 'professional-dark' ? '#2563EB' : '#7C3AED'
+                   backgroundColor: '#00D4E4'
                  }}>
               <Users className="w-4 h-4 text-white" />
             </div>
@@ -519,15 +548,15 @@ const MultiVoiceConversationPanel: React.FC<MultiVoiceConversationPanelProps> = 
              (internalUploadedFiles && internalUploadedFiles.length > 0) ? (
               <>
                 <h2 className="text-xl font-bold mb-2" style={{
-                  color: theme === 'professional-dark' ? '#E8EAED' : theme === 'dark' ? '#FFFFFF' : '#1F2937'
+                  color: '#FFFFFF'
                 }}>Document Summary</h2>
                 <div className="mb-4">
                   <div className="flex items-center space-x-2 mb-3">
                     <FileText className="w-5 h-5" style={{
-                      color: theme === 'light' ? '#60A5FA' : theme === 'professional-dark' ? '#2563EB' : '#6366F1'
+                      color: '#00D4E4'
                     }} />
                     <span className="text-sm font-medium" style={{
-                      color: theme === 'professional-dark' ? '#E8EAED' : theme === 'dark' ? 'rgba(255, 255, 255, 0.9)' : '#1F2937'
+                      color: '#FFFFFF'
                     }}>
                       {getDocumentTitle()}
                     </span>
@@ -536,7 +565,7 @@ const MultiVoiceConversationPanel: React.FC<MultiVoiceConversationPanelProps> = 
                   {/* Summary Type Selector */}
                   <div className="mb-3">
                     <label className="text-xs block mb-2" style={{
-                      color: theme === 'professional-dark' ? '#9AA0A6' : theme === 'dark' ? 'rgba(255, 255, 255, 0.8)' : '#4B5563'
+                      color: 'rgba(255, 255, 255, 0.7)'
                     }}>Summary Type</label>
                     <div className="grid grid-cols-3 gap-2">
                       {[
@@ -550,14 +579,14 @@ const MultiVoiceConversationPanel: React.FC<MultiVoiceConversationPanelProps> = 
                           className={`p-2 text-xs rounded-lg transition-all duration-200 border`}
                           style={{
                             backgroundColor: summaryType === type.id
-                              ? (theme === 'professional-dark' ? 'rgba(37, 99, 235, 0.2)' : theme === 'dark' ? 'rgba(99, 102, 241, 0.2)' : 'rgba(96, 165, 250, 0.1)')
+                              ? 'rgba(0, 212, 228, 0.2)'
                               : 'transparent',
                             borderColor: summaryType === type.id
-                              ? (theme === 'professional-dark' ? '#2563EB' : theme === 'dark' ? '#6366F1' : '#60A5FA')
-                              : (theme === 'professional-dark' ? '#3C4043' : theme === 'dark' ? 'rgba(255, 255, 255, 0.2)' : 'rgba(156, 163, 175, 0.3)'),
+                              ? '#00D4E4'
+                              : 'rgba(255, 255, 255, 0.1)',
                             color: summaryType === type.id
-                              ? (theme === 'professional-dark' ? '#2563EB' : theme === 'dark' ? '#C4B5FD' : '#60A5FA')
-                              : (theme === 'professional-dark' ? '#E8EAED' : theme === 'dark' ? 'rgba(255, 255, 255, 0.9)' : '#1F2937')
+                              ? '#00D4E4'
+                              : 'rgba(255, 255, 255, 0.7)'
                           }}
                         >
                           <div className="font-medium">{type.name}</div>
@@ -570,12 +599,12 @@ const MultiVoiceConversationPanel: React.FC<MultiVoiceConversationPanelProps> = 
 
                 {/* Document Summary Content */}
                 <div className="backdrop-blur-sm rounded-lg p-4 mb-4 border" style={{
-                  backgroundColor: theme === 'professional-dark' ? '#2A2A2A' : theme === 'dark' ? 'rgba(255, 255, 255, 0.1)' : '#FFFFFF',
-                  borderColor: theme === 'professional-dark' ? '#3C4043' : theme === 'dark' ? 'rgba(255, 255, 255, 0.2)' : 'rgba(156, 163, 175, 0.5)'
+                  backgroundColor: '#14191a',
+                  borderColor: 'rgba(255, 255, 255, 0.1)'
                 }}>
                   <div className="flex items-start justify-between mb-3">
                     <p className="text-sm leading-relaxed flex-1" style={{
-                      color: theme === 'professional-dark' ? '#9AA0A6' : theme === 'dark' ? 'rgba(255, 255, 255, 0.8)' : '#4B5563'
+                      color: 'rgba(255, 255, 255, 0.7)'
                     }}>
                       {getDocumentSummary()}
                     </p>
@@ -584,7 +613,7 @@ const MultiVoiceConversationPanel: React.FC<MultiVoiceConversationPanelProps> = 
                         onClick={generateDocumentSummary}
                         className="ml-3 px-3 py-1 text-white rounded-lg transition-all duration-300 text-xs whitespace-nowrap shadow-lg"
                         style={{
-                          backgroundColor: theme === 'light' ? '#60A5FA' : theme === 'professional-dark' ? '#2563EB' : '#6366F1'
+                          backgroundColor: '#00D4E4'
                         }}
                       >
                         Generate Summary
@@ -593,8 +622,8 @@ const MultiVoiceConversationPanel: React.FC<MultiVoiceConversationPanelProps> = 
                   </div>
                   {isLoadingSummary && (
                     <div className="flex items-center space-x-2 mt-2">
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-                      <span className="text-xs text-primary-400">AI is analyzing your document...</span>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2" style={{ borderColor: '#00D4E4' }}></div>
+                      <span className="text-xs" style={{ color: '#00D4E4' }}>AI is analyzing your document...</span>
                     </div>
                   )}
                 </div>
@@ -603,25 +632,25 @@ const MultiVoiceConversationPanel: React.FC<MultiVoiceConversationPanelProps> = 
                 {uploadedContent && uploadedContent.length > 0 && (
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div className="backdrop-blur-sm rounded-lg p-3 border" style={{
-                      backgroundColor: theme === 'professional-dark' ? 'rgba(59, 130, 246, 0.1)' : theme === 'dark' ? 'rgba(139, 92, 246, 0.2)' : 'rgba(59, 130, 246, 0.1)',
-                      borderColor: theme === 'professional-dark' ? '#2563EB' : theme === 'dark' ? 'rgba(139, 92, 246, 0.3)' : 'rgba(59, 130, 246, 0.2)'
+                      backgroundColor: 'rgba(0, 212, 228, 0.1)',
+                      borderColor: 'rgba(0, 212, 228, 0.3)'
                     }}>
                       <div className="font-medium" style={{
-                        color: theme === 'professional-dark' ? '#2563EB' : theme === 'dark' ? '#C4B5FD' : '#60A5FA'
+                        color: '#00D4E4'
                       }}>Word Count</div>
                       <div style={{
-                        color: theme === 'professional-dark' ? '#E8EAED' : theme === 'dark' ? 'rgba(255, 255, 255, 0.9)' : '#1F2937'
+                        color: '#FFFFFF'
                       }}>{uploadedContent[0].metadata?.wordCount || uploadedContent[0].content.split(' ').length} words</div>
                     </div>
                     <div className="backdrop-blur-sm rounded-lg p-3 border" style={{
-                      backgroundColor: theme === 'professional-dark' ? 'rgba(59, 130, 246, 0.1)' : theme === 'dark' ? 'rgba(219, 39, 119, 0.2)' : 'rgba(16, 185, 129, 0.1)',
-                      borderColor: theme === 'professional-dark' ? '#2563EB' : theme === 'dark' ? 'rgba(219, 39, 119, 0.3)' : 'rgba(16, 185, 129, 0.2)'
+                      backgroundColor: 'rgba(0, 212, 228, 0.1)',
+                      borderColor: 'rgba(0, 212, 228, 0.3)'
                     }}>
                       <div className="font-medium" style={{
-                        color: theme === 'professional-dark' ? '#2563EB' : theme === 'dark' ? '#F9A8D4' : '#10B981'
+                        color: '#00D4E4'
                       }}>Est. Reading Time</div>
                       <div style={{
-                        color: theme === 'professional-dark' ? '#E8EAED' : theme === 'dark' ? 'rgba(255, 255, 255, 0.9)' : '#1F2937'
+                        color: '#FFFFFF'
                       }}>{Math.ceil((uploadedContent[0].metadata?.wordCount || uploadedContent[0].content.split(' ').length) / 250)} min</div>
                     </div>
                   </div>
@@ -630,10 +659,10 @@ const MultiVoiceConversationPanel: React.FC<MultiVoiceConversationPanelProps> = 
             ) : (
               <>
                 <h2 className="text-xl font-bold mb-2" style={{
-                  color: theme === 'professional-dark' ? '#E8EAED' : theme === 'dark' ? '#FFFFFF' : '#1F2937'
+                  color: '#FFFFFF'
                 }}>Upload Your Document</h2>
                 <p className="text-sm mb-6" style={{
-                  color: theme === 'professional-dark' ? '#9AA0A6' : theme === 'dark' ? 'rgba(255, 255, 255, 0.7)' : '#4B5563'
+                  color: 'rgba(255, 255, 255, 0.7)'
                 }}>We support PDF, EPUB, DOCX, and TXT formats. Maximum file size is 50MB.</p>
 
                 {/* Upload Area */}
@@ -641,25 +670,28 @@ const MultiVoiceConversationPanel: React.FC<MultiVoiceConversationPanelProps> = 
                   {...getRootProps()}
                   className={`border-2 border-dashed rounded-lg p-6 text-center mb-4 transition-colors cursor-pointer backdrop-blur-sm ${
                     isDragActive
-                      ? (theme === 'professional-dark' ? 'border-blue-400 bg-blue-50/20' : theme === 'dark' ? 'border-primary-400 bg-primary-500/20' : 'border-blue-400 bg-blue-50')
-                      : (theme === 'professional-dark' ? 'border-gray-400/30 bg-gray-500/10 hover:border-blue-400/50' : theme === 'dark' ? 'border-white/30 bg-white/10 hover:border-primary-400/50' : 'border-gray-300 bg-white hover:border-blue-400')
+                      ? 'bg-cyan-500/20'
+                      : 'bg-white/5 hover:bg-white/10'
                   }`}
+                  style={{
+                    borderColor: isDragActive ? '#00D4E4' : 'rgba(255, 255, 255, 0.2)'
+                  }}
                 >
                   <input {...getInputProps()} />
                   <Upload className="w-10 h-10 mx-auto mb-3" style={{
-                    color: theme === 'professional-dark' ? '#9AA0A6' : theme === 'dark' ? 'rgba(255, 255, 255, 0.6)' : '#9CA3AF'
+                    color: 'rgba(255, 255, 255, 0.5)'
                   }} />
                   {isDragActive ? (
                     <p className="text-sm mb-3" style={{
-                      color: theme === 'professional-dark' ? '#2563EB' : theme === 'dark' ? '#C4B5FD' : '#60A5FA'
+                      color: '#00D4E4'
                     }}>Drop your file here</p>
                   ) : (
                     <>
                       <p className="text-sm mb-3" style={{
-                        color: theme === 'professional-dark' ? '#9AA0A6' : theme === 'dark' ? 'rgba(255, 255, 255, 0.7)' : '#4B5563'
+                        color: 'rgba(255, 255, 255, 0.7)'
                       }}>Drag and drop your file here or click to browse</p>
                       <div className="px-4 py-2 text-white rounded-lg text-sm font-medium transition-all duration-300 inline-block shadow-lg" style={{
-                        background: theme === 'professional-dark' ? '#2563EB' : theme === 'dark' ? 'linear-gradient(to right, #7C3AED, #DB2777)' : '#60A5FA'
+                        background: '#00D4E4'
                       }}>Choose File</div>
                     </>
                   )}
@@ -671,7 +703,7 @@ const MultiVoiceConversationPanel: React.FC<MultiVoiceConversationPanelProps> = 
           {/* Podcast Style Selection */}
           <GlassCard variant="medium" className="p-6" glow>
             <h2 className="text-xl font-bold mb-4" style={{
-              color: theme === 'professional-dark' ? '#E8EAED' : theme === 'dark' ? '#FFFFFF' : '#1F2937'
+              color: '#FFFFFF'
             }}>Choose Conversation Style</h2>
 
             <div className="grid grid-cols-2 gap-4">
@@ -682,16 +714,31 @@ const MultiVoiceConversationPanel: React.FC<MultiVoiceConversationPanelProps> = 
                   disabled={isAnalyzingContent && style.id === 'ai-smart'}
                   className={`p-4 rounded-xl border-2 transition-all text-left ${
                     selectedStyle === style.id || (style.id === 'ai-smart' && showAiInsights)
-                      ? 'border-blue-500 bg-blue-500/20'
+                      ? 'border-cyan-500 bg-cyan-500/20'
                       : 'border-gray-300/30 bg-transparent hover:bg-gray-500/10'
                   } ${style.isSpecial ? 'relative overflow-hidden' : ''}`}
                   style={{
                     borderColor: (selectedStyle === style.id || (style.id === 'ai-smart' && showAiInsights))
-                      ? (theme === 'professional-dark' ? '#2563EB' : theme === 'dark' ? '#6366F1' : '#60A5FA')
-                      : (theme === 'professional-dark' ? '#3C4043' : theme === 'dark' ? 'rgba(255, 255, 255, 0.2)' : 'rgba(156, 163, 175, 0.3)'),
+                      ? '#00D4E4'
+                      : 'rgba(255, 255, 255, 0.1)',
                     backgroundColor: (selectedStyle === style.id || (style.id === 'ai-smart' && showAiInsights))
-                      ? (theme === 'professional-dark' ? 'rgba(37, 99, 235, 0.2)' : theme === 'dark' ? 'rgba(99, 102, 241, 0.2)' : 'rgba(96, 165, 250, 0.1)')
-                      : 'transparent'
+                      ? 'rgba(0, 212, 228, 0.15)'
+                      : 'transparent',
+                    boxShadow: (selectedStyle === style.id || (style.id === 'ai-smart' && showAiInsights))
+                      ? '0 0 20px rgba(0, 212, 228, 0.2)'
+                      : 'none'
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!(selectedStyle === style.id || (style.id === 'ai-smart' && showAiInsights))) {
+                      e.currentTarget.style.backgroundColor = 'rgba(0, 212, 228, 0.05)';
+                      e.currentTarget.style.borderColor = 'rgba(0, 212, 228, 0.3)';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!(selectedStyle === style.id || (style.id === 'ai-smart' && showAiInsights))) {
+                      e.currentTarget.style.backgroundColor = 'transparent';
+                      e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+                    }
                   }}
                 >
                   {style.isSpecial && (
@@ -723,15 +770,15 @@ const MultiVoiceConversationPanel: React.FC<MultiVoiceConversationPanelProps> = 
                   exit={{ opacity: 0, height: 0 }}
                   className="mt-4 p-4 rounded-lg border"
                   style={{
-                    backgroundColor: theme === 'professional-dark' ? 'rgba(37, 99, 235, 0.1)' : theme === 'dark' ? 'rgba(99, 102, 241, 0.1)' : 'rgba(96, 165, 250, 0.05)',
-                    borderColor: theme === 'professional-dark' ? '#2563EB' : theme === 'dark' ? '#6366F1' : '#60A5FA'
+                    backgroundColor: 'rgba(0, 212, 228, 0.1)',
+                    borderColor: '#00D4E4'
                   }}
                 >
                   <div className="flex items-start gap-3">
-                    <Sparkles className="w-5 h-5 text-blue-500 mt-0.5" />
+                    <Sparkles className="w-5 h-5 mt-0.5" style={{color: '#00D4E4'}} />
                     <div className="flex-1">
                       <h4 className="font-semibold mb-2" style={{
-                        color: theme === 'professional-dark' ? '#2563EB' : theme === 'dark' ? '#C4B5FD' : '#60A5FA'
+                        color: '#00D4E4'
                       }}>
                         AI Analysis Results
                       </h4>
@@ -763,8 +810,8 @@ const MultiVoiceConversationPanel: React.FC<MultiVoiceConversationPanelProps> = 
                                 key={idx}
                                 className="px-2 py-1 rounded-full text-xs"
                                 style={{
-                                  backgroundColor: theme === 'dark' ? 'rgba(99, 102, 241, 0.2)' : 'rgba(96, 165, 250, 0.2)',
-                                  color: theme === 'dark' ? '#C4B5FD' : '#60A5FA'
+                                  backgroundColor: 'rgba(0, 212, 228, 0.15)',
+                                  color: '#00D4E4'
                                 }}
                               >
                                 {theme}
@@ -801,17 +848,26 @@ const MultiVoiceConversationPanel: React.FC<MultiVoiceConversationPanelProps> = 
                     onClick={() => setNumberOfSpeakers(num)}
                     className={`px-6 py-2 rounded-lg border-2 transition-all ${
                       numberOfSpeakers === num
-                        ? 'border-blue-500 bg-blue-500/20'
+                        ? 'border-cyan-500 bg-cyan-500/20'
                         : 'border-gray-300/30 bg-transparent hover:bg-gray-500/10'
                     }`}
                     style={{
-                      borderColor: numberOfSpeakers === num
-                        ? (theme === 'professional-dark' ? '#2563EB' : '#60A5FA')
-                        : (theme === 'professional-dark' ? '#3C4043' : 'rgba(156, 163, 175, 0.3)'),
-                      backgroundColor: numberOfSpeakers === num
-                        ? (theme === 'professional-dark' ? 'rgba(37, 99, 235, 0.2)' : 'rgba(96, 165, 250, 0.1)')
-                        : 'transparent',
-                      color: theme === 'professional-dark' ? '#E8EAED' : '#1F2937'
+                      borderColor: numberOfSpeakers === num ? '#00D4E4' : 'rgba(255, 255, 255, 0.1)',
+                      backgroundColor: numberOfSpeakers === num ? 'rgba(0, 212, 228, 0.15)' : 'transparent',
+                      color: '#FFFFFF',
+                      boxShadow: numberOfSpeakers === num ? '0 0 15px rgba(0, 212, 228, 0.2)' : 'none'
+                    }}
+                    onMouseEnter={(e) => {
+                      if (numberOfSpeakers !== num) {
+                        e.currentTarget.style.backgroundColor = 'rgba(0, 212, 228, 0.05)';
+                        e.currentTarget.style.borderColor = 'rgba(0, 212, 228, 0.3)';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (numberOfSpeakers !== num) {
+                        e.currentTarget.style.backgroundColor = 'transparent';
+                        e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+                      }
                     }}
                   >
                     {num} {num === 1 ? 'Speaker' : 'Speakers'}
@@ -832,16 +888,25 @@ const MultiVoiceConversationPanel: React.FC<MultiVoiceConversationPanelProps> = 
                     onClick={() => setConversationTone(tone.id)}
                     className={`p-3 rounded-lg border-2 transition-all text-left ${
                       conversationTone === tone.id
-                        ? 'border-blue-500 bg-blue-500/20'
+                        ? 'border-cyan-500 bg-cyan-500/20'
                         : 'border-gray-300/30 bg-transparent hover:bg-gray-500/10'
                     }`}
                     style={{
-                      borderColor: conversationTone === tone.id
-                        ? (theme === 'professional-dark' ? '#2563EB' : '#60A5FA')
-                        : (theme === 'professional-dark' ? '#3C4043' : 'rgba(156, 163, 175, 0.3)'),
-                      backgroundColor: conversationTone === tone.id
-                        ? (theme === 'professional-dark' ? 'rgba(37, 99, 235, 0.2)' : 'rgba(96, 165, 250, 0.1)')
-                        : 'transparent'
+                      borderColor: conversationTone === tone.id ? '#00D4E4' : 'rgba(255, 255, 255, 0.1)',
+                      backgroundColor: conversationTone === tone.id ? 'rgba(0, 212, 228, 0.15)' : 'transparent',
+                      boxShadow: conversationTone === tone.id ? '0 0 15px rgba(0, 212, 228, 0.2)' : 'none'
+                    }}
+                    onMouseEnter={(e) => {
+                      if (conversationTone !== tone.id) {
+                        e.currentTarget.style.backgroundColor = 'rgba(0, 212, 228, 0.05)';
+                        e.currentTarget.style.borderColor = 'rgba(0, 212, 228, 0.3)';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (conversationTone !== tone.id) {
+                        e.currentTarget.style.backgroundColor = 'transparent';
+                        e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+                      }
                     }}
                   >
                     <div className="font-medium mb-1" style={{
@@ -869,7 +934,20 @@ const MultiVoiceConversationPanel: React.FC<MultiVoiceConversationPanelProps> = 
                   : 'text-white shadow-lg'
               }`}
               style={{
-                backgroundColor: isGenerating ? undefined : (theme === 'light' ? '#60A5FA' : theme === 'professional-dark' ? '#2563EB' : '#6366F1')
+                backgroundColor: isGenerating ? undefined : '#00D4E4',
+                boxShadow: isGenerating ? 'none' : '0 0 30px rgba(0, 212, 228, 0.4)'
+              }}
+              onMouseEnter={(e) => {
+                if (!isGenerating) {
+                  e.currentTarget.style.backgroundColor = '#00E8FA';
+                  e.currentTarget.style.boxShadow = '0 0 40px rgba(0, 212, 228, 0.6)';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!isGenerating) {
+                  e.currentTarget.style.backgroundColor = '#00D4E4';
+                  e.currentTarget.style.boxShadow = '0 0 30px rgba(0, 212, 228, 0.4)';
+                }
               }}
             >
               <Sparkles size={20} />
@@ -890,9 +968,16 @@ const MultiVoiceConversationPanel: React.FC<MultiVoiceConversationPanelProps> = 
                   <motion.div
                     animate={{ rotate: 360 }}
                     transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
-                    className="w-32 h-32 rounded-full border-4 border-blue-500/30 border-t-blue-500"
+                    className="w-32 h-32 rounded-full border-4"
+                    style={{
+                      borderColor: 'rgba(0, 212, 228, 0.3)',
+                      borderTopColor: '#00D4E4'
+                    }}
                   />
-                  <div className="absolute inset-4 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
+                  <div className="absolute inset-4 rounded-full flex items-center justify-center"
+                       style={{
+                         background: 'linear-gradient(135deg, #00D4E4, #00E8FA)'
+                       }}>
                     <motion.div
                       animate={{ scale: [1, 1.2, 1] }}
                       transition={{ duration: 1.5, repeat: Infinity }}

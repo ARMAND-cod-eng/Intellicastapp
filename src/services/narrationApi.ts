@@ -1,4 +1,6 @@
-const API_BASE_URL = 'http://localhost:3004/api';
+import { ENDPOINTS, getAudioUrl, getPodcastDownloadUrl, getPodcastStatusUrl } from '../config/api';
+
+const API_BASE_URL = ENDPOINTS.NARRATION.BASE.replace('/narration', '');
 
 export interface DocumentAnalysis {
   wordCount: number;
@@ -179,7 +181,7 @@ export class NarrationAPI {
   // NotebookLM Podcast Generation Methods
   static async generatePodcastEstimate(documentText: string, length: string = '10min'): Promise<any> {
     try {
-      const response = await fetch('http://localhost:8000/api/podcast/estimate-cost', {
+      const response = await fetch(ENDPOINTS.PODCAST.ESTIMATE_COST, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -216,7 +218,7 @@ export class NarrationAPI {
     saveScript?: boolean;
   }): Promise<any> {
     try {
-      const response = await fetch('http://localhost:8000/api/podcast/generate', {
+      const response = await fetch(ENDPOINTS.PODCAST.GENERATE, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -250,7 +252,7 @@ export class NarrationAPI {
 
   static async getPodcastStatus(jobId: string): Promise<any> {
     try {
-      const response = await fetch(`http://localhost:8000/api/podcast/status/${jobId}`);
+      const response = await fetch(getPodcastStatusUrl(jobId));
 
       if (!response.ok) {
         throw new Error(`Status check failed: ${response.statusText}`);
@@ -268,7 +270,7 @@ export class NarrationAPI {
 
   static async getAvailableVoices(): Promise<any> {
     try {
-      const response = await fetch('http://localhost:8000/api/podcast/voices');
+      const response = await fetch(ENDPOINTS.PODCAST.VOICES);
 
       if (!response.ok) {
         throw new Error(`Failed to fetch voices: ${response.statusText}`);
@@ -288,7 +290,7 @@ export class NarrationAPI {
   // AI-Powered Style Recommendation Methods
   static async recommendPodcastStyle(documentText: string): Promise<any> {
     try {
-      const response = await fetch('http://localhost:8000/api/podcast/recommend-style', {
+      const response = await fetch(ENDPOINTS.PODCAST.RECOMMEND_STYLE, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -314,7 +316,7 @@ export class NarrationAPI {
 
   static async analyzeDocumentContent(documentText: string): Promise<any> {
     try {
-      const response = await fetch('http://localhost:8000/api/podcast/analyze-content', {
+      const response = await fetch(ENDPOINTS.PODCAST.ANALYZE_CONTENT, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -56,6 +56,7 @@ const CalendarTodoWidget: React.FC<CalendarTodoWidgetProps> = ({
   const [events, setEvents] = useState<Event[]>([]);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [isExpanded, setIsExpanded] = useState(true);
+  const [isWidthExpanded, setIsWidthExpanded] = useState(false);
   const [showTodoList, setShowTodoList] = useState(false);
   const [newTaskInput, setNewTaskInput] = useState('');
   const [showAddTask, setShowAddTask] = useState(false);
@@ -424,20 +425,29 @@ const CalendarTodoWidget: React.FC<CalendarTodoWidgetProps> = ({
   };
 
   return (
-    <div className="calendar-todo-widget">
+    <div className={`calendar-todo-widget ${isWidthExpanded ? 'expanded-width' : ''}`}>
       {/* Header */}
       <div className="widget-header">
         <div className="header-left">
           <CalendarIcon className="header-icon" />
           <span className="header-title">Calendar</span>
         </div>
-        <button
-          className="collapse-btn"
-          onClick={() => setIsExpanded(!isExpanded)}
-          title={isExpanded ? 'Collapse' : 'Expand'}
-        >
-          {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-        </button>
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <button
+            className="collapse-btn"
+            onClick={() => setIsWidthExpanded(!isWidthExpanded)}
+            title={isWidthExpanded ? 'Collapse Width' : 'Expand Width'}
+          >
+            {isWidthExpanded ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
+          </button>
+          <button
+            className="collapse-btn"
+            onClick={() => setIsExpanded(!isExpanded)}
+            title={isExpanded ? 'Collapse' : 'Expand'}
+          >
+            {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+          </button>
+        </div>
       </div>
 
       {isExpanded && (

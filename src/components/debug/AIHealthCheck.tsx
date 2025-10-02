@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Activity, CheckCircle, XCircle, Clock, Wifi, Search, Brain } from 'lucide-react';
 import { TavilyClient } from '../../features/voice-search/services/tavily-client';
+import { ENDPOINTS } from '../../config/api';
 
 interface AIHealthStatus {
   status: 'checking' | 'healthy' | 'unhealthy';
@@ -44,7 +45,7 @@ const AIHealthCheck: React.FC = () => {
       // Check backend availability (optional)
       let backendStatus = { status: 'unavailable' as const, message: 'Backend server not required for current features' };
       try {
-        const response = await fetch('http://localhost:3004/health', {
+        const response = await fetch(ENDPOINTS.HEALTH.NODE, {
           method: 'GET',
           signal: AbortSignal.timeout(2000) // 2 second timeout
         });

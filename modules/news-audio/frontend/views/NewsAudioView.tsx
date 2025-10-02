@@ -31,6 +31,7 @@ import {
   Building2,
   ChevronDown
 } from 'lucide-react';
+import { ENDPOINTS } from '../../../../src/config/api';
 
 interface NewsArticle {
   id: number;
@@ -101,7 +102,7 @@ const NewsAudioView: React.FC = () => {
 
   const fetchCategories = async () => {
     try {
-      const response = await fetch('http://localhost:3004/api/news/categories');
+      const response = await fetch(ENDPOINTS.NEWS.CATEGORIES);
       if (response.ok) {
         const data = await response.json();
         const categoryList = data.categories.map((cat: any) => ({
@@ -122,7 +123,7 @@ const NewsAudioView: React.FC = () => {
       setLoading(true);
 
       const categoryParam = selectedCategory === 'all' ? '' : `&category=${selectedCategory}`;
-      const response = await fetch(`http://localhost:3004/api/news/articles?limit=50${categoryParam}`);
+      const response = await fetch(`${ENDPOINTS.NEWS.ARTICLES}?limit=50${categoryParam}`);
 
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -185,10 +186,10 @@ const NewsAudioView: React.FC = () => {
       <div className="h-full flex items-center justify-center">
         <div className="flex items-center space-x-3">
           <RefreshCw className="w-6 h-6 animate-spin" style={{
-            color: theme === 'light' ? '#60A5FA' : theme === 'professional-dark' ? '#2563EB' : '#7C3AED'
+            color: '#00D4E4'
           }} />
           <span style={{
-            color: theme === 'professional-dark' ? '#E8EAED' : theme === 'dark' ? '#FFFFFF' : '#1F2937'
+            color: '#FFFFFF'
           }}>Loading news articles...</span>
         </div>
       </div>
@@ -197,14 +198,15 @@ const NewsAudioView: React.FC = () => {
 
   return (
     <div className="min-h-full flex" style={{
-      backgroundColor: theme === 'professional-dark' ? '#1a1a1a' : theme === 'dark' ? '#0F0F23' : '#F8F9FA'
+      backgroundColor: '#14191a'
     }}>
       {/* Main Content Area */}
       <div className="flex-1">
         {/* Top News Card Only */}
         <div className="p-6">
           <div className="relative rounded-3xl overflow-hidden p-8" style={{
-            backgroundColor: theme === 'professional-dark' ? '#2563EB' : theme === 'dark' ? '#7C3AED' : '#60A5FA'
+            background: 'linear-gradient(135deg, #00D4E4, #00E8FA)',
+            boxShadow: '0 0 40px rgba(0, 212, 228, 0.3)'
           }}>
             <div className="relative z-10">
               <p className="text-white/80 text-sm mb-2">News Article</p>
@@ -280,18 +282,10 @@ const NewsAudioView: React.FC = () => {
               onClick={() => setSelectedCategory(category.id)}
               className="px-6 py-3 rounded-full text-sm font-medium whitespace-nowrap transition-all duration-200 hover:scale-105"
               style={{
-                backgroundColor: selectedCategory === category.id
-                  ? (theme === 'light' ? '#60A5FA' : theme === 'professional-dark' ? '#2563EB' : '#7C3AED')
-                  : (theme === 'professional-dark' ? '#2A2A2A' : theme === 'dark' ? 'rgba(255,255,255,0.05)' : '#FFFFFF'),
-                color: selectedCategory === category.id
-                  ? '#FFFFFF'
-                  : (theme === 'professional-dark' ? '#E8EAED' : theme === 'dark' ? '#FFFFFF' : '#1F2937'),
-                border: selectedCategory === category.id
-                  ? 'none'
-                  : `1px solid ${theme === 'professional-dark' ? '#3C4043' : theme === 'dark' ? 'rgba(255,255,255,0.1)' : '#E5E7EB'}`,
-                boxShadow: selectedCategory === category.id
-                  ? '0 8px 25px rgba(0,0,0,0.15)'
-                  : '0 2px 8px rgba(0,0,0,0.05)'
+                backgroundColor: selectedCategory === category.id ? '#00D4E4' : '#14191a',
+                color: selectedCategory === category.id ? '#FFFFFF' : 'rgba(255, 255, 255, 0.7)',
+                border: selectedCategory === category.id ? 'none' : '1px solid rgba(255, 255, 255, 0.1)',
+                boxShadow: selectedCategory === category.id ? '0 0 20px rgba(0, 212, 228, 0.3)' : ''
               }}
             >
               {category.label}
@@ -303,13 +297,16 @@ const NewsAudioView: React.FC = () => {
         <div className="mb-12">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-bold" style={{
-              color: theme === 'professional-dark' ? '#E8EAED' : theme === 'dark' ? '#FFFFFF' : '#1F2937'
+              color: '#FFFFFF'
             }}>
               {selectedCategory === 'all' ? 'All News' : selectedCategory.charAt(0).toUpperCase() + selectedCategory.slice(1)}
             </h2>
-            <button className="flex items-center space-x-2 text-sm font-medium" style={{
-              color: theme === 'light' ? '#60A5FA' : theme === 'professional-dark' ? '#2563EB' : '#7C3AED'
-            }}>
+            <button className="flex items-center space-x-2 text-sm font-medium transition-colors" style={{
+              color: '#00D4E4'
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.color = '#00E8FA'}
+            onMouseLeave={(e) => e.currentTarget.style.color = '#00D4E4'}
+            >
               <span>View All</span>
               <ArrowRight className="w-4 h-4" />
             </button>
@@ -324,22 +321,29 @@ const NewsAudioView: React.FC = () => {
                 key={article.id}
                 className="group rounded-3xl overflow-hidden transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl cursor-pointer"
                 style={{
-                  backgroundColor: theme === 'professional-dark' ? '#2A2A2A' : theme === 'dark' ? 'rgba(255,255,255,0.05)' : '#FFFFFF',
-                  border: `1px solid ${theme === 'professional-dark' ? '#3C4043' : theme === 'dark' ? 'rgba(255,255,255,0.1)' : '#E5E7EB'}`
+                  backgroundColor: '#14191a',
+                  border: '1px solid rgba(255, 255, 255, 0.1)'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = '#00D4E4';
+                  e.currentTarget.style.boxShadow = '0 0 30px rgba(0, 212, 228, 0.3)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+                  e.currentTarget.style.boxShadow = '';
                 }}
               >
                 {/* Article Image/Thumbnail */}
                 <div className="relative h-48 overflow-hidden" style={{
-                  background: theme === 'professional-dark'
-                    ? 'linear-gradient(135deg, #374151 0%, #1F2937 100%)'
-                    : theme === 'dark'
-                    ? 'linear-gradient(135deg, #4C1D95 0%, #312E81 100%)'
-                    : 'linear-gradient(135deg, #F3F4F6 0%, #E5E7EB 100%)'
+                  background: 'linear-gradient(135deg, rgba(0, 212, 228, 0.1) 0%, rgba(0, 232, 250, 0.05) 100%)'
                 }}>
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="w-16 h-16 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center">
+                    <div className="w-16 h-16 rounded-2xl flex items-center justify-center" style={{
+                      backgroundColor: 'rgba(0, 212, 228, 0.2)',
+                      border: '1px solid rgba(0, 212, 228, 0.3)'
+                    }}>
                       <Newspaper className="w-8 h-8" style={{
-                        color: theme === 'professional-dark' ? '#E8EAED' : theme === 'dark' ? '#FFFFFF' : '#1F2937'
+                        color: '#00D4E4'
                       }} />
                     </div>
                   </div>
@@ -383,14 +387,15 @@ const NewsAudioView: React.FC = () => {
                 <div className="p-6">
                   <div className="flex items-center space-x-2 mb-3">
                     <span className="px-2 py-1 rounded-full text-xs font-medium" style={{
-                      backgroundColor: theme === 'professional-dark' ? '#3C4043' : theme === 'dark' ? 'rgba(255,255,255,0.1)' : '#F3F4F6',
-                      color: theme === 'professional-dark' ? '#9AA0A6' : theme === 'dark' ? '#C7D2FE' : '#6B7280'
+                      backgroundColor: 'rgba(0, 212, 228, 0.2)',
+                      color: '#00D4E4',
+                      border: '1px solid rgba(0, 212, 228, 0.3)'
                     }}>
                       {article.category || 'General'}
                     </span>
                     {article.audio_session?.duration && (
                       <div className="flex items-center space-x-1 text-xs" style={{
-                        color: theme === 'professional-dark' ? '#9AA0A6' : theme === 'dark' ? '#C7D2FE' : '#6B7280'
+                        color: 'rgba(255, 255, 255, 0.6)'
                       }}>
                         <Clock className="w-3 h-3" />
                         <span>{formatDuration(article.audio_session.duration)}</span>
@@ -399,13 +404,13 @@ const NewsAudioView: React.FC = () => {
                   </div>
 
                   <h3 className="text-lg font-bold mb-2 line-clamp-2 leading-tight" style={{
-                    color: theme === 'professional-dark' ? '#E8EAED' : theme === 'dark' ? '#FFFFFF' : '#1F2937'
+                    color: '#FFFFFF'
                   }}>
                     {article.title}
                   </h3>
 
                   <p className="text-sm line-clamp-3 mb-4 leading-relaxed" style={{
-                    color: theme === 'professional-dark' ? '#9AA0A6' : theme === 'dark' ? '#C7D2FE' : '#6B7280'
+                    color: 'rgba(255, 255, 255, 0.7)'
                   }}>
                     {article.summary}
                   </p>
@@ -413,7 +418,7 @@ const NewsAudioView: React.FC = () => {
                   {/* Article Meta */}
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-3 text-xs" style={{
-                      color: theme === 'professional-dark' ? '#80868B' : theme === 'dark' ? '#A78BFA' : '#9CA3AF'
+                      color: 'rgba(255, 255, 255, 0.5)'
                     }}>
                       <div className="flex items-center space-x-1">
                         <User className="w-3 h-3" />
@@ -429,8 +434,9 @@ const NewsAudioView: React.FC = () => {
                         disabled={article.status === 'pending'}
                         className="flex items-center space-x-1 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 hover:scale-105 disabled:opacity-50"
                         style={{
-                          backgroundColor: theme === 'light' ? '#60A5FA' : theme === 'professional-dark' ? '#2563EB' : '#7C3AED',
-                          color: '#FFFFFF'
+                          background: 'linear-gradient(135deg, #00D4E4, #00E8FA)',
+                          color: '#FFFFFF',
+                          boxShadow: '0 0 15px rgba(0, 212, 228, 0.3)'
                         }}
                       >
                         <Volume2 className="w-3 h-3" />
@@ -448,7 +454,7 @@ const NewsAudioView: React.FC = () => {
         {articles.filter(article => selectedCategory === 'all' || article.category === selectedCategory).length > 6 && (
           <div>
             <h3 className="text-xl font-bold mb-6" style={{
-              color: theme === 'professional-dark' ? '#E8EAED' : theme === 'dark' ? '#FFFFFF' : '#1F2937'
+              color: '#FFFFFF'
             }}>
               More Articles
             </h3>
@@ -462,37 +468,42 @@ const NewsAudioView: React.FC = () => {
                   key={article.id}
                   className="flex items-center space-x-4 p-4 rounded-2xl transition-all duration-200 hover:scale-[1.01] cursor-pointer"
                   style={{
-                    backgroundColor: theme === 'professional-dark' ? '#2A2A2A' : theme === 'dark' ? 'rgba(255,255,255,0.05)' : '#FFFFFF',
-                    border: `1px solid ${theme === 'professional-dark' ? '#3C4043' : theme === 'dark' ? 'rgba(255,255,255,0.1)' : '#E5E7EB'}`
+                    backgroundColor: '#14191a',
+                    border: '1px solid rgba(255, 255, 255, 0.1)'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor = '#00D4E4';
+                    e.currentTarget.style.boxShadow = '0 0 20px rgba(0, 212, 228, 0.2)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+                    e.currentTarget.style.boxShadow = '';
                   }}
                 >
                   {/* Article Thumbnail */}
                   <div className="w-16 h-16 rounded-xl flex items-center justify-center flex-shrink-0" style={{
-                    background: theme === 'professional-dark'
-                      ? 'linear-gradient(135deg, #374151 0%, #1F2937 100%)'
-                      : theme === 'dark'
-                      ? 'linear-gradient(135deg, #4C1D95 0%, #312E81 100%)'
-                      : 'linear-gradient(135deg, #F3F4F6 0%, #E5E7EB 100%)'
+                    background: 'linear-gradient(135deg, rgba(0, 212, 228, 0.1) 0%, rgba(0, 232, 250, 0.05) 100%)',
+                    border: '1px solid rgba(0, 212, 228, 0.2)'
                   }}>
                     <Newspaper className="w-6 h-6" style={{
-                      color: theme === 'professional-dark' ? '#9AA0A6' : theme === 'dark' ? '#C7D2FE' : '#6B7280'
+                      color: '#00D4E4'
                     }} />
                   </div>
 
                   {/* Article Info */}
                   <div className="flex-1 min-w-0">
                     <h4 className="font-semibold line-clamp-1 mb-1" style={{
-                      color: theme === 'professional-dark' ? '#E8EAED' : theme === 'dark' ? '#FFFFFF' : '#1F2937'
+                      color: '#FFFFFF'
                     }}>
                       {article.title}
                     </h4>
                     <p className="text-sm line-clamp-1 mb-2" style={{
-                      color: theme === 'professional-dark' ? '#9AA0A6' : theme === 'dark' ? '#C7D2FE' : '#6B7280'
+                      color: 'rgba(255, 255, 255, 0.7)'
                     }}>
                       {article.summary}
                     </p>
                     <div className="flex items-center space-x-2 text-xs" style={{
-                      color: theme === 'professional-dark' ? '#80868B' : theme === 'dark' ? '#A78BFA' : '#9CA3AF'
+                      color: 'rgba(255, 255, 255, 0.5)'
                     }}>
                       <span>{article.source_name}</span>
                       <span>•</span>
@@ -507,8 +518,9 @@ const NewsAudioView: React.FC = () => {
                         onClick={() => handlePlayAudio(article.id)}
                         className="w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-110"
                         style={{
-                          backgroundColor: theme === 'light' ? '#60A5FA' : theme === 'professional-dark' ? '#2563EB' : '#7C3AED',
-                          color: '#FFFFFF'
+                          background: 'linear-gradient(135deg, #00D4E4, #00E8FA)',
+                          color: '#FFFFFF',
+                          boxShadow: '0 0 15px rgba(0, 212, 228, 0.3)'
                         }}
                       >
                         {playingArticle === article.id ? (
@@ -523,8 +535,9 @@ const NewsAudioView: React.FC = () => {
                         disabled={article.status === 'pending'}
                         className="px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 hover:scale-105 disabled:opacity-50"
                         style={{
-                          backgroundColor: theme === 'light' ? '#60A5FA' : theme === 'professional-dark' ? '#2563EB' : '#7C3AED',
-                          color: '#FFFFFF'
+                          background: 'linear-gradient(135deg, #00D4E4, #00E8FA)',
+                          color: '#FFFFFF',
+                          boxShadow: '0 0 15px rgba(0, 212, 228, 0.3)'
                         }}
                       >
                         Generate
@@ -542,23 +555,20 @@ const NewsAudioView: React.FC = () => {
       {articles.filter(article => selectedCategory === 'all' || article.category === selectedCategory).length === 0 && (
         <div className="text-center py-20">
           <div className="w-24 h-24 mx-auto mb-6 rounded-3xl flex items-center justify-center" style={{
-            background: theme === 'professional-dark'
-              ? 'linear-gradient(135deg, #374151 0%, #1F2937 100%)'
-              : theme === 'dark'
-              ? 'linear-gradient(135deg, #4C1D95 0%, #312E81 100%)'
-              : 'linear-gradient(135deg, #F3F4F6 0%, #E5E7EB 100%)'
+            background: 'linear-gradient(135deg, rgba(0, 212, 228, 0.2) 0%, rgba(0, 232, 250, 0.1) 100%)',
+            border: '2px solid rgba(0, 212, 228, 0.3)'
           }}>
             <Newspaper className="w-12 h-12" style={{
-              color: theme === 'professional-dark' ? '#9AA0A6' : theme === 'dark' ? '#C7D2FE' : '#6B7280'
+              color: '#00D4E4'
             }} />
           </div>
           <h3 className="text-2xl font-bold mb-3" style={{
-            color: theme === 'professional-dark' ? '#E8EAED' : theme === 'dark' ? '#FFFFFF' : '#1F2937'
+            color: '#FFFFFF'
           }}>
             No articles found
           </h3>
           <p className="text-lg mb-6 max-w-md mx-auto" style={{
-            color: theme === 'professional-dark' ? '#9AA0A6' : theme === 'dark' ? '#C7D2FE' : '#6B7280'
+            color: 'rgba(255, 255, 255, 0.7)'
           }}>
             Try selecting a different category or check back later for fresh news articles.
           </p>
@@ -566,8 +576,9 @@ const NewsAudioView: React.FC = () => {
             onClick={fetchArticles}
             className="flex items-center space-x-2 px-6 py-3 rounded-xl mx-auto transition-all duration-200 hover:scale-105"
             style={{
-              backgroundColor: theme === 'light' ? '#60A5FA' : theme === 'professional-dark' ? '#2563EB' : '#7C3AED',
-              color: '#FFFFFF'
+              background: 'linear-gradient(135deg, #00D4E4, #00E8FA)',
+              color: '#FFFFFF',
+              boxShadow: '0 0 20px rgba(0, 212, 228, 0.3)'
             }}
           >
             <RefreshCw className="w-4 h-4" />
@@ -579,13 +590,13 @@ const NewsAudioView: React.FC = () => {
 
       {/* Sidebar */}
       <div className="w-80 p-6 border-l" style={{
-        backgroundColor: theme === 'professional-dark' ? '#1a1a1a' : theme === 'dark' ? '#0F0F23' : '#F8F9FA',
-        borderColor: theme === 'professional-dark' ? '#3C4043' : theme === 'dark' ? 'rgba(255,255,255,0.1)' : '#E5E7EB'
+        backgroundColor: '#000000',
+        borderColor: 'rgba(0, 212, 228, 0.2)'
       }}>
         {/* Weather Widget */}
         <div className="mb-6 p-4 rounded-2xl" style={{
-          backgroundColor: theme === 'professional-dark' ? '#2A2A2A' : theme === 'dark' ? 'rgba(255,255,255,0.05)' : '#FFFFFF',
-          border: `1px solid ${theme === 'professional-dark' ? '#3C4043' : theme === 'dark' ? 'rgba(255,255,255,0.1)' : '#E5E7EB'}`
+          backgroundColor: '#14191a',
+          border: '1px solid rgba(0, 212, 228, 0.3)'
         }}>
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center space-x-2">

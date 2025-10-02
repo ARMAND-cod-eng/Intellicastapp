@@ -230,7 +230,7 @@ const AIContentDiscoveryPanel: React.FC<AIContentDiscoveryPanelProps> = ({
           <h1 className="text-2xl font-bold flex items-center space-x-3" style={{
             color: theme === 'professional-dark' ? '#E8EAED' : theme === 'dark' ? '#FFFFFF' : '#1F2937'
           }}>
-            <div className="w-8 h-8 rounded-full flex items-center justify-center bg-gradient-to-r from-purple-500 to-pink-500">
+            <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{backgroundColor: '#00D4E4', boxShadow: '0 0 20px rgba(0, 212, 228, 0.4)'}}>
               <TrendingUp className="w-4 h-4 text-white" />
             </div>
             <span>AI Content Discovery</span>
@@ -241,7 +241,16 @@ const AIContentDiscoveryPanel: React.FC<AIContentDiscoveryPanelProps> = ({
             disabled={isDiscovering}
             className="flex items-center gap-2 px-4 py-2 rounded-lg text-white transition-all"
             style={{
-              backgroundColor: theme === 'light' ? '#A855F7' : '#9333EA'
+              backgroundColor: '#00D4E4',
+              boxShadow: '0 0 15px rgba(0, 212, 228, 0.3)'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = '#00E8FA';
+              e.currentTarget.style.boxShadow = '0 0 25px rgba(0, 212, 228, 0.5)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = '#00D4E4';
+              e.currentTarget.style.boxShadow = '0 0 15px rgba(0, 212, 228, 0.3)';
             }}
           >
             <RefreshCw className={`w-4 h-4 ${isDiscovering ? 'animate-spin' : ''}`} />
@@ -270,16 +279,25 @@ const AIContentDiscoveryPanel: React.FC<AIContentDiscoveryPanelProps> = ({
                   onClick={() => setSelectedCategory(category.id)}
                   className={`p-3 rounded-lg border-2 transition-all text-center ${
                     selectedCategory === category.id
-                      ? 'border-purple-500 bg-purple-500/20'
+                      ? 'border-cyan-500 bg-cyan-500/20'
                       : 'border-gray-300/30 bg-transparent hover:bg-gray-500/10'
                   }`}
                   style={{
-                    borderColor: selectedCategory === category.id
-                      ? (theme === 'professional-dark' ? '#9333EA' : '#A855F7')
-                      : (theme === 'professional-dark' ? '#3C4043' : 'rgba(156, 163, 175, 0.3)'),
-                    backgroundColor: selectedCategory === category.id
-                      ? (theme === 'professional-dark' ? 'rgba(147, 51, 234, 0.2)' : 'rgba(168, 85, 247, 0.1)')
-                      : 'transparent'
+                    borderColor: selectedCategory === category.id ? '#00D4E4' : 'rgba(156, 163, 175, 0.3)',
+                    backgroundColor: selectedCategory === category.id ? 'rgba(0, 212, 228, 0.15)' : 'transparent',
+                    boxShadow: selectedCategory === category.id ? '0 0 20px rgba(0, 212, 228, 0.2)' : 'none'
+                  }}
+                  onMouseEnter={(e) => {
+                    if (selectedCategory !== category.id) {
+                      e.currentTarget.style.backgroundColor = 'rgba(0, 212, 228, 0.05)';
+                      e.currentTarget.style.borderColor = 'rgba(0, 212, 228, 0.3)';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (selectedCategory !== category.id) {
+                      e.currentTarget.style.backgroundColor = 'transparent';
+                      e.currentTarget.style.borderColor = 'rgba(156, 163, 175, 0.3)';
+                    }
                   }}
                 >
                   <div className="text-2xl mb-1">{category.icon}</div>
@@ -301,7 +319,7 @@ const AIContentDiscoveryPanel: React.FC<AIContentDiscoveryPanelProps> = ({
               }}>
                 <TrendingUp size={20} />
                 Trending Topics
-                <span className="text-sm font-normal px-2 py-1 rounded-full bg-purple-500/20 text-purple-400">
+                <span className="text-sm font-normal px-2 py-1 rounded-full" style={{backgroundColor: 'rgba(0, 212, 228, 0.2)', color: '#00D4E4'}}>
                   {filteredTopics.length} topics
                 </span>
               </h2>
@@ -326,13 +344,25 @@ const AIContentDiscoveryPanel: React.FC<AIContentDiscoveryPanelProps> = ({
                     onClick={() => toggleTopicSelection(topic.id)}
                     className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
                       selectedTopics.has(topic.id)
-                        ? 'border-purple-500 bg-purple-500/10'
+                        ? 'border-cyan-500 bg-cyan-500/10'
                         : 'border-gray-300/30 bg-transparent hover:bg-gray-500/5'
                     }`}
                     style={{
-                      borderColor: selectedTopics.has(topic.id)
-                        ? (theme === 'professional-dark' ? '#9333EA' : '#A855F7')
-                        : (theme === 'professional-dark' ? '#3C4043' : 'rgba(156, 163, 175, 0.3)')
+                      borderColor: selectedTopics.has(topic.id) ? '#00D4E4' : 'rgba(156, 163, 175, 0.3)',
+                      backgroundColor: selectedTopics.has(topic.id) ? 'rgba(0, 212, 228, 0.1)' : 'transparent',
+                      boxShadow: selectedTopics.has(topic.id) ? '0 0 20px rgba(0, 212, 228, 0.2)' : 'none'
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!selectedTopics.has(topic.id)) {
+                        e.currentTarget.style.backgroundColor = 'rgba(0, 212, 228, 0.05)';
+                        e.currentTarget.style.borderColor = 'rgba(0, 212, 228, 0.3)';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!selectedTopics.has(topic.id)) {
+                        e.currentTarget.style.backgroundColor = 'transparent';
+                        e.currentTarget.style.borderColor = 'rgba(156, 163, 175, 0.3)';
+                      }
                     }}
                   >
                     <div className="flex items-start justify-between mb-2">
@@ -350,8 +380,8 @@ const AIContentDiscoveryPanel: React.FC<AIContentDiscoveryPanelProps> = ({
                       </div>
                       <div className="ml-4 flex flex-col items-end gap-2">
                         <div className="flex items-center gap-1">
-                          <BarChart3 size={14} className="text-purple-500" />
-                          <span className="text-xs font-bold text-purple-500">{topic.trendScore}</span>
+                          <BarChart3 size={14} style={{color: '#00D4E4'}} />
+                          <span className="text-xs font-bold" style={{color: '#00D4E4'}}>{topic.trendScore}</span>
                         </div>
                         <span className="text-xs px-2 py-1 rounded-full bg-blue-500/20 text-blue-400">
                           {topic.sources} sources
@@ -365,8 +395,8 @@ const AIContentDiscoveryPanel: React.FC<AIContentDiscoveryPanelProps> = ({
                           key={idx}
                           className="text-xs px-2 py-1 rounded-full"
                           style={{
-                            backgroundColor: theme === 'dark' ? 'rgba(168, 85, 247, 0.2)' : 'rgba(168, 85, 247, 0.1)',
-                            color: '#A855F7'
+                            backgroundColor: 'rgba(0, 212, 228, 0.15)',
+                            color: '#00D4E4'
                           }}
                         >
                           {keyword}
@@ -437,13 +467,25 @@ const AIContentDiscoveryPanel: React.FC<AIContentDiscoveryPanelProps> = ({
                           onClick={() => setScheduleFrequency(option.id)}
                           className={`p-3 rounded-lg border-2 transition-all text-left ${
                             scheduleFrequency === option.id
-                              ? 'border-purple-500 bg-purple-500/20'
+                              ? 'border-cyan-500 bg-cyan-500/20'
                               : 'border-gray-300/30 bg-transparent hover:bg-gray-500/10'
                           }`}
                           style={{
-                            borderColor: scheduleFrequency === option.id
-                              ? (theme === 'professional-dark' ? '#9333EA' : '#A855F7')
-                              : (theme === 'professional-dark' ? '#3C4043' : 'rgba(156, 163, 175, 0.3)')
+                            borderColor: scheduleFrequency === option.id ? '#00D4E4' : 'rgba(156, 163, 175, 0.3)',
+                            backgroundColor: scheduleFrequency === option.id ? 'rgba(0, 212, 228, 0.15)' : 'transparent',
+                            boxShadow: scheduleFrequency === option.id ? '0 0 15px rgba(0, 212, 228, 0.2)' : 'none'
+                          }}
+                          onMouseEnter={(e) => {
+                            if (scheduleFrequency !== option.id) {
+                              e.currentTarget.style.backgroundColor = 'rgba(0, 212, 228, 0.05)';
+                              e.currentTarget.style.borderColor = 'rgba(0, 212, 228, 0.3)';
+                            }
+                          }}
+                          onMouseLeave={(e) => {
+                            if (scheduleFrequency !== option.id) {
+                              e.currentTarget.style.backgroundColor = 'transparent';
+                              e.currentTarget.style.borderColor = 'rgba(156, 163, 175, 0.3)';
+                            }
                           }}
                         >
                           <div className="font-medium text-sm mb-1" style={{
@@ -462,11 +504,11 @@ const AIContentDiscoveryPanel: React.FC<AIContentDiscoveryPanelProps> = ({
                   </div>
 
                   <div className="p-4 rounded-lg" style={{
-                    backgroundColor: theme === 'dark' ? 'rgba(168, 85, 247, 0.1)' : 'rgba(168, 85, 247, 0.05)',
-                    border: '1px solid rgba(168, 85, 247, 0.3)'
+                    backgroundColor: 'rgba(0, 212, 228, 0.1)',
+                    border: '1px solid rgba(0, 212, 228, 0.3)'
                   }}>
                     <div className="flex items-start gap-2">
-                      <Zap size={16} className="text-purple-500 mt-0.5" />
+                      <Zap size={16} style={{color: '#00D4E4'}} className="mt-0.5" />
                       <div className="text-xs" style={{
                         color: theme === 'professional-dark' ? '#9AA0A6' : theme === 'dark' ? 'rgba(255, 255, 255, 0.8)' : '#6B7280'
                       }}>
@@ -489,8 +531,24 @@ const AIContentDiscoveryPanel: React.FC<AIContentDiscoveryPanelProps> = ({
               className={`px-8 py-4 rounded-2xl font-semibold text-lg flex items-center gap-3 transition-all ${
                 selectedTopics.size === 0
                   ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
-                  : 'text-white shadow-lg bg-gradient-to-r from-purple-500 to-pink-500'
+                  : 'text-white shadow-lg'
               }`}
+              style={{
+                backgroundColor: selectedTopics.size > 0 ? '#00D4E4' : undefined,
+                boxShadow: selectedTopics.size > 0 ? '0 0 30px rgba(0, 212, 228, 0.4)' : undefined
+              }}
+              onMouseEnter={(e) => {
+                if (selectedTopics.size > 0) {
+                  e.currentTarget.style.backgroundColor = '#00E8FA';
+                  e.currentTarget.style.boxShadow = '0 0 40px rgba(0, 212, 228, 0.6)';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (selectedTopics.size > 0) {
+                  e.currentTarget.style.backgroundColor = '#00D4E4';
+                  e.currentTarget.style.boxShadow = '0 0 30px rgba(0, 212, 228, 0.4)';
+                }
+              }}
             >
               <Play size={20} />
               Generate {selectedTopics.size > 0 ? `${selectedTopics.size} ` : ''}Podcast{selectedTopics.size !== 1 ? 's' : ''}

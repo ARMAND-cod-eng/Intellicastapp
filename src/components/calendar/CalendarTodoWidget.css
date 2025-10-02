@@ -11,12 +11,17 @@
   border: 1px solid rgba(255, 255, 255, 0.1);
   padding: 16px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.calendar-todo-widget.expanded-width {
+  width: 480px;
+  max-width: 90vw;
 }
 
 .calendar-todo-widget:hover {
   box-shadow: 0 12px 48px rgba(0, 0, 0, 0.15);
-  border-color: rgba(139, 92, 246, 0.3);
+  border-color: rgba(0, 212, 228, 0.3);
 }
 
 /* ============================================================================ */
@@ -41,13 +46,13 @@
 .header-icon {
   width: 20px;
   height: 20px;
-  color: #8B5CF6;
+  color: #00D4E4;
 }
 
 .header-title {
   font-size: 16px;
   font-weight: 700;
-  background: linear-gradient(135deg, #8B5CF6, #06B6D4);
+  background: linear-gradient(135deg, #00D4E4, #00E8FA);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -55,10 +60,10 @@
 
 .collapse-btn {
   padding: 6px;
-  background: rgba(139, 92, 246, 0.1);
-  border: 1px solid rgba(139, 92, 246, 0.2);
+  background: rgba(0, 212, 228, 0.1);
+  border: 1px solid rgba(0, 212, 228, 0.2);
   border-radius: 8px;
-  color: #8B5CF6;
+  color: #00D4E4;
   cursor: pointer;
   transition: all 0.2s ease;
   display: flex;
@@ -67,8 +72,9 @@
 }
 
 .collapse-btn:hover {
-  background: rgba(139, 92, 246, 0.2);
+  background: rgba(0, 212, 228, 0.2);
   transform: scale(1.05);
+  box-shadow: 0 0 15px rgba(0, 212, 228, 0.3);
 }
 
 /* ============================================================================ */
@@ -81,7 +87,7 @@
   justify-content: space-between;
   margin-bottom: 16px;
   padding: 8px;
-  background: rgba(139, 92, 246, 0.05);
+  background: rgba(0, 212, 228, 0.05);
   border-radius: 10px;
 }
 
@@ -99,9 +105,10 @@
 }
 
 .nav-btn:hover {
-  background: rgba(139, 92, 246, 0.2);
-  border-color: rgba(139, 92, 246, 0.4);
+  background: rgba(0, 212, 228, 0.2);
+  border-color: rgba(0, 212, 228, 0.4);
   transform: translateY(-1px);
+  box-shadow: 0 0 12px rgba(0, 212, 228, 0.2);
 }
 
 .current-month {
@@ -120,6 +127,11 @@
   grid-template-columns: repeat(7, 1fr);
   gap: 6px;
   margin-bottom: 16px;
+  transition: gap 0.3s ease;
+}
+
+.expanded-width .calendar-grid {
+  gap: 10px;
 }
 
 .day-header {
@@ -129,6 +141,11 @@
   font-weight: 600;
   color: #9CA3AF;
   letter-spacing: 0.05em;
+  transition: font-size 0.3s ease;
+}
+
+.expanded-width .day-header {
+  font-size: 13px;
 }
 
 .calendar-day {
@@ -142,14 +159,20 @@
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 8px;
   cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   padding: 4px;
 }
 
+.expanded-width .calendar-day {
+  border-radius: 10px;
+  padding: 6px;
+}
+
 .calendar-day:hover {
-  background: rgba(139, 92, 246, 0.15);
-  border-color: rgba(139, 92, 246, 0.3);
+  background: rgba(0, 212, 228, 0.15);
+  border-color: rgba(0, 212, 228, 0.3);
   transform: scale(1.05);
+  box-shadow: 0 0 15px rgba(0, 212, 228, 0.2);
 }
 
 .calendar-day.other-month {
@@ -164,15 +187,15 @@
 }
 
 .calendar-day.is-today {
-  background: linear-gradient(135deg, rgba(139, 92, 246, 0.3), rgba(6, 182, 212, 0.3));
-  border-color: rgba(139, 92, 246, 0.6);
-  box-shadow: 0 0 12px rgba(139, 92, 246, 0.4);
+  background: linear-gradient(135deg, rgba(0, 212, 228, 0.3), rgba(0, 232, 250, 0.3));
+  border-color: rgba(0, 212, 228, 0.6);
+  box-shadow: 0 0 12px rgba(0, 212, 228, 0.4);
 }
 
 .calendar-day.is-selected {
-  background: linear-gradient(135deg, #8B5CF6, #06B6D4);
+  background: linear-gradient(135deg, #00D4E4, #00E8FA);
   border-color: transparent;
-  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
+  box-shadow: 0 4px 12px rgba(0, 212, 228, 0.5);
 }
 
 .day-number {
@@ -180,6 +203,11 @@
   font-weight: 600;
   color: #E5E7EB;
   z-index: 1;
+  transition: font-size 0.3s ease;
+}
+
+.expanded-width .day-number {
+  font-size: 14px;
 }
 
 .calendar-day.is-selected .day-number {
@@ -192,9 +220,9 @@
   bottom: 3px;
   width: 4px;
   height: 4px;
-  background: linear-gradient(135deg, #8B5CF6, #06B6D4);
+  background: linear-gradient(135deg, #00D4E4, #00E8FA);
   border-radius: 50%;
-  box-shadow: 0 0 6px rgba(139, 92, 246, 0.6);
+  box-shadow: 0 0 6px rgba(0, 212, 228, 0.6);
 }
 
 .calendar-day.is-selected .task-indicator {
@@ -210,9 +238,9 @@
   gap: 12px;
   margin-bottom: 12px;
   padding: 10px;
-  background: rgba(139, 92, 246, 0.05);
+  background: rgba(0, 212, 228, 0.05);
   border-radius: 10px;
-  border: 1px solid rgba(139, 92, 246, 0.1);
+  border: 1px solid rgba(0, 212, 228, 0.1);
 }
 
 .stat-item {
@@ -228,7 +256,7 @@
 .stat-item svg {
   width: 14px;
   height: 14px;
-  color: #8B5CF6;
+  color: #00D4E4;
 }
 
 /* ============================================================================ */
@@ -241,8 +269,8 @@
   align-items: center;
   justify-content: space-between;
   padding: 12px;
-  background: rgba(139, 92, 246, 0.1);
-  border: 1px solid rgba(139, 92, 246, 0.2);
+  background: rgba(0, 212, 228, 0.1);
+  border: 1px solid rgba(0, 212, 228, 0.2);
   border-radius: 10px;
   color: #E5E7EB;
   font-size: 13px;
@@ -253,15 +281,16 @@
 }
 
 .todo-toggle-btn:hover {
-  background: rgba(139, 92, 246, 0.2);
-  border-color: rgba(139, 92, 246, 0.4);
+  background: rgba(0, 212, 228, 0.2);
+  border-color: rgba(0, 212, 228, 0.4);
   transform: translateY(-1px);
+  box-shadow: 0 0 20px rgba(0, 212, 228, 0.3);
 }
 
 .todo-toggle-btn svg {
   width: 16px;
   height: 16px;
-  color: #8B5CF6;
+  color: #00D4E4;
 }
 
 .todo-toggle-btn span {
@@ -272,13 +301,14 @@
 
 .task-count {
   padding: 3px 8px;
-  background: linear-gradient(135deg, #8B5CF6, #06B6D4);
+  background: linear-gradient(135deg, #00D4E4, #00E8FA);
   border-radius: 12px;
   font-size: 11px;
   font-weight: 700;
   color: #FFFFFF;
   min-width: 20px;
   text-align: center;
+  box-shadow: 0 0 10px rgba(0, 212, 228, 0.4);
 }
 
 /* ============================================================================ */
@@ -324,7 +354,7 @@
 
 .add-task-btn {
   padding: 6px;
-  background: linear-gradient(135deg, #8B5CF6, #06B6D4);
+  background: linear-gradient(135deg, #00D4E4, #00E8FA);
   border: none;
   border-radius: 6px;
   color: #FFFFFF;
@@ -337,7 +367,7 @@
 
 .add-task-btn:hover {
   transform: scale(1.1);
-  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
+  box-shadow: 0 4px 12px rgba(0, 212, 228, 0.4);
 }
 
 /* ============================================================================ */
@@ -349,7 +379,7 @@
   gap: 6px;
   margin-bottom: 12px;
   padding: 8px;
-  background: rgba(139, 92, 246, 0.05);
+  background: rgba(0, 212, 228, 0.05);
   border-radius: 8px;
   animation: slideDown 0.2s ease;
 }
@@ -368,8 +398,8 @@
 
 .add-task-input input:focus {
   background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(139, 92, 246, 0.5);
-  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+  border-color: rgba(0, 212, 228, 0.5);
+  box-shadow: 0 0 0 3px rgba(0, 212, 228, 0.1);
 }
 
 .add-task-input input::placeholder {
@@ -465,7 +495,7 @@
 
 .task-item:hover {
   background: rgba(255, 255, 255, 0.05);
-  border-color: rgba(139, 92, 246, 0.3);
+  border-color: rgba(0, 212, 228, 0.3);
 }
 
 .task-item.completed {
@@ -481,9 +511,9 @@
   flex-shrink: 0;
   width: 20px;
   height: 20px;
-  border: 2px solid rgba(139, 92, 246, 0.5);
+  border: 2px solid rgba(0, 212, 228, 0.5);
   border-radius: 4px;
-  background: rgba(139, 92, 246, 0.1);
+  background: rgba(0, 212, 228, 0.1);
   cursor: pointer;
   transition: all 0.2s ease;
   display: flex;
@@ -493,13 +523,13 @@
 }
 
 .task-checkbox:hover {
-  background: rgba(139, 92, 246, 0.2);
-  border-color: rgba(139, 92, 246, 0.8);
+  background: rgba(0, 212, 228, 0.2);
+  border-color: rgba(0, 212, 228, 0.8);
   transform: scale(1.1);
 }
 
 .task-item.completed .task-checkbox {
-  background: linear-gradient(135deg, #8B5CF6, #06B6D4);
+  background: linear-gradient(135deg, #00D4E4, #00E8FA);
   border-color: transparent;
   color: #FFFFFF;
 }
@@ -519,6 +549,11 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  transition: font-size 0.3s ease;
+}
+
+.expanded-width .task-title {
+  font-size: 13px;
 }
 
 .task-meta {
@@ -557,8 +592,8 @@
 
 .status-selector:focus,
 .priority-selector:focus {
-  border-color: rgba(139, 92, 246, 0.5);
-  box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.1);
+  border-color: rgba(0, 212, 228, 0.5);
+  box-shadow: 0 0 0 2px rgba(0, 212, 228, 0.1);
 }
 
 .status-selector option,
@@ -663,8 +698,8 @@
 .add-subtask-btn {
   flex-shrink: 0;
   padding: 4px;
-  background: rgba(139, 92, 246, 0.1);
-  border: 1px solid rgba(139, 92, 246, 0.2);
+  background: rgba(0, 212, 228, 0.1);
+  border: 1px solid rgba(0, 212, 228, 0.2);
   border-radius: 4px;
   color: #A78BFA;
   cursor: pointer;
@@ -680,7 +715,7 @@
 }
 
 .add-subtask-btn:hover {
-  background: rgba(139, 92, 246, 0.2);
+  background: rgba(0, 212, 228, 0.2);
   transform: scale(1.1);
 }
 
@@ -759,7 +794,7 @@
 
 .add-subtask-input input:focus {
   background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(139, 92, 246, 0.5);
+  border-color: rgba(0, 212, 228, 0.5);
 }
 
 .submit-subtask-btn,
@@ -803,7 +838,7 @@
   gap: 4px;
   margin-top: 8px;
   padding-left: 24px;
-  border-left: 2px solid rgba(139, 92, 246, 0.3);
+  border-left: 2px solid rgba(0, 212, 228, 0.3);
   animation: fadeIn 0.3s ease;
 }
 
@@ -812,13 +847,13 @@
   align-items: center;
   gap: 6px;
   padding: 6px 8px;
-  background: rgba(139, 92, 246, 0.05);
+  background: rgba(0, 212, 228, 0.05);
   border-radius: 4px;
   transition: all 0.2s ease;
 }
 
 .subtask-item:hover {
-  background: rgba(139, 92, 246, 0.1);
+  background: rgba(0, 212, 228, 0.1);
 }
 
 .subtask-item.completed {
@@ -874,7 +909,7 @@
 }
 
 .todo-list-container::-webkit-scrollbar-thumb {
-  background: linear-gradient(135deg, #8B5CF6, #06B6D4);
+  background: linear-gradient(135deg, #00D4E4, #00E8FA);
   border-radius: 10px;
 }
 
@@ -952,10 +987,10 @@
 }
 
 .tab-btn.active {
-  background: linear-gradient(135deg, rgba(139, 92, 246, 0.3), rgba(6, 182, 212, 0.3));
-  border-color: rgba(139, 92, 246, 0.5);
+  background: linear-gradient(135deg, rgba(0, 212, 228, 0.3), rgba(0, 232, 250, 0.3));
+  border-color: rgba(0, 212, 228, 0.5);
   color: #FFFFFF;
-  box-shadow: 0 2px 8px rgba(139, 92, 246, 0.3);
+  box-shadow: 0 2px 8px rgba(0, 212, 228, 0.3);
 }
 
 .tab-btn svg {
@@ -984,10 +1019,10 @@
 .voice-input-btn {
   flex-shrink: 0;
   padding: 8px;
-  background: rgba(139, 92, 246, 0.1);
-  border: 1px solid rgba(139, 92, 246, 0.2);
+  background: rgba(0, 212, 228, 0.1);
+  border: 1px solid rgba(0, 212, 228, 0.2);
   border-radius: 6px;
-  color: #8B5CF6;
+  color: #00D4E4;
   cursor: pointer;
   transition: all 0.2s ease;
   display: flex;
@@ -996,8 +1031,8 @@
 }
 
 .voice-input-btn:hover {
-  background: rgba(139, 92, 246, 0.2);
-  border-color: rgba(139, 92, 246, 0.4);
+  background: rgba(0, 212, 228, 0.2);
+  border-color: rgba(0, 212, 228, 0.4);
   transform: scale(1.05);
 }
 
@@ -1036,7 +1071,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 12px 14px;
-  background: rgba(139, 92, 246, 0.1);
+  background: rgba(0, 212, 228, 0.1);
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
@@ -1108,8 +1143,8 @@
 .form-select:focus,
 .form-textarea:focus {
   background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(139, 92, 246, 0.5);
-  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+  border-color: rgba(0, 212, 228, 0.5);
+  box-shadow: 0 0 0 3px rgba(0, 212, 228, 0.1);
 }
 
 .form-input::placeholder,
@@ -1137,7 +1172,7 @@
   align-items: center;
   gap: 8px;
   padding: 8px;
-  background: rgba(139, 92, 246, 0.05);
+  background: rgba(0, 212, 228, 0.05);
   border-radius: 6px;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -1145,14 +1180,14 @@
 }
 
 .checkbox-label:hover {
-  background: rgba(139, 92, 246, 0.1);
+  background: rgba(0, 212, 228, 0.1);
 }
 
 .checkbox-label input[type="checkbox"] {
   width: 16px;
   height: 16px;
   cursor: pointer;
-  accent-color: #8B5CF6;
+  accent-color: #00D4E4;
 }
 
 .checkbox-label span {
@@ -1164,13 +1199,13 @@
 .checkbox-label svg {
   width: 16px;
   height: 16px;
-  color: #8B5CF6;
+  color: #00D4E4;
 }
 
 .appointment-info-banner {
   padding: 10px;
-  background: rgba(6, 182, 212, 0.1);
-  border: 1px solid rgba(6, 182, 212, 0.3);
+  background: rgba(0, 232, 250, 0.1);
+  border: 1px solid rgba(0, 232, 250, 0.3);
   border-radius: 8px;
   margin-bottom: 8px;
 }
@@ -1184,10 +1219,10 @@
 
 .learn-more-btn {
   padding: 4px 10px;
-  background: rgba(6, 182, 212, 0.2);
-  border: 1px solid rgba(6, 182, 212, 0.4);
+  background: rgba(0, 232, 250, 0.2);
+  border: 1px solid rgba(0, 232, 250, 0.4);
   border-radius: 4px;
-  color: #06B6D4;
+  color: #00E8FA;
   font-size: 11px;
   font-weight: 600;
   cursor: pointer;
@@ -1195,7 +1230,7 @@
 }
 
 .learn-more-btn:hover {
-  background: rgba(6, 182, 212, 0.3);
+  background: rgba(0, 232, 250, 0.3);
   transform: translateY(-1px);
 }
 
@@ -1211,7 +1246,7 @@
 .btn-setup-schedule {
   flex: 1;
   padding: 10px 16px;
-  background: linear-gradient(135deg, #8B5CF6, #06B6D4);
+  background: linear-gradient(135deg, #00D4E4, #00E8FA);
   border: none;
   border-radius: 8px;
   color: #FFFFFF;
@@ -1225,7 +1260,7 @@
 .btn-save:hover,
 .btn-setup-schedule:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(139, 92, 246, 0.4);
+  box-shadow: 0 6px 16px rgba(0, 212, 228, 0.4);
 }
 
 .btn-save:active,

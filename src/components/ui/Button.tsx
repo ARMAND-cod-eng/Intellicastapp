@@ -79,11 +79,11 @@ const Button: React.FC<ButtonProps> = ({
   };
 
   const glowClasses = glow ? {
-    primary: 'hover:shadow-neon-blue',
-    secondary: 'hover:shadow-neon-purple',
+    primary: 'hover:shadow-neon-cyan',
+    secondary: 'hover:shadow-neon-cyan',
     ghost: 'hover:shadow-glass',
     glass: 'hover:shadow-glass-lg',
-    gradient: 'hover:shadow-neon-purple',
+    gradient: 'hover:shadow-neon-cyan',
   }[variant] : '';
 
   const pulseClasses = pulse ? 'animate-pulse-slow' : '';

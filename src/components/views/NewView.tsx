@@ -6,6 +6,7 @@ import SingleVoiceNarrationPanel from '../narration/SingleVoiceNarrationPanel';
 import MultiVoiceConversationPanel from '../narration/MultiVoiceConversationPanel';
 import AIContentDiscoveryPanel from '../narration/AIContentDiscoveryPanel';
 import ModernAudioPlayer from '../audio/ModernAudioPlayer';
+import { getAudioUrl } from '../../config/api';
 
 interface NewViewProps {
   currentView: string;
@@ -105,17 +106,17 @@ const NewView: React.FC<NewViewProps> = ({ currentView, onOpenUpload, uploadedCo
       }`}>
       {/* Hero Section */}
       <section className="text-center mb-12">
-        <h1 className="text-4xl font-bold mb-4" style={{color: theme === 'professional-dark' ? '#E8EAED' : theme === 'dark' ? '#FFFFFF' : '#1F2937'}}>
+        <h1 className="text-4xl font-bold mb-4" style={{color: '#FFFFFF'}}>
           Create Your Next Podcast
         </h1>
-        <p className="text-xl max-w-3xl mx-auto" style={{color: theme === 'professional-dark' ? '#9AA0A6' : theme === 'dark' ? '#C7D2FE' : '#4B5563'}}>
+        <p className="text-xl max-w-3xl mx-auto" style={{color: 'rgba(255, 255, 255, 0.7)'}}>
           Transform any content into engaging audio experiences with AI-powered narration and conversation
         </p>
       </section>
 
       {/* Upload Options */}
       <section>
-        <h2 className="text-2xl font-bold mb-6" style={{color: theme === 'professional-dark' ? '#E8EAED' : theme === 'dark' ? '#FFFFFF' : '#1F2937'}}>Choose Your Content Source</h2>
+        <h2 className="text-2xl font-bold mb-6" style={{color: '#FFFFFF'}}>Choose Your Content Source</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {uploadOptions.map((option, index) => {
             const Icon = option.icon;
@@ -123,16 +124,20 @@ const NewView: React.FC<NewViewProps> = ({ currentView, onOpenUpload, uploadedCo
               <div
                 key={index}
                 onClick={option.action}
-                className={`group relative p-8 rounded-2xl border-2 backdrop-blur-sm cursor-pointer transition-all duration-300 hover:-translate-y-1 ${
-                  theme === 'professional-dark'
-                    ? 'hover:shadow-lg'
-                    : theme === 'dark'
-                    ? 'border-gray-600/30 bg-gradient-to-br from-gray-800/20 to-gray-900/20 hover:border-purple-400/50 hover:shadow-lg hover:shadow-purple-500/10'
-                    : 'border-gray-200 bg-gradient-to-br from-white to-gray-50 hover:border-blue-300 hover:shadow-lg hover:shadow-blue-500/10'
-                }`}
+                className="group relative p-8 rounded-2xl border-2 backdrop-blur-sm cursor-pointer transition-all duration-300 hover:-translate-y-1"
                 style={{
-                  backgroundColor: theme === 'professional-dark' ? '#252526' : theme === 'light' ? '#FFFFFF' : undefined,
-                  borderColor: theme === 'professional-dark' ? '#3C4043' : theme === 'light' ? '#E5E7EB' : undefined
+                  backgroundColor: '#14191a',
+                  borderColor: 'rgba(255, 255, 255, 0.1)'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = '#00D4E4';
+                  e.currentTarget.style.backgroundColor = 'rgba(0, 212, 228, 0.05)';
+                  e.currentTarget.style.boxShadow = '0 0 20px rgba(0, 212, 228, 0.15)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+                  e.currentTarget.style.backgroundColor = '#14191a';
+                  e.currentTarget.style.boxShadow = 'none';
                 }}
               >
                 {option.title === 'Upload Document' && uploadedContent && uploadedContent.length > 0 && (
@@ -141,18 +146,16 @@ const NewView: React.FC<NewViewProps> = ({ currentView, onOpenUpload, uploadedCo
                   </div>
                 )}
                 <div className="flex flex-col items-center text-center">
-                  <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300 shadow-lg ${
-                    theme === 'professional-dark' ? '' : `bg-gradient-to-br ${option.color}`
-                  }`}
+                  <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300 shadow-lg"
                        style={{
-                         backgroundColor: theme === 'light' ? '#60A5FA' : theme === 'professional-dark' ? '#2563EB' : '#6366F1'
+                         backgroundColor: '#00D4E4'
                        }}>
                     <Icon className="w-8 h-8 text-white" />
                   </div>
-                  <h3 className="text-xl font-bold mb-3" style={{color: theme === 'professional-dark' ? '#E8EAED' : theme === 'dark' ? '#FFFFFF' : '#1F2937'}}>
+                  <h3 className="text-xl font-bold mb-3" style={{color: '#FFFFFF'}}>
                     {option.title}
                   </h3>
-                  <p className="text-sm leading-relaxed" style={{color: theme === 'professional-dark' ? '#9AA0A6' : theme === 'dark' ? '#C7D2FE' : '#4B5563'}}>
+                  <p className="text-sm leading-relaxed" style={{color: 'rgba(255, 255, 255, 0.7)'}}>
                     {option.description}
                   </p>
                 </div>
@@ -164,35 +167,26 @@ const NewView: React.FC<NewViewProps> = ({ currentView, onOpenUpload, uploadedCo
 
       {/* Generation Styles */}
       <section>
-        <h2 className="text-2xl font-bold mb-6" style={{color: theme === 'professional-dark' ? '#E8EAED' : theme === 'dark' ? '#FFFFFF' : '#1F2937'}}>Choose Your Podcast Style</h2>
+        <h2 className="text-2xl font-bold mb-6" style={{color: '#FFFFFF'}}>Choose Your Podcast Style</h2>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {generationStyles.map((style, index) => (
             <div
               key={index}
               onClick={style.action}
-              className={`relative p-8 rounded-2xl border-2 cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-lg ${
-                style.isAiPowered
-                  ? (theme === 'professional-dark'
-                      ? 'hover:shadow-lg border-gradient'
-                      : theme === 'dark'
-                      ? 'border-transparent bg-gradient-to-br from-purple-500/20 via-pink-500/20 to-orange-500/20 hover:shadow-purple-500/30'
-                      : 'border-transparent bg-gradient-to-br from-purple-100 via-pink-100 to-orange-100 hover:shadow-purple-500/20')
-                  : style.recommended
-                  ? (theme === 'professional-dark'
-                      ? 'hover:shadow-lg'
-                      : theme === 'dark'
-                      ? 'border-purple-400/60 bg-gradient-to-br from-purple-500/10 to-purple-600/10 hover:border-purple-300/80 hover:shadow-purple-500/20'
-                      : 'border-blue-300 bg-gradient-to-br from-blue-50 to-blue-100 hover:border-blue-400 hover:shadow-blue-500/20')
-                  : (theme === 'professional-dark'
-                      ? 'hover:shadow-lg'
-                      : theme === 'dark'
-                      ? 'border-gray-600/30 bg-gradient-to-br from-gray-800/20 to-gray-900/20 hover:border-purple-400/50 hover:shadow-purple-500/10'
-                      : 'border-gray-200 bg-gradient-to-br from-white to-gray-50 hover:border-blue-300 hover:shadow-blue-500/10')
-              }`}
+              className="relative p-8 rounded-2xl border-2 cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
               style={{
-                backgroundColor: theme === 'professional-dark' ? (style.isAiPowered ? 'rgba(147, 51, 234, 0.1)' : style.recommended ? 'rgba(32, 178, 170, 0.1)' : '#252526') : theme === 'light' && !style.recommended && !style.isAiPowered ? '#FFFFFF' : undefined,
-                borderColor: theme === 'professional-dark' ? (style.isAiPowered ? '#9333EA' : style.recommended ? '#2563EB' : '#3C4043') : theme === 'light' ? (style.isAiPowered ? '#9333EA' : style.recommended ? '#60A5FA' : 'rgba(156,163,175,0.2)') : (style.isAiPowered ? '#A855F7' : style.recommended ? '#6366F1' : undefined),
-                backgroundImage: style.isAiPowered && theme === 'professional-dark' ? 'linear-gradient(135deg, rgba(147, 51, 234, 0.15), rgba(236, 72, 153, 0.15))' : undefined
+                backgroundColor: '#14191a',
+                borderColor: style.recommended ? '#00D4E4' : 'rgba(255, 255, 255, 0.1)'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = '#00D4E4';
+                e.currentTarget.style.backgroundColor = 'rgba(0, 212, 228, 0.05)';
+                e.currentTarget.style.boxShadow = '0 0 25px rgba(0, 212, 228, 0.2)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = style.recommended ? '#00D4E4' : 'rgba(255, 255, 255, 0.1)';
+                e.currentTarget.style.backgroundColor = '#14191a';
+                e.currentTarget.style.boxShadow = 'none';
               }}
             >
               {style.recommended && (
@@ -209,21 +203,21 @@ const NewView: React.FC<NewViewProps> = ({ currentView, onOpenUpload, uploadedCo
                   </span>
                 </div>
               )}
-              
+
               <div className="space-y-4">
-                <h3 className="text-xl font-bold flex items-center gap-2" style={{color: theme === 'professional-dark' ? '#E8EAED' : theme === 'dark' ? '#FFFFFF' : '#1F2937'}}>
-                  {style.isAiPowered && <Zap className="w-5 h-5 text-purple-500" />}
+                <h3 className="text-xl font-bold flex items-center gap-2" style={{color: '#FFFFFF'}}>
+                  {style.isAiPowered && <Zap className="w-5 h-5" style={{color: '#00D4E4'}} />}
                   {style.title}
                 </h3>
-                <p className="text-sm leading-relaxed" style={{color: theme === 'professional-dark' ? '#9AA0A6' : theme === 'dark' ? '#C7D2FE' : '#4B5563'}}>
+                <p className="text-sm leading-relaxed" style={{color: 'rgba(255, 255, 255, 0.7)'}}>
                   {style.description}
                 </p>
 
-                <div className="pt-4 border-t" style={{borderColor: theme === 'professional-dark' ? '#3C4043' : theme === 'dark' ? 'rgba(75, 85, 99, 0.3)' : 'rgba(191,200,216,0.3)'}}>
+                <div className="pt-4 border-t" style={{borderColor: 'rgba(255, 255, 255, 0.1)'}}>
                   <ul className="space-y-3">
                     {style.features.map((feature, featureIndex) => (
-                      <li key={featureIndex} className="flex items-center text-sm" style={{color: theme === 'professional-dark' ? '#80868B' : theme === 'dark' ? '#9CA3AF' : '#6B7280'}}>
-                        <div className="w-2 h-2 rounded-full mr-3 flex-shrink-0" style={{backgroundColor: style.isAiPowered ? '#A855F7' : theme === 'light' ? '#60A5FA' : theme === 'professional-dark' ? '#2563EB' : '#6366F1'}}></div>
+                      <li key={featureIndex} className="flex items-center text-sm" style={{color: 'rgba(255, 255, 255, 0.6)'}}>
+                        <div className="w-2 h-2 rounded-full mr-3 flex-shrink-0" style={{backgroundColor: '#00D4E4'}}></div>
                         {feature}
                       </li>
                     ))}
@@ -294,7 +288,7 @@ const NewView: React.FC<NewViewProps> = ({ currentView, onOpenUpload, uploadedCo
             externalPlayerMinimized ? 'p-2 max-w-xs' : 'p-4 w-96'
           }`}>
             <ModernAudioPlayer
-              audioUrl={`http://localhost:3004${externalAudioPlayer.audioUrl}`}
+              audioUrl={getAudioUrl(externalAudioPlayer.audioUrl, 'node')}
               trackData={externalAudioPlayer.trackData}
               isMinimized={externalPlayerMinimized}
               onClose={() => {
@@ -314,7 +308,7 @@ const NewView: React.FC<NewViewProps> = ({ currentView, onOpenUpload, uploadedCo
         <div className="fixed bottom-4 right-4 z-40">
           <div className="bg-white rounded-lg shadow-2xl border border-gray-200 p-4 max-w-sm">
             <ModernAudioPlayer
-              audioUrl={`http://localhost:3004${persistentAudioData.audioUrl}`}
+              audioUrl={getAudioUrl(persistentAudioData.audioUrl, 'node')}
               trackData={persistentAudioData.trackData}
               isMinimized={true}
               onClose={() => {

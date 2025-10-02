@@ -16,7 +16,7 @@ const HomeView: React.FC<HomeViewProps> = ({ currentView, onOpenUpload, uploaded
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [activeSearch, setActiveSearch] = useState<string | null>(null);
 
-  if (currentView !== 'home') return null;
+  if (currentView !== 'search') return null;
 
   const handleSearch = (query: string) => {
     if (query.trim()) {
@@ -44,11 +44,11 @@ const HomeView: React.FC<HomeViewProps> = ({ currentView, onOpenUpload, uploaded
       {/* Main Brand */}
       <div className="mb-12">
         <h1 className="text-6xl font-bold mb-4"
-            style={{ color: theme === 'professional-dark' ? '#E8EAED' : '#1F2937' }}>
+            style={{ color: '#FFFFFF' }}>
           intellicast
         </h1>
         <p className="text-xl max-w-2xl mx-auto leading-relaxed"
-           style={{ color: theme === 'professional-dark' ? '#9AA0A6' : '#6B7280' }}>
+           style={{ color: 'rgba(255, 255, 255, 0.7)' }}>
           Where knowledge meets conversation. Create AI-powered podcasts from your documents.
         </p>
       </div>
@@ -58,7 +58,7 @@ const HomeView: React.FC<HomeViewProps> = ({ currentView, onOpenUpload, uploaded
         <div className="relative">
           <div className="absolute left-4 top-1/2 transform -translate-y-1/2">
             <Search className="w-5 h-5"
-                   style={{ color: theme === 'professional-dark' ? '#9AA0A6' : '#6B7280' }} />
+                   style={{ color: 'rgba(255, 255, 255, 0.5)' }} />
           </div>
 
           <input
@@ -75,10 +75,10 @@ const HomeView: React.FC<HomeViewProps> = ({ currentView, onOpenUpload, uploaded
             }}
             className="w-full pl-12 pr-20 py-4 text-lg rounded-xl transition-all duration-200 focus:outline-none"
             style={{
-              backgroundColor: theme === 'professional-dark' ? '#2A2A2A' : '#F9FAFB',
-              border: theme === 'professional-dark' ? '1px solid #3C4043' : '1px solid #E5E7EB',
-              color: theme === 'professional-dark' ? '#E8EAED' : '#1F2937',
-              borderColor: isSearchFocused ? (theme === 'light' ? '#60A5FA' : theme === 'professional-dark' ? '#2563EB' : '#6366F1') : undefined
+              backgroundColor: '#14191a',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
+              color: '#FFFFFF',
+              borderColor: isSearchFocused ? '#00D4E4' : undefined
             }}
           />
 
@@ -87,8 +87,16 @@ const HomeView: React.FC<HomeViewProps> = ({ currentView, onOpenUpload, uploaded
               onClick={onOpenUpload}
               className="p-2 rounded-lg transition-all duration-200"
               style={{
-                backgroundColor: theme === 'professional-dark' ? '#3C4043' : '#F3F4F6',
-                color: theme === 'professional-dark' ? '#9AA0A6' : '#6B7280'
+                backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                color: '#FFFFFF'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = 'rgba(0, 212, 228, 0.15)';
+                e.currentTarget.style.color = '#00D4E4';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
+                e.currentTarget.style.color = '#FFFFFF';
               }}
               title="Upload Document"
             >
@@ -97,8 +105,16 @@ const HomeView: React.FC<HomeViewProps> = ({ currentView, onOpenUpload, uploaded
 
             <button className="p-2 rounded-lg transition-all duration-200"
                     style={{
-                      backgroundColor: theme === 'professional-dark' ? '#3C4043' : '#F3F4F6',
-                      color: theme === 'professional-dark' ? '#9AA0A6' : '#6B7280'
+                      backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                      color: '#FFFFFF'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = 'rgba(0, 212, 228, 0.15)';
+                      e.currentTarget.style.color = '#00D4E4';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
+                      e.currentTarget.style.color = '#FFFFFF';
                     }}
                     title="Voice Input">
               <Mic className="w-4 h-4" />
@@ -108,8 +124,17 @@ const HomeView: React.FC<HomeViewProps> = ({ currentView, onOpenUpload, uploaded
               onClick={() => handleSearch(searchQuery)}
               className="p-2 rounded-lg transition-all duration-200"
               style={{
-                backgroundColor: theme === 'light' ? '#60A5FA' : theme === 'professional-dark' ? '#2563EB' : '#6366F1',
-                color: 'white'
+                backgroundColor: '#00D4E4',
+                color: 'white',
+                boxShadow: '0 0 15px rgba(0, 212, 228, 0.3)'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = '#00E8FA';
+                e.currentTarget.style.boxShadow = '0 0 25px rgba(0, 212, 228, 0.5)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = '#00D4E4';
+                e.currentTarget.style.boxShadow = '0 0 15px rgba(0, 212, 228, 0.3)';
               }}>
               <ArrowRight className="w-4 h-4" />
             </button>
@@ -125,9 +150,19 @@ const HomeView: React.FC<HomeViewProps> = ({ currentView, onOpenUpload, uploaded
                 onClick={() => handleSearch(suggestion)}
                 className="px-4 py-2 rounded-full text-sm transition-all duration-200 hover:scale-105"
                 style={{
-                  backgroundColor: theme === 'professional-dark' ? '#2A2A2A' : '#F3F4F6',
-                  color: theme === 'professional-dark' ? '#9AA0A6' : '#6B7280',
-                  border: theme === 'professional-dark' ? '1px solid #3C4043' : '1px solid #E5E7EB'
+                  backgroundColor: '#14191a',
+                  color: 'rgba(255, 255, 255, 0.7)',
+                  border: '1px solid rgba(255, 255, 255, 0.1)'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = 'rgba(0, 212, 228, 0.1)';
+                  e.currentTarget.style.borderColor = 'rgba(0, 212, 228, 0.3)';
+                  e.currentTarget.style.color = '#00D4E4';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = '#14191a';
+                  e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+                  e.currentTarget.style.color = 'rgba(255, 255, 255, 0.7)';
                 }}
               >
                 {suggestion}
@@ -143,8 +178,17 @@ const HomeView: React.FC<HomeViewProps> = ({ currentView, onOpenUpload, uploaded
           onClick={onOpenUpload}
           className="flex items-center space-x-2 px-6 py-3 rounded-xl transition-all duration-200 hover:scale-105"
           style={{
-            backgroundColor: theme === 'light' ? '#60A5FA' : theme === 'professional-dark' ? '#2563EB' : '#6366F1',
-            color: 'white'
+            backgroundColor: '#00D4E4',
+            color: 'white',
+            boxShadow: '0 0 20px rgba(0, 212, 228, 0.3)'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = '#00E8FA';
+            e.currentTarget.style.boxShadow = '0 0 30px rgba(0, 212, 228, 0.5)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = '#00D4E4';
+            e.currentTarget.style.boxShadow = '0 0 20px rgba(0, 212, 228, 0.3)';
           }}
         >
           <Upload className="w-5 h-5" />
@@ -153,9 +197,19 @@ const HomeView: React.FC<HomeViewProps> = ({ currentView, onOpenUpload, uploaded
 
         <button className="flex items-center space-x-2 px-6 py-3 rounded-xl transition-all duration-200 hover:scale-105"
                 style={{
-                  backgroundColor: theme === 'professional-dark' ? '#2A2A2A' : '#F3F4F6',
-                  color: theme === 'professional-dark' ? '#E8EAED' : '#1F2937',
-                  border: theme === 'professional-dark' ? '1px solid #3C4043' : '1px solid #E5E7EB'
+                  backgroundColor: '#14191a',
+                  color: '#FFFFFF',
+                  border: '1px solid rgba(255, 255, 255, 0.1)'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = 'rgba(0, 212, 228, 0.1)';
+                  e.currentTarget.style.borderColor = 'rgba(0, 212, 228, 0.3)';
+                  e.currentTarget.style.color = '#00D4E4';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = '#14191a';
+                  e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+                  e.currentTarget.style.color = '#FFFFFF';
                 }}>
           <Sparkles className="w-5 h-5" />
           <span>Try Examples</span>
@@ -165,7 +219,7 @@ const HomeView: React.FC<HomeViewProps> = ({ currentView, onOpenUpload, uploaded
       {/* Footer Info */}
       <div className="text-center max-w-md">
         <p className="text-sm leading-relaxed"
-           style={{ color: theme === 'professional-dark' ? '#80868B' : '#9CA3AF' }}>
+           style={{ color: 'rgba(255, 255, 255, 0.5)' }}>
           Powered by advanced AI to transform your documents into engaging podcast conversations with natural voices and intelligent insights.
         </p>
       </div>

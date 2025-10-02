@@ -193,34 +193,43 @@ const WebResultsTab: React.FC<WebResultsTabProps> = ({
       {/* Header with controls */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex items-center space-x-4">
-          <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+          <h2 className="text-xl font-bold" style={{ color: '#FFFFFF' }}>
             Web Results
           </h2>
-          <span className="text-sm text-gray-500 dark:text-gray-400">
+          <span className="text-sm px-3 py-1 rounded-full" style={{
+            backgroundColor: 'rgba(0, 212, 228, 0.2)',
+            color: '#00D4E4',
+            border: '1px solid rgba(0, 212, 228, 0.3)'
+          }}>
             {filteredResults.length} {filteredResults.length === 1 ? 'result' : 'results'}
           </span>
         </div>
 
         <div className="flex items-center space-x-3">
           {/* View Mode Toggle */}
-          <div className="flex items-center bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
+          <div className="flex items-center rounded-lg p-1" style={{
+            backgroundColor: '#14191a',
+            border: '1px solid rgba(255, 255, 255, 0.1)'
+          }}>
             <button
               onClick={() => setViewMode('grid')}
-              className={`p-2 rounded-md transition-all ${
-                viewMode === 'grid'
-                  ? 'bg-white dark:bg-gray-700 text-purple-600 shadow-sm'
-                  : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
-              }`}
+              className="p-2 rounded-md transition-all"
+              style={{
+                backgroundColor: viewMode === 'grid' ? '#00D4E4' : 'transparent',
+                color: viewMode === 'grid' ? 'white' : 'rgba(255, 255, 255, 0.5)',
+                boxShadow: viewMode === 'grid' ? '0 0 10px rgba(0, 212, 228, 0.3)' : ''
+              }}
             >
               <Grid className="w-4 h-4" />
             </button>
             <button
               onClick={() => setViewMode('list')}
-              className={`p-2 rounded-md transition-all ${
-                viewMode === 'list'
-                  ? 'bg-white dark:bg-gray-700 text-purple-600 shadow-sm'
-                  : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
-              }`}
+              className="p-2 rounded-md transition-all"
+              style={{
+                backgroundColor: viewMode === 'list' ? '#00D4E4' : 'transparent',
+                color: viewMode === 'list' ? 'white' : 'rgba(255, 255, 255, 0.5)',
+                boxShadow: viewMode === 'list' ? '0 0 10px rgba(0, 212, 228, 0.3)' : ''
+              }}
             >
               <List className="w-4 h-4" />
             </button>
@@ -229,7 +238,20 @@ const WebResultsTab: React.FC<WebResultsTabProps> = ({
           {/* Filters Toggle */}
           <button
             onClick={() => setShowFilters(!showFilters)}
-            className="flex items-center space-x-2 px-3 py-2 bg-gray-100 dark:bg-gray-800 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+            className="flex items-center space-x-2 px-3 py-2 rounded-lg transition-all duration-200 hover:scale-105"
+            style={{
+              backgroundColor: '#14191a',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
+              color: 'rgba(255, 255, 255, 0.7)'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.borderColor = '#00D4E4';
+              e.currentTarget.style.color = '#00D4E4';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+              e.currentTarget.style.color = 'rgba(255, 255, 255, 0.7)';
+            }}
           >
             <Filter className="w-4 h-4" />
             <span className="text-sm font-medium">Filters</span>
@@ -240,11 +262,15 @@ const WebResultsTab: React.FC<WebResultsTabProps> = ({
 
       {/* Filter Panel */}
       {showFilters && (
-        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700 shadow-lg">
+        <div className="rounded-2xl p-6 shadow-lg" style={{
+          backgroundColor: '#14191a',
+          border: '1px solid rgba(0, 212, 228, 0.3)',
+          boxShadow: '0 0 20px rgba(0, 212, 228, 0.15)'
+        }}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Filter by Type */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+              <label className="block text-sm font-medium mb-3" style={{ color: '#FFFFFF' }}>
                 Filter by Type
               </label>
               <div className="flex flex-wrap gap-2">
@@ -257,11 +283,13 @@ const WebResultsTab: React.FC<WebResultsTabProps> = ({
                   <button
                     key={key}
                     onClick={() => setFilter(key)}
-                    className={`flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
-                      filter === key
-                        ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800'
-                        : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-                    }`}
+                    className="flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:scale-105"
+                    style={{
+                      backgroundColor: filter === key ? '#00D4E4' : 'rgba(255, 255, 255, 0.05)',
+                      color: filter === key ? 'white' : 'rgba(255, 255, 255, 0.7)',
+                      border: filter === key ? '1px solid #00D4E4' : '1px solid rgba(255, 255, 255, 0.1)',
+                      boxShadow: filter === key ? '0 0 15px rgba(0, 212, 228, 0.3)' : ''
+                    }}
                   >
                     <Icon className="w-4 h-4" />
                     <span>{label}</span>
@@ -272,7 +300,7 @@ const WebResultsTab: React.FC<WebResultsTabProps> = ({
 
             {/* Sort by */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+              <label className="block text-sm font-medium mb-3" style={{ color: '#FFFFFF' }}>
                 Sort by
               </label>
               <div className="flex flex-wrap gap-2">
@@ -284,11 +312,13 @@ const WebResultsTab: React.FC<WebResultsTabProps> = ({
                   <button
                     key={key}
                     onClick={() => setSort(key)}
-                    className={`flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
-                      sort === key
-                        ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800'
-                        : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-                    }`}
+                    className="flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:scale-105"
+                    style={{
+                      backgroundColor: sort === key ? '#00D4E4' : 'rgba(255, 255, 255, 0.05)',
+                      color: sort === key ? 'white' : 'rgba(255, 255, 255, 0.7)',
+                      border: sort === key ? '1px solid #00D4E4' : '1px solid rgba(255, 255, 255, 0.1)',
+                      boxShadow: sort === key ? '0 0 15px rgba(0, 212, 228, 0.3)' : ''
+                    }}
                   >
                     <Icon className="w-4 h-4" />
                     <span>{label}</span>
@@ -317,9 +347,21 @@ const WebResultsTab: React.FC<WebResultsTabProps> = ({
           return (
             <div
               key={index}
-              className={`bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 ${
+              className={`rounded-2xl border overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 ${
                 viewMode === 'list' ? 'p-6' : 'p-5'
               }`}
+              style={{
+                backgroundColor: '#14191a',
+                borderColor: 'rgba(255, 255, 255, 0.1)'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = '#00D4E4';
+                e.currentTarget.style.boxShadow = '0 0 20px rgba(0, 212, 228, 0.2)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+                e.currentTarget.style.boxShadow = '';
+              }}
             >
               {/* Header */}
               <div className="flex items-start justify-between mb-4">
@@ -357,18 +399,25 @@ const WebResultsTab: React.FC<WebResultsTabProps> = ({
                       )}
                     </div>
 
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2 line-clamp-2 leading-tight">
+                    <h3 className="text-lg font-semibold mb-2 line-clamp-2 leading-tight" style={{ color: '#FFFFFF' }}>
                       <a
                         href={result.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
+                        className="transition-colors"
+                        style={{ color: '#FFFFFF' }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.color = '#00D4E4';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.color = '#FFFFFF';
+                        }}
                       >
                         {result.title}
                       </a>
                     </h3>
 
-                    <div className="flex items-center space-x-1 text-sm text-gray-500 dark:text-gray-400 mb-3">
+                    <div className="flex items-center space-x-1 text-sm mb-3" style={{ color: 'rgba(255, 255, 255, 0.5)' }}>
                       <span className="truncate">{new URL(result.url).hostname}</span>
                       <ExternalLink className="w-3 h-3 flex-shrink-0" />
                     </div>
@@ -379,11 +428,26 @@ const WebResultsTab: React.FC<WebResultsTabProps> = ({
                 <div className="flex items-center space-x-2 ml-3">
                   <button
                     onClick={() => onPlayAudio?.(result)}
-                    className="group relative p-3 bg-purple-100 dark:bg-purple-900/30 rounded-xl hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-all hover:scale-105"
+                    className="group relative p-3 rounded-xl transition-all hover:scale-105"
+                    style={{
+                      backgroundColor: 'rgba(0, 212, 228, 0.2)',
+                      border: '1px solid rgba(0, 212, 228, 0.3)'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = 'rgba(0, 212, 228, 0.3)';
+                      e.currentTarget.style.boxShadow = '0 0 15px rgba(0, 212, 228, 0.3)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = 'rgba(0, 212, 228, 0.2)';
+                      e.currentTarget.style.boxShadow = '';
+                    }}
                     title="Audio narration coming soon"
                   >
-                    <Headphones className="w-5 h-5 text-purple-600 dark:text-purple-400 group-hover:animate-pulse" />
-                    <span className="absolute -top-1 -right-1 bg-purple-600 text-white text-xs px-1.5 py-0.5 rounded-full">
+                    <Headphones className="w-5 h-5 group-hover:animate-pulse" style={{ color: '#00D4E4' }} />
+                    <span className="absolute -top-1 -right-1 text-white text-xs px-1.5 py-0.5 rounded-full" style={{
+                      background: 'linear-gradient(135deg, #00D4E4, #00E8FA)',
+                      boxShadow: '0 0 10px rgba(0, 212, 228, 0.5)'
+                    }}>
                       {audioDuration}
                     </span>
                   </button>
@@ -392,7 +456,7 @@ const WebResultsTab: React.FC<WebResultsTabProps> = ({
 
               {/* Metadata */}
               <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center space-x-4 text-sm text-gray-500 dark:text-gray-400">
+                <div className="flex items-center space-x-4 text-sm" style={{ color: 'rgba(255, 255, 255, 0.6)' }}>
                   {result.published_date && (
                     <div className="flex items-center space-x-1">
                       <Clock className="w-4 h-4" />
@@ -405,7 +469,7 @@ const WebResultsTab: React.FC<WebResultsTabProps> = ({
                   </div>
                   {result.score && (
                     <div className="flex items-center space-x-1">
-                      <Star className="w-4 h-4 text-yellow-500" />
+                      <Star className="w-4 h-4" style={{ color: '#00D4E4' }} />
                       <span>{Math.round(result.score * 100)}%</span>
                     </div>
                   )}
@@ -413,7 +477,7 @@ const WebResultsTab: React.FC<WebResultsTabProps> = ({
               </div>
 
               {/* Content Preview */}
-              <div className="text-gray-600 dark:text-gray-300 text-sm leading-relaxed">
+              <div className="text-sm leading-relaxed" style={{ color: 'rgba(255, 255, 255, 0.7)' }}>
                 {isExpanded ? (
                   <div className="whitespace-pre-line">
                     {result.content || result.snippet || 'No content preview available.'}
@@ -430,7 +494,16 @@ const WebResultsTab: React.FC<WebResultsTabProps> = ({
               {(result.content || result.snippet || '').length > 200 && (
                 <button
                   onClick={() => toggleExpanded(index)}
-                  className="flex items-center space-x-1 mt-3 text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 text-sm font-medium transition-colors"
+                  className="flex items-center space-x-1 mt-3 text-sm font-medium transition-all duration-200"
+                  style={{ color: '#00D4E4' }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.color = '#00E8FA';
+                    e.currentTarget.style.transform = 'translateX(4px)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.color = '#00D4E4';
+                    e.currentTarget.style.transform = 'translateX(0)';
+                  }}
                 >
                   <span>{isExpanded ? 'Show less' : 'Read more'}</span>
                   {isExpanded ? (

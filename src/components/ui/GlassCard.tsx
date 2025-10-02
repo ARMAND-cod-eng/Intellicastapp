@@ -67,8 +67,13 @@ const GlassCard: React.FC<GlassCardProps> = ({
   const hoverClasses = getHoverClasses();
 
   const glowClasses = glow
-    ? 'hover:shadow-neon-purple hover:border-primary-500/50'
+    ? 'hover:shadow-neon-cyan'
     : '';
+
+  const glowStyle = glow ? {
+    borderColor: hover ? '#00D4E4' : undefined,
+    boxShadow: hover ? '0 0 30px rgba(0, 212, 228, 0.3)' : undefined
+  } : {};
 
   const borderClasses = borderGradient
     ? 'border-gradient'
@@ -92,13 +97,17 @@ const GlassCard: React.FC<GlassCardProps> = ({
       )}
       style={{
         backgroundColor: theme === 'professional-dark' ? '#252526' : theme === 'light' ? '#FBF5F0' : undefined,
-        border: theme === 'professional-dark' ? '1px solid #3C4043' : undefined
+        border: theme === 'professional-dark' ? '1px solid #3C4043' : undefined,
+        ...glowStyle
       }}
       onClick={onClick}
+      onMouseEnter={(e) => glow && hover && (e.currentTarget.style.boxShadow = '0 0 30px rgba(0, 212, 228, 0.4)')}
+      onMouseLeave={(e) => glow && hover && (e.currentTarget.style.boxShadow = 'none')}
     >
       {/* Inner glow */}
       {glow && (
-        <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-primary-600/20 via-transparent to-secondary-600/20 opacity-0 hover:opacity-100 transition-opacity duration-300" />
+        <div className="absolute inset-0 rounded-2xl opacity-0 hover:opacity-100 transition-opacity duration-300"
+             style={{background: 'linear-gradient(135deg, rgba(0, 212, 228, 0.2), transparent, rgba(0, 232, 250, 0.2))'}} />
       )}
       
       {/* Content */}

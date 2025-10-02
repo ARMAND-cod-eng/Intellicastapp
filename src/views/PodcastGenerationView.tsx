@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Check, ChevronDown, Music, Sparkles, Play, Pause } from 'lucide-react';
+import { Check, ChevronDown, Music, Sparkles, Play, Pause, Maximize2, Minimize2 } from 'lucide-react';
 import { voices, narrationTypes, podcastStyles, backgroundMusic, contentSources } from '../data/mockPodcastData';
 import type { Voice, NarrationType, PodcastStyle, BackgroundMusic, ContentSource, PodcastConfiguration } from '../types/podcast';
 
@@ -21,6 +21,7 @@ export const PodcastGenerationView: React.FC<PodcastGenerationViewProps> = ({ up
   const [showVoiceDropdown, setShowVoiceDropdown] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   const canGenerate = configuration.contentSource && configuration.style && configuration.voice && configuration.narrationType;
 
@@ -54,11 +55,31 @@ export const PodcastGenerationView: React.FC<PodcastGenerationViewProps> = ({ up
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-violet-900 p-6">
-      <div className="max-w-6xl mx-auto space-y-8">
-        
+    <div className="min-h-screen p-6" style={{background: 'linear-gradient(to bottom, #000000, #14191a)'}}>
+      <div className={`mx-auto space-y-8 transition-all duration-500 ${isExpanded ? 'max-w-[95vw]' : 'max-w-6xl'}`}>
+
         {/* Header */}
-        <div className="text-center space-y-4">
+        <div className="text-center space-y-4 relative">
+          <button
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="absolute right-0 top-0 p-3 rounded-xl transition-all duration-300"
+            style={{
+              backgroundColor: 'rgba(0, 212, 228, 0.1)',
+              border: '1px solid rgba(0, 212, 228, 0.3)',
+              color: '#00D4E4'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = 'rgba(0, 212, 228, 0.2)';
+              e.currentTarget.style.boxShadow = '0 0 20px rgba(0, 212, 228, 0.3)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'rgba(0, 212, 228, 0.1)';
+              e.currentTarget.style.boxShadow = 'none';
+            }}
+            title={isExpanded ? 'Collapse View' : 'Expand View'}
+          >
+            {isExpanded ? <Minimize2 size={20} /> : <Maximize2 size={20} />}
+          </button>
           <h1 className="text-4xl font-bold text-white">Create Your Podcast</h1>
           <p className="text-gray-300 text-lg">Transform your content into an engaging audio experience</p>
         </div>
@@ -69,17 +90,30 @@ export const PodcastGenerationView: React.FC<PodcastGenerationViewProps> = ({ up
             <span className="bg-blue-500 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm">1</span>
             Select Content Source
           </h2>
-          <div className="grid md:grid-cols-3 gap-4">
+          <div className={`grid gap-4 transition-all duration-500 ${isExpanded ? 'md:grid-cols-4 lg:grid-cols-5' : 'md:grid-cols-3'}`}>
             {contentSources.map((source) => (
               <motion.div
                 key={source.id}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                className={`relative p-6 rounded-2xl border border-white/20 backdrop-blur-xl cursor-pointer transition-all ${
-                  configuration.contentSource?.id === source.id
-                    ? 'bg-white/20 ring-2 ring-green-500'
-                    : 'bg-white/10 hover:bg-white/15'
-                }`}
+                className="relative p-6 rounded-2xl border backdrop-blur-xl cursor-pointer transition-all"
+                style={{
+                  backgroundColor: configuration.contentSource?.id === source.id ? 'rgba(0, 212, 228, 0.15)' : '#14191a',
+                  borderColor: configuration.contentSource?.id === source.id ? '#00D4E4' : 'rgba(255, 255, 255, 0.1)',
+                  boxShadow: configuration.contentSource?.id === source.id ? '0 0 20px rgba(0, 212, 228, 0.2)' : 'none'
+                }}
+                onMouseEnter={(e) => {
+                  if (configuration.contentSource?.id !== source.id) {
+                    e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.05)';
+                    e.currentTarget.style.borderColor = 'rgba(0, 212, 228, 0.3)';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (configuration.contentSource?.id !== source.id) {
+                    e.currentTarget.style.backgroundColor = '#14191a';
+                    e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+                  }
+                }}
                 onClick={() => handleContentSourceSelect(source)}
               >
                 {/* Show checkmark only for Upload Document when content is uploaded */}
@@ -104,17 +138,30 @@ export const PodcastGenerationView: React.FC<PodcastGenerationViewProps> = ({ up
             <span className="bg-blue-500 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm">2</span>
             Choose Podcast Style
           </h2>
-          <div className="grid md:grid-cols-3 gap-4">
+          <div className={`grid gap-4 transition-all duration-500 ${isExpanded ? 'md:grid-cols-4 lg:grid-cols-5' : 'md:grid-cols-3'}`}>
             {podcastStyles.map((style) => (
               <motion.div
                 key={style.id}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                className={`relative p-6 rounded-2xl border border-white/20 backdrop-blur-xl cursor-pointer transition-all ${
-                  configuration.style?.id === style.id
-                    ? 'bg-white/20 ring-2 ring-blue-500'
-                    : 'bg-white/10 hover:bg-white/15'
-                } ${style.recommended ? 'ring-2 ring-yellow-400' : ''}`}
+                className="relative p-6 rounded-2xl border backdrop-blur-xl cursor-pointer transition-all"
+                style={{
+                  backgroundColor: configuration.style?.id === style.id ? 'rgba(0, 212, 228, 0.15)' : '#14191a',
+                  borderColor: configuration.style?.id === style.id ? '#00D4E4' : style.recommended ? '#00D4E4' : 'rgba(255, 255, 255, 0.1)',
+                  boxShadow: configuration.style?.id === style.id ? '0 0 20px rgba(0, 212, 228, 0.2)' : 'none'
+                }}
+                onMouseEnter={(e) => {
+                  if (configuration.style?.id !== style.id) {
+                    e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.05)';
+                    e.currentTarget.style.borderColor = 'rgba(0, 212, 228, 0.3)';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (configuration.style?.id !== style.id) {
+                    e.currentTarget.style.backgroundColor = '#14191a';
+                    e.currentTarget.style.borderColor = style.recommended ? '#00D4E4' : 'rgba(255, 255, 255, 0.1)';
+                  }
+                }}
                 onClick={() => handleStyleSelect(style)}
               >
                 {style.recommended && (
@@ -147,7 +194,11 @@ export const PodcastGenerationView: React.FC<PodcastGenerationViewProps> = ({ up
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
-              className="bg-white/10 backdrop-blur-xl rounded-2xl border border-white/20 p-6 space-y-6"
+              className="backdrop-blur-xl rounded-2xl border p-6 space-y-6"
+              style={{
+                backgroundColor: '#14191a',
+                borderColor: 'rgba(255, 255, 255, 0.1)'
+              }}
             >
               <div className="flex items-center justify-between">
                 <h3 className="text-xl font-semibold text-white">Configure Your Podcast</h3>
@@ -165,11 +216,23 @@ export const PodcastGenerationView: React.FC<PodcastGenerationViewProps> = ({ up
                 <div className="relative">
                   <button
                     onClick={() => setShowVoiceDropdown(!showVoiceDropdown)}
-                    className="w-full p-4 bg-white/10 border border-white/20 rounded-xl text-left text-white flex items-center justify-between hover:bg-white/15 transition-colors"
+                    className="w-full p-4 border rounded-xl text-left text-white flex items-center justify-between transition-colors"
+                    style={{
+                      backgroundColor: '#14191a',
+                      borderColor: 'rgba(255, 255, 255, 0.1)'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = 'rgba(0, 212, 228, 0.05)';
+                      e.currentTarget.style.borderColor = 'rgba(0, 212, 228, 0.3)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = '#14191a';
+                      e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+                    }}
                   >
                     {configuration.voice ? (
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white text-sm">
+                        <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm" style={{backgroundColor: '#00D4E4'}}>
                           {configuration.voice.name[0]}
                         </div>
                         <div>
@@ -189,16 +252,29 @@ export const PodcastGenerationView: React.FC<PodcastGenerationViewProps> = ({ up
                         initial={{ opacity: 0, y: -10 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -10 }}
-                        className="absolute top-full left-0 right-0 mt-2 bg-white/10 backdrop-blur-xl border border-white/20 rounded-xl overflow-hidden z-50 max-h-60 overflow-y-auto"
+                        className="absolute top-full left-0 right-0 mt-2 backdrop-blur-xl border rounded-xl overflow-hidden z-50 max-h-60 overflow-y-auto"
+                        style={{
+                          backgroundColor: '#14191a',
+                          borderColor: 'rgba(255, 255, 255, 0.2)'
+                        }}
                       >
                         {voices.map((voice) => (
                           <button
                             key={voice.id}
                             onClick={() => handleVoiceSelect(voice)}
-                            className="w-full p-4 text-left hover:bg-white/10 transition-colors border-b border-white/10 last:border-b-0"
+                            className="w-full p-4 text-left transition-colors border-b last:border-b-0"
+                            style={{
+                              borderColor: 'rgba(255, 255, 255, 0.1)'
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.05)';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.backgroundColor = 'transparent';
+                            }}
                           >
                             <div className="flex items-center gap-3">
-                              <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white text-sm">
+                              <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm" style={{backgroundColor: '#00D4E4'}}>
                                 {voice.name[0]}
                               </div>
                               <div>
@@ -223,11 +299,25 @@ export const PodcastGenerationView: React.FC<PodcastGenerationViewProps> = ({ up
                     <button
                       key={type.id}
                       onClick={() => handleNarrationTypeSelect(type)}
-                      className={`p-4 rounded-xl border transition-all text-left ${
-                        configuration.narrationType?.id === type.id
-                          ? 'bg-blue-500/20 border-blue-500 text-white'
-                          : 'bg-white/10 border-white/20 text-gray-300 hover:bg-white/15'
-                      }`}
+                      className="p-4 rounded-xl border transition-all text-left"
+                      style={{
+                        backgroundColor: configuration.narrationType?.id === type.id ? 'rgba(0, 212, 228, 0.15)' : '#14191a',
+                        borderColor: configuration.narrationType?.id === type.id ? '#00D4E4' : 'rgba(255, 255, 255, 0.1)',
+                        color: configuration.narrationType?.id === type.id ? '#00D4E4' : 'rgba(255, 255, 255, 0.7)',
+                        boxShadow: configuration.narrationType?.id === type.id ? '0 0 15px rgba(0, 212, 228, 0.2)' : 'none'
+                      }}
+                      onMouseEnter={(e) => {
+                        if (configuration.narrationType?.id !== type.id) {
+                          e.currentTarget.style.backgroundColor = 'rgba(0, 212, 228, 0.05)';
+                          e.currentTarget.style.borderColor = 'rgba(0, 212, 228, 0.3)';
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (configuration.narrationType?.id !== type.id) {
+                          e.currentTarget.style.backgroundColor = '#14191a';
+                          e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+                        }
+                      }}
                     >
                       <div className="flex items-center gap-3 mb-2">
                         <span className="text-2xl">{type.icon}</span>
@@ -250,9 +340,10 @@ export const PodcastGenerationView: React.FC<PodcastGenerationViewProps> = ({ up
                   <label className="text-white font-medium">Background Music</label>
                   <button
                     onClick={() => setConfiguration(prev => ({ ...prev, useBackgroundMusic: !prev.useBackgroundMusic }))}
-                    className={`relative w-12 h-6 rounded-full transition-colors ${
-                      configuration.useBackgroundMusic ? 'bg-blue-500' : 'bg-gray-600'
-                    }`}
+                    className="relative w-12 h-6 rounded-full transition-colors"
+                    style={{
+                      backgroundColor: configuration.useBackgroundMusic ? '#00D4E4' : 'rgba(255, 255, 255, 0.2)'
+                    }}
                   >
                     <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${
                       configuration.useBackgroundMusic ? 'translate-x-7' : 'translate-x-1'
@@ -266,11 +357,25 @@ export const PodcastGenerationView: React.FC<PodcastGenerationViewProps> = ({ up
                       <button
                         key={music.id}
                         onClick={() => handleBackgroundMusicSelect(music)}
-                        className={`p-3 rounded-xl border transition-all text-left ${
-                          configuration.backgroundMusic?.id === music.id
-                            ? 'bg-purple-500/20 border-purple-500 text-white'
-                            : 'bg-white/10 border-white/20 text-gray-300 hover:bg-white/15'
-                        }`}
+                        className="p-3 rounded-xl border transition-all text-left"
+                        style={{
+                          backgroundColor: configuration.backgroundMusic?.id === music.id ? 'rgba(0, 212, 228, 0.15)' : '#14191a',
+                          borderColor: configuration.backgroundMusic?.id === music.id ? '#00D4E4' : 'rgba(255, 255, 255, 0.1)',
+                          color: configuration.backgroundMusic?.id === music.id ? '#00D4E4' : 'rgba(255, 255, 255, 0.7)',
+                          boxShadow: configuration.backgroundMusic?.id === music.id ? '0 0 15px rgba(0, 212, 228, 0.2)' : 'none'
+                        }}
+                        onMouseEnter={(e) => {
+                          if (configuration.backgroundMusic?.id !== music.id) {
+                            e.currentTarget.style.backgroundColor = 'rgba(0, 212, 228, 0.05)';
+                            e.currentTarget.style.borderColor = 'rgba(0, 212, 228, 0.3)';
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          if (configuration.backgroundMusic?.id !== music.id) {
+                            e.currentTarget.style.backgroundColor = '#14191a';
+                            e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+                          }
+                        }}
                       >
                         <div className="flex items-center gap-2 mb-1">
                           <Music size={16} />
@@ -293,11 +398,25 @@ export const PodcastGenerationView: React.FC<PodcastGenerationViewProps> = ({ up
             whileTap={canGenerate ? { scale: 0.95 } : {}}
             onClick={handleGenerate}
             disabled={!canGenerate || isGenerating}
-            className={`px-8 py-4 rounded-2xl font-semibold text-lg flex items-center gap-3 transition-all ${
-              canGenerate && !isGenerating
-                ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white hover:from-blue-600 hover:to-purple-600 shadow-lg shadow-blue-500/25'
-                : 'bg-gray-600 text-gray-400 cursor-not-allowed'
-            }`}
+            className="px-8 py-4 rounded-2xl font-semibold text-lg flex items-center gap-3 transition-all"
+            style={{
+              backgroundColor: canGenerate && !isGenerating ? '#00D4E4' : 'rgba(255, 255, 255, 0.1)',
+              color: canGenerate && !isGenerating ? '#FFFFFF' : 'rgba(255, 255, 255, 0.4)',
+              cursor: canGenerate && !isGenerating ? 'pointer' : 'not-allowed',
+              boxShadow: canGenerate && !isGenerating ? '0 0 30px rgba(0, 212, 228, 0.4)' : 'none'
+            }}
+            onMouseEnter={(e) => {
+              if (canGenerate && !isGenerating) {
+                e.currentTarget.style.backgroundColor = '#00E8FA';
+                e.currentTarget.style.boxShadow = '0 0 40px rgba(0, 212, 228, 0.6)';
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (canGenerate && !isGenerating) {
+                e.currentTarget.style.backgroundColor = '#00D4E4';
+                e.currentTarget.style.boxShadow = '0 0 30px rgba(0, 212, 228, 0.4)';
+              }
+            }}
           >
             <Sparkles size={20} />
             {isGenerating ? 'Generating Podcast...' : 'Generate Podcast'}
@@ -317,9 +436,14 @@ export const PodcastGenerationView: React.FC<PodcastGenerationViewProps> = ({ up
                 <motion.div
                   animate={{ rotate: 360 }}
                   transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
-                  className="w-32 h-32 rounded-full border-4 border-blue-500/30 border-t-blue-500"
+                  className="w-32 h-32 rounded-full border-4"
+                  style={{
+                    borderColor: 'rgba(0, 212, 228, 0.3)',
+                    borderTopColor: '#00D4E4'
+                  }}
                 />
-                <div className="absolute inset-4 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
+                <div className="absolute inset-4 rounded-full flex items-center justify-center"
+                     style={{backgroundColor: '#00D4E4'}}>
                   <motion.div
                     animate={{ scale: [1, 1.2, 1] }}
                     transition={{ duration: 1.5, repeat: Infinity }}

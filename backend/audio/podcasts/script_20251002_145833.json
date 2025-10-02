@@ -1,0 +1,118 @@
+{
+  "title": "Unlocking AI Potential: A Conversation with Armand Junior Dongmo Notue",
+  "turns": [
+    {
+      "speaker": "host",
+      "text": "Welcome to the show, Armand! With your impressive background in machine learning, deep learning, and NLP, I'm excited to dive into your experiences. Can you walk me through what sparked your interest in AI and data science?",
+      "turn_number": 1,
+      "segment_type": "intro"
+    },
+    {
+      "speaker": "guest",
+      "text": "What's interesting is that my journey began with petroleum engineering, but as I delved deeper into data analysis, I realized the potential of AI in solving complex problems. That's when I decided to pursue my master's in data science.",
+      "turn_number": 2,
+      "segment_type": "dialogue"
+    },
+    {
+      "speaker": "host",
+      "text": "That's fascinating! Your experience at Outlier as an AI trainer must have been incredible. Can you tell me more about optimizing AI models and improving accuracy by 15%?",
+      "turn_number": 3,
+      "segment_type": "dialogue"
+    },
+    {
+      "speaker": "guest",
+      "text": "When I first started, I focused on real-time evaluation and feedback to enhance model performance. Through continuous iteration and troubleshooting, we were able to achieve significant improvements in accuracy.",
+      "turn_number": 4,
+      "segment_type": "dialogue"
+    },
+    {
+      "speaker": "host",
+      "text": "I'd love to hear more about your project on transformer-based NLP for sentiment analysis. What inspired you to use BERT and CNN-RNN layers?",
+      "turn_number": 5,
+      "segment_type": "dialogue"
+    },
+    {
+      "speaker": "guest",
+      "text": "The key moment was when I realized the power of fine-tuning pre-trained language models like BERT. By combining it with CNN-RNN layers, we achieved an impressive 88.3% accuracy in sentiment analysis.",
+      "turn_number": 6,
+      "segment_type": "dialogue"
+    },
+    {
+      "speaker": "host",
+      "text": "That's remarkable! Your work on the AI-driven job market insights platform also caught my attention. How did you leverage NLP models to extract key insights from Upwork job postings?",
+      "turn_number": 7,
+      "segment_type": "dialogue"
+    },
+    {
+      "speaker": "guest",
+      "text": "We implemented Hugging Face's spaCy library to extract relevant information and predict budgets, detect trends, and identify in-demand skills. The results were astounding, with a 20% improvement in hiring strategies.",
+      "turn_number": 8,
+      "segment_type": "dialogue"
+    },
+    {
+      "speaker": "host",
+      "text": "I'm curious about your approach to real-time fraud detection. Can you explain how you used autoencoders and isolation forests to improve detection accuracy?",
+      "turn_number": 9,
+      "segment_type": "dialogue"
+    },
+    {
+      "speaker": "guest",
+      "text": "By building an AI-powered fraud detection pipeline, we were able to increase detection accuracy by 35%, significantly reducing financial losses for our clients.",
+      "turn_number": 10,
+      "segment_type": "dialogue"
+    },
+    {
+      "speaker": "host",
+      "text": "Your work on time series forecasting for retail sales optimization is also impressive. How did you decide on using ARIMA and LSTM models?",
+      "turn_number": 11,
+      "segment_type": "dialogue"
+    },
+    {
+      "speaker": "guest",
+      "text": "We analyzed seasonal trends and identified the need for a hybrid approach. By combining ARIMA and LSTM models, we achieved a 20% increase in forecasting accuracy, reducing overstock and stockouts.",
+      "turn_number": 12,
+      "segment_type": "dialogue"
+    },
+    {
+      "speaker": "host",
+      "text": "I'd like to shift gears and discuss your certifications and professional affiliations. What drove you to pursue certifications from Harvard University, Google, and Deeplearning.ai?",
+      "turn_number": 13,
+      "segment_type": "dialogue"
+    },
+    {
+      "speaker": "guest",
+      "text": "As the field of AI continues to evolve, I believe it's essential to stay updated with the latest techniques and tools. These certifications have helped me expand my skill set and contribute to the AI community.",
+      "turn_number": 14,
+      "segment_type": "dialogue"
+    },
+    {
+      "speaker": "host",
+      "text": "Finally, looking back on your journey, what advice would you give to aspiring data scientists and AI enthusiasts?",
+      "turn_number": 15,
+      "segment_type": "dialogue"
+    },
+    {
+      "speaker": "guest",
+      "text": "What's crucial is to remain adaptable, continuously learn, and focus on solving real-world problems. Don't be afraid to explore new areas and collaborate with others – that's where the magic happens.",
+      "turn_number": 16,
+      "segment_type": "outro"
+    }
+  ],
+  "metadata": {
+    "model": "meta-llama/Llama-3-70b-chat-hf",
+    "total_turns": 16,
+    "total_tokens": 2560
+  },
+  "options": {
+    "length": "10min",
+    "host_voice": "host_male_friendly",
+    "guest_voice": "guest_female_expert",
+    "style": "interview",
+    "output_format": "mp3",
+    "add_pauses": true,
+    "normalize_audio": true,
+    "temperature": 0.8,
+    "output_dir": "backend/audio/podcasts",
+    "save_script": true
+  }
+}

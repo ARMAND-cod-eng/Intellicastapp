@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import HomeView from './HomeView';
+import HomePageView from './HomePageView';
 import NewView from './NewView';
 import DocumentUpload from '../upload/DocumentUpload';
 import { PodcastGenerationView } from '../../views/PodcastGenerationView';
@@ -32,15 +33,21 @@ const MainContent: React.FC<MainContentProps> = ({ currentView }) => {
   const renderView = () => {
     switch (currentView) {
       case 'home':
+        return <HomePageView />;
+      case 'search':
         return <HomeView currentView={currentView} onOpenUpload={() => setIsUploadModalOpen(true)} uploadedContent={uploadedContent} />;
       case 'new':
         return <NewView currentView={currentView} onOpenUpload={() => setIsUploadModalOpen(true)} uploadedContent={uploadedContent} uploadedFiles={uploadedFiles} />;
       case 'news':
         return <NewsAudioView />;
       case 'ai-demo':
-        return <EnhancedAIDemo />;
+        return <div className="w-full h-full" style={{ backgroundColor: '#14191a' }}></div>;
+      case 'library':
+        return <div className="w-full h-full" style={{ backgroundColor: '#14191a' }}></div>;
+      case 'discover':
+        return <div className="w-full h-full" style={{ backgroundColor: '#14191a' }}></div>;
       default:
-        return <HomeView currentView="home" onOpenUpload={() => setIsUploadModalOpen(true)} uploadedContent={uploadedContent} />;
+        return <HomePageView />;
     }
   };
 

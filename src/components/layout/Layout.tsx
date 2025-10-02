@@ -41,7 +41,7 @@ const Layout: React.FC = () => {
   return (
     <div className="h-screen flex relative"
          style={{
-           background: theme === 'professional-dark' ? '#202020' : theme === 'dark' ? '#0F0F23' : '#F8F9FA'
+           background: 'linear-gradient(to bottom, #000000, #14191a)'
          }}>
       {/* Sidebar */}
       <motion.div
@@ -93,7 +93,7 @@ const Layout: React.FC = () => {
       {/* Loading overlay for initial render */}
       <motion.div
         className="fixed inset-0 flex items-center justify-center z-50 pointer-events-none"
-        style={{backgroundColor: theme === 'professional-dark' ? '#202020' : theme === 'dark' ? '#0F0F23' : '#FBF5F0'}}
+        style={{backgroundColor: '#000000'}}
         initial={{ opacity: 1 }}
         animate={{ opacity: 0 }}
         transition={{ duration: 1, delay: 1 }}
@@ -105,12 +105,12 @@ const Layout: React.FC = () => {
           transition={{ duration: 0.6 }}
         >
           <motion.div
-            className="w-16 h-16 border-4 border-primary-500/30 border-t-primary-500 rounded-full mx-auto mb-4"
+            className="w-16 h-16 border-4 border-[#00D4E4]/30 border-t-[#00D4E4] rounded-full mx-auto mb-4"
             animate={{ rotate: 360 }}
             transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
           />
-          <h2 className="text-xl font-bold mb-2" style={{color: theme === 'professional-dark' ? '#E8EAED' : theme === 'dark' ? '#FFFFFF' : '#BFC8D8'}}>IntelliCast</h2>
-          <p className="text-sm" style={{color: theme === 'professional-dark' ? '#9AA0A6' : theme === 'dark' ? 'rgba(255,255,255,0.7)' : 'rgba(191,200,216,0.8)'}}>Initializing AI-powered audio experience...</p>
+          <h2 className="text-xl font-bold mb-2" style={{color: '#FFFFFF'}}>IntelliCast</h2>
+          <p className="text-sm" style={{color: 'rgba(255,255,255,0.7)'}}>Initializing AI-powered audio experience...</p>
         </motion.div>
       </motion.div>
     </div>

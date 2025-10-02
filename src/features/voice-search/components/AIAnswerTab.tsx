@@ -21,6 +21,7 @@ import {
 import { useTheme } from '../../../contexts/ThemeContext';
 import type { TavilySearchResponse } from '../services/tavily-client';
 import { createDetailedAnswerGenerator, extractCitations, buildCitationList } from '../services/together-detailed-answer';
+import { ENDPOINTS, getAudioUrl } from '../../../config/api';
 
 interface AIAnswerTabProps {
   searchData: TavilySearchResponse;
@@ -231,20 +232,17 @@ const AIAnswerTab: React.FC<AIAnswerTabProps> = ({
       <div
         className="relative overflow-hidden rounded-3xl backdrop-blur-xl border transition-all duration-700 hover:scale-[1.01]"
         style={{
-          background: theme === 'professional-dark'
-            ? 'linear-gradient(135deg, rgba(88, 28, 135, 0.1), rgba(59, 130, 246, 0.1), rgba(16, 185, 129, 0.05))'
-            : 'linear-gradient(135deg, rgba(139, 92, 246, 0.08), rgba(59, 130, 246, 0.08), rgba(16, 185, 129, 0.05))',
-          borderColor: theme === 'professional-dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
+          background: 'linear-gradient(135deg, rgba(0, 212, 228, 0.1), rgba(0, 232, 250, 0.08), rgba(20, 25, 26, 0.9))',
+          borderColor: 'rgba(0, 212, 228, 0.3)',
           backdropFilter: 'blur(20px)',
+          boxShadow: '0 0 30px rgba(0, 212, 228, 0.15)'
         }}
       >
         {/* Gradient Overlay */}
         <div
           className="absolute inset-0 opacity-50"
           style={{
-            background: theme === 'professional-dark'
-              ? 'radial-gradient(circle at top right, rgba(139, 92, 246, 0.1), transparent 70%)'
-              : 'radial-gradient(circle at top right, rgba(99, 102, 241, 0.08), transparent 70%)'
+            background: 'radial-gradient(circle at top right, rgba(0, 212, 228, 0.15), transparent 70%)'
           }}
         />
 
@@ -257,7 +255,8 @@ const AIAnswerTab: React.FC<AIAnswerTabProps> = ({
                 <div
                   className="p-3 rounded-2xl"
                   style={{
-                    background: 'linear-gradient(135deg, #8B5CF6, #06B6D4)',
+                    background: 'linear-gradient(135deg, #00D4E4, #00E8FA)',
+                    boxShadow: '0 0 20px rgba(0, 212, 228, 0.3)'
                   }}
                 >
                   <Sparkles className="w-6 h-6 text-white" />
@@ -265,11 +264,11 @@ const AIAnswerTab: React.FC<AIAnswerTabProps> = ({
                 <div>
                   <h2
                     className="text-2xl font-bold"
-                    style={{ color: theme === 'professional-dark' ? '#F3F4F6' : '#1F2937' }}
+                    style={{ color: '#FFFFFF' }}
                   >
                     AI Answer
                   </h2>
-                  <div className="flex items-center space-x-4 text-sm" style={{ color: theme === 'professional-dark' ? '#9CA3AF' : '#6B7280' }}>
+                  <div className="flex items-center space-x-4 text-sm" style={{ color: 'rgba(255, 255, 255, 0.7)' }}>
                     <span className="flex items-center space-x-1">
                       <Clock className="w-4 h-4" />
                       <span>{readTime} min read • {listenTime} min listen</span>
@@ -349,8 +348,9 @@ const AIAnswerTab: React.FC<AIAnswerTabProps> = ({
                     onClick={onSaveEpisode}
                     className="flex items-center space-x-2 px-6 py-3 rounded-xl font-medium transition-all duration-300 hover:scale-105 shadow-lg"
                     style={{
-                      background: 'linear-gradient(135deg, #8B5CF6, #06B6D4)',
+                      background: 'linear-gradient(135deg, #00D4E4, #00E8FA)',
                       color: 'white',
+                      boxShadow: '0 0 20px rgba(0, 212, 228, 0.3)'
                     }}
                   >
                     <Bookmark className="w-5 h-5" />
@@ -360,8 +360,17 @@ const AIAnswerTab: React.FC<AIAnswerTabProps> = ({
                   <button
                     className="flex items-center space-x-2 px-4 py-3 rounded-xl transition-all duration-300 hover:scale-105"
                     style={{
-                      backgroundColor: theme === 'professional-dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)',
-                      color: theme === 'professional-dark' ? '#E5E7EB' : '#374151',
+                      backgroundColor: '#14191a',
+                      color: 'rgba(255, 255, 255, 0.7)',
+                      border: '1px solid rgba(255, 255, 255, 0.1)'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.borderColor = '#00D4E4';
+                      e.currentTarget.style.color = '#00D4E4';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+                      e.currentTarget.style.color = 'rgba(255, 255, 255, 0.7)';
                     }}
                   >
                     <ExternalLink className="w-4 h-4" />
@@ -369,7 +378,7 @@ const AIAnswerTab: React.FC<AIAnswerTabProps> = ({
                   </button>
                 </div>
 
-                <div className="text-sm" style={{ color: theme === 'professional-dark' ? '#9CA3AF' : '#6B7280' }}>
+                <div className="text-sm" style={{ color: 'rgba(255, 255, 255, 0.5)' }}>
                   Generated from {searchData.results?.length || 0} sources
                 </div>
               </div>
@@ -506,7 +515,7 @@ const PodcastPlayer: React.FC<{
     setError(null);
 
     try {
-      const response = await fetch('http://localhost:3004/api/search/generate-audio', {
+      const response = await fetch(ENDPOINTS.SEARCH.GENERATE_AUDIO, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -528,7 +537,7 @@ const PodcastPlayer: React.FC<{
       const data = await response.json();
 
       if (data.success && data.audioUrl) {
-        const fullAudioUrl = `http://localhost:3004${data.audioUrl}`;
+        const fullAudioUrl = getAudioUrl(data.audioUrl, 'node');
         setAudioUrl(fullAudioUrl);
 
         // Create audio element
@@ -703,11 +712,12 @@ const CitationCards: React.FC<{
   theme: string;
 }> = ({ results, selectedCitation, theme }) => (
   <div className="space-y-4">
-    <h3 className="text-lg font-semibold flex items-center space-x-2" style={{ color: theme === 'professional-dark' ? '#F3F4F6' : '#1F2937' }}>
+    <h3 className="text-lg font-semibold flex items-center space-x-2" style={{ color: '#FFFFFF' }}>
       <span>Sources</span>
       <span className="text-sm font-normal px-2 py-1 rounded-full" style={{
-        backgroundColor: theme === 'professional-dark' ? 'rgba(139, 92, 246, 0.2)' : 'rgba(139, 92, 246, 0.1)',
-        color: '#8B5CF6'
+        backgroundColor: 'rgba(0, 212, 228, 0.2)',
+        color: '#00D4E4',
+        border: '1px solid rgba(0, 212, 228, 0.3)'
       }}>
         {results.length}
       </span>
@@ -723,16 +733,28 @@ const CitationCards: React.FC<{
             ${selectedCitation === index ? 'scale-[1.02]' : ''}
           `}
           style={{
-            backgroundColor: theme === 'professional-dark' ? 'rgba(55, 65, 81, 0.5)' : 'rgba(255, 255, 255, 0.8)',
-            borderColor: selectedCitation === index
-              ? '#8B5CF6'
-              : theme === 'professional-dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
+            backgroundColor: '#14191a',
+            borderColor: selectedCitation === index ? '#00D4E4' : 'rgba(255, 255, 255, 0.1)',
             backdropFilter: 'blur(10px)',
+            boxShadow: selectedCitation === index ? '0 0 20px rgba(0, 212, 228, 0.3)' : ''
           }}
           onClick={() => window.open(result.url, '_blank')}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.borderColor = '#00D4E4';
+            e.currentTarget.style.boxShadow = '0 0 15px rgba(0, 212, 228, 0.2)';
+          }}
+          onMouseLeave={(e) => {
+            if (selectedCitation !== index) {
+              e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+              e.currentTarget.style.boxShadow = '';
+            }
+          }}
         >
           {/* Citation Number */}
-          <div className="absolute -top-2 -left-2 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white bg-gradient-to-r from-purple-500 to-blue-500">
+          <div className="absolute -top-2 -left-2 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white bg-gradient-to-r from-cyan-500 to-cyan-400" style={{
+            background: 'linear-gradient(135deg, #00D4E4, #00E8FA)',
+            boxShadow: '0 0 10px rgba(0, 212, 228, 0.3)'
+          }}>
             {index + 1}
           </div>
 
@@ -741,38 +763,44 @@ const CitationCards: React.FC<{
             <div className="flex-shrink-0">
               <div
                 className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold text-white"
-                style={{ background: 'linear-gradient(135deg, #8B5CF6, #06B6D4)' }}
+                style={{
+                  background: 'linear-gradient(135deg, #00D4E4, #00E8FA)',
+                  boxShadow: '0 0 10px rgba(0, 212, 228, 0.2)'
+                }}
               >
                 {new URL(result.url).hostname.charAt(0).toUpperCase()}
               </div>
             </div>
 
             <div className="flex-1 min-w-0">
-              <h4 className="font-medium text-sm line-clamp-2 group-hover:text-purple-600 transition-colors" style={{
-                color: theme === 'professional-dark' ? '#F3F4F6' : '#1F2937'
+              <h4 className="font-medium text-sm line-clamp-2 transition-colors" style={{
+                color: '#FFFFFF'
               }}>
                 {result.title}
               </h4>
 
-              <p className="text-xs mt-1 opacity-75" style={{ color: theme === 'professional-dark' ? '#9CA3AF' : '#6B7280' }}>
+              <p className="text-xs mt-1 opacity-75" style={{ color: 'rgba(255, 255, 255, 0.6)' }}>
                 {new URL(result.url).hostname}
                 {result.published_date && ` • ${new Date(result.published_date).toLocaleDateString()}`}
               </p>
 
-              <p className="text-xs mt-2 line-clamp-2 opacity-60" style={{ color: theme === 'professional-dark' ? '#D1D5DB' : '#374151' }}>
+              <p className="text-xs mt-2 line-clamp-2 opacity-60" style={{ color: 'rgba(255, 255, 255, 0.5)' }}>
                 {result.content.substring(0, 120)}...
               </p>
 
               {result.score && (
                 <div className="flex items-center space-x-1 mt-2">
-                  <div className="text-xs opacity-75">Relevance:</div>
-                  <div className="w-12 h-1 bg-gray-200 rounded overflow-hidden">
+                  <div className="text-xs opacity-75" style={{ color: 'rgba(255, 255, 255, 0.7)' }}>Relevance:</div>
+                  <div className="w-12 h-1 bg-gray-700 rounded overflow-hidden">
                     <div
-                      className="h-full bg-gradient-to-r from-purple-500 to-blue-500 transition-all duration-500"
-                      style={{ width: `${result.score * 100}%` }}
+                      className="h-full transition-all duration-500"
+                      style={{
+                        width: `${result.score * 100}%`,
+                        background: 'linear-gradient(90deg, #00D4E4, #00E8FA)'
+                      }}
                     />
                   </div>
-                  <span className="text-xs font-medium" style={{ color: '#8B5CF6' }}>
+                  <span className="text-xs font-medium" style={{ color: '#00D4E4' }}>
                     {Math.round(result.score * 100)}%
                   </span>
                 </div>
@@ -794,8 +822,8 @@ const FollowUpQuestions: React.FC<{
   theme: string;
 }> = ({ questions, onQuestionClick, theme }) => (
   <div className="space-y-4 animate-fadeInUp" style={{ animationDelay: '0.5s' }}>
-    <h3 className="text-lg font-semibold flex items-center space-x-2" style={{ color: theme === 'professional-dark' ? '#F3F4F6' : '#1F2937' }}>
-      <Search className="w-5 h-5" />
+    <h3 className="text-lg font-semibold flex items-center space-x-2" style={{ color: '#FFFFFF' }}>
+      <Search className="w-5 h-5" style={{ color: '#00D4E4' }} />
       <span>Continue exploring</span>
     </h3>
 
@@ -806,9 +834,19 @@ const FollowUpQuestions: React.FC<{
           onClick={() => onQuestionClick?.(question)}
           className="group flex items-center space-x-2 px-4 py-3 rounded-2xl border transition-all duration-300 hover:scale-105 hover:shadow-lg"
           style={{
-            backgroundColor: theme === 'professional-dark' ? 'rgba(55, 65, 81, 0.5)' : 'rgba(255, 255, 255, 0.8)',
-            borderColor: theme === 'professional-dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
-            color: theme === 'professional-dark' ? '#E5E7EB' : '#374151',
+            backgroundColor: '#14191a',
+            borderColor: 'rgba(255, 255, 255, 0.1)',
+            color: 'rgba(255, 255, 255, 0.7)'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.borderColor = '#00D4E4';
+            e.currentTarget.style.color = '#00D4E4';
+            e.currentTarget.style.boxShadow = '0 0 15px rgba(0, 212, 228, 0.2)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+            e.currentTarget.style.color = 'rgba(255, 255, 255, 0.7)';
+            e.currentTarget.style.boxShadow = '';
           }}
         >
           <span className="text-sm font-medium">{question}</span>
