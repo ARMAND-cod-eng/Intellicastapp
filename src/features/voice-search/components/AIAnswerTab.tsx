@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { useTheme } from '../../../contexts/ThemeContext';
 import type { TavilySearchResponse } from '../services/tavily-client';
+import { createDetailedAnswerGenerator, extractCitations, buildCitationList } from '../services/together-detailed-answer';
 
 interface AIAnswerTabProps {
   searchData: TavilySearchResponse;
@@ -45,11 +46,52 @@ const AIAnswerTab: React.FC<AIAnswerTabProps> = ({
   const [showFollowUps, setShowFollowUps] = useState(false);
   const answerRef = useRef<HTMLDivElement>(null);
 
+  // State for detailed answer generation
+  const [detailedAnswer, setDetailedAnswer] = useState<string | null>(null);
+  const [detailedFollowUps, setDetailedFollowUps] = useState<string[]>([]);
+  const [isGeneratingDetailed, setIsGeneratingDetailed] = useState(false);
+  const [detailedWordCount, setDetailedWordCount] = useState(0);
+
   // Calculate estimated reading/listening time
-  const wordCount = searchData?.answer?.split(' ').length || 0;
+  const currentAnswer = mode === 'detailed' && detailedAnswer ? detailedAnswer : searchData?.answer || '';
+  const wordCount = currentAnswer.split(' ').length || 0;
   const readTime = Math.ceil(wordCount / 200); // 200 words per minute reading
   const listenTime = Math.ceil(wordCount / 150); // 150 words per minute speaking
   const estimatedDuration = listenTime * 60; // Convert to seconds
+
+  // Generate detailed answer using Together.ai when in detailed mode
+  useEffect(() => {
+    const generateDetailedAnswer = async () => {
+      if (mode === 'detailed' && !detailedAnswer && searchData?.results?.length > 0) {
+        setIsGeneratingDetailed(true);
+        try {
+          const generator = createDetailedAnswerGenerator();
+          const result = await generator.generateDetailedAnswer({
+            query: searchData.query,
+            searchResults: searchData.results,
+            queryIntent: searchData.metadata?.query_intent as any
+          });
+
+          setDetailedAnswer(result.answer);
+          setDetailedFollowUps(result.followUpQuestions);
+          setDetailedWordCount(result.wordCount);
+          console.log('✅ Generated detailed answer:', {
+            wordCount: result.wordCount,
+            citations: result.citationCount,
+            time: result.generationTime + 'ms'
+          });
+        } catch (error) {
+          console.error('Failed to generate detailed answer:', error);
+          // Fallback to Tavily answer
+          setDetailedAnswer(searchData.answer);
+        } finally {
+          setIsGeneratingDetailed(false);
+        }
+      }
+    };
+
+    generateDetailedAnswer();
+  }, [mode, searchData, detailedAnswer]);
 
   useEffect(() => {
     // Show follow-up questions after a delay
@@ -59,7 +101,7 @@ const AIAnswerTab: React.FC<AIAnswerTabProps> = ({
 
   const handleCopyText = async () => {
     try {
-      await navigator.clipboard.writeText(searchData.answer);
+      await navigator.clipboard.writeText(currentAnswer);
       setCopySuccess(true);
       setTimeout(() => setCopySuccess(false), 2000);
     } catch (error) {
@@ -71,7 +113,7 @@ const AIAnswerTab: React.FC<AIAnswerTabProps> = ({
     try {
       await navigator.share({
         title: `AI Answer for "${searchData.query}"`,
-        text: searchData.answer,
+        text: currentAnswer,
         url: window.location.href
       });
     } catch (error) {
@@ -254,6 +296,19 @@ const AIAnswerTab: React.FC<AIAnswerTabProps> = ({
           {/* Answer Content */}
           {isExpanded && (
             <div className="space-y-6">
+              {/* Loading state for detailed answer */}
+              {isGeneratingDetailed && mode === 'detailed' && (
+                <div className="flex items-center space-x-3 p-4 rounded-xl mb-4" style={{
+                  backgroundColor: theme === 'professional-dark' ? 'rgba(139, 92, 246, 0.1)' : 'rgba(139, 92, 246, 0.05)',
+                  border: '1px solid rgba(139, 92, 246, 0.2)'
+                }}>
+                  <div className="w-5 h-5 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
+                  <span className="text-sm font-medium" style={{ color: theme === 'professional-dark' ? '#E5E7EB' : '#374151' }}>
+                    Generating comprehensive answer with Together AI...
+                  </span>
+                </div>
+              )}
+
               <div
                 ref={answerRef}
                 className="answer-content"
@@ -262,9 +317,18 @@ const AIAnswerTab: React.FC<AIAnswerTabProps> = ({
                   fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
                 }}
                 dangerouslySetInnerHTML={{
-                  __html: formatAnswerWithCitations(searchData.answer)
+                  __html: formatAnswerWithCitations(currentAnswer)
                 }}
               />
+
+              {/* Word count indicator for detailed mode */}
+              {mode === 'detailed' && detailedWordCount > 0 && (
+                <div className="mt-4 text-xs flex items-center space-x-4" style={{ color: theme === 'professional-dark' ? '#9CA3AF' : '#6B7280' }}>
+                  <span>📝 {detailedWordCount} words</span>
+                  <span>•</span>
+                  <span>🤖 Generated with Together AI LLaMA-3.1-70B</span>
+                </div>
+              )}
 
               {/* Audio Player Section */}
               <PodcastPlayer
@@ -324,9 +388,11 @@ const AIAnswerTab: React.FC<AIAnswerTabProps> = ({
       )}
 
       {/* Follow-up Questions */}
-      {showFollowUps && searchData.follow_up_questions && searchData.follow_up_questions.length > 0 && (
+      {showFollowUps && (
         <FollowUpQuestions
-          questions={searchData.follow_up_questions}
+          questions={mode === 'detailed' && detailedFollowUps.length > 0
+            ? detailedFollowUps
+            : searchData.follow_up_questions || []}
           onQuestionClick={onFollowUpSearch}
           theme={theme}
         />
