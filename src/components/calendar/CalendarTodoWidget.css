@@ -1,0 +1,1260 @@
+/**
+ * IntelliCast AI - Calendar & Todo Widget Styles
+ * Modern glassmorphic design with gradient accents
+ */
+
+.calendar-todo-widget {
+  width: 280px;
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(20px);
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.calendar-todo-widget:hover {
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.15);
+  border-color: rgba(139, 92, 246, 0.3);
+}
+
+/* ============================================================================ */
+/* Header Section */
+/* ============================================================================ */
+
+.widget-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.header-icon {
+  width: 20px;
+  height: 20px;
+  color: #8B5CF6;
+}
+
+.header-title {
+  font-size: 16px;
+  font-weight: 700;
+  background: linear-gradient(135deg, #8B5CF6, #06B6D4);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.collapse-btn {
+  padding: 6px;
+  background: rgba(139, 92, 246, 0.1);
+  border: 1px solid rgba(139, 92, 246, 0.2);
+  border-radius: 8px;
+  color: #8B5CF6;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.collapse-btn:hover {
+  background: rgba(139, 92, 246, 0.2);
+  transform: scale(1.05);
+}
+
+/* ============================================================================ */
+/* Calendar Navigation */
+/* ============================================================================ */
+
+.calendar-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  padding: 8px;
+  background: rgba(139, 92, 246, 0.05);
+  border-radius: 10px;
+}
+
+.nav-btn {
+  padding: 6px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  color: #E5E7EB;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nav-btn:hover {
+  background: rgba(139, 92, 246, 0.2);
+  border-color: rgba(139, 92, 246, 0.4);
+  transform: translateY(-1px);
+}
+
+.current-month {
+  font-size: 13px;
+  font-weight: 600;
+  color: #F3F4F6;
+  letter-spacing: -0.01em;
+}
+
+/* ============================================================================ */
+/* Calendar Grid */
+/* ============================================================================ */
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+.day-header {
+  padding: 8px 0;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: #9CA3AF;
+  letter-spacing: 0.05em;
+}
+
+.calendar-day {
+  position: relative;
+  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  padding: 4px;
+}
+
+.calendar-day:hover {
+  background: rgba(139, 92, 246, 0.15);
+  border-color: rgba(139, 92, 246, 0.3);
+  transform: scale(1.05);
+}
+
+.calendar-day.other-month {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.calendar-day.other-month:hover {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.08);
+  transform: scale(1);
+}
+
+.calendar-day.is-today {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.3), rgba(6, 182, 212, 0.3));
+  border-color: rgba(139, 92, 246, 0.6);
+  box-shadow: 0 0 12px rgba(139, 92, 246, 0.4);
+}
+
+.calendar-day.is-selected {
+  background: linear-gradient(135deg, #8B5CF6, #06B6D4);
+  border-color: transparent;
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
+}
+
+.day-number {
+  font-size: 12px;
+  font-weight: 600;
+  color: #E5E7EB;
+  z-index: 1;
+}
+
+.calendar-day.is-selected .day-number {
+  color: #FFFFFF;
+  font-weight: 700;
+}
+
+.task-indicator {
+  position: absolute;
+  bottom: 3px;
+  width: 4px;
+  height: 4px;
+  background: linear-gradient(135deg, #8B5CF6, #06B6D4);
+  border-radius: 50%;
+  box-shadow: 0 0 6px rgba(139, 92, 246, 0.6);
+}
+
+.calendar-day.is-selected .task-indicator {
+  background: #FFFFFF;
+}
+
+/* ============================================================================ */
+/* Quick Stats */
+/* ============================================================================ */
+
+.quick-stats {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 12px;
+  padding: 10px;
+  background: rgba(139, 92, 246, 0.05);
+  border-radius: 10px;
+  border: 1px solid rgba(139, 92, 246, 0.1);
+}
+
+.stat-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 500;
+  color: #D1D5DB;
+  flex: 1;
+}
+
+.stat-item svg {
+  width: 14px;
+  height: 14px;
+  color: #8B5CF6;
+}
+
+/* ============================================================================ */
+/* Todo Toggle Button */
+/* ============================================================================ */
+
+.todo-toggle-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px;
+  background: rgba(139, 92, 246, 0.1);
+  border: 1px solid rgba(139, 92, 246, 0.2);
+  border-radius: 10px;
+  color: #E5E7EB;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-bottom: 12px;
+}
+
+.todo-toggle-btn:hover {
+  background: rgba(139, 92, 246, 0.2);
+  border-color: rgba(139, 92, 246, 0.4);
+  transform: translateY(-1px);
+}
+
+.todo-toggle-btn svg {
+  width: 16px;
+  height: 16px;
+  color: #8B5CF6;
+}
+
+.todo-toggle-btn span {
+  flex: 1;
+  text-align: left;
+  margin-left: 8px;
+}
+
+.task-count {
+  padding: 3px 8px;
+  background: linear-gradient(135deg, #8B5CF6, #06B6D4);
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #FFFFFF;
+  min-width: 20px;
+  text-align: center;
+}
+
+/* ============================================================================ */
+/* Todo List Container */
+/* ============================================================================ */
+
+.todo-list-container {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 12px;
+  padding: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  max-height: 300px;
+  overflow-y: auto;
+  animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.todo-list-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.todo-list-header h4 {
+  font-size: 14px;
+  font-weight: 700;
+  color: #F3F4F6;
+  margin: 0;
+}
+
+.add-task-btn {
+  padding: 6px;
+  background: linear-gradient(135deg, #8B5CF6, #06B6D4);
+  border: none;
+  border-radius: 6px;
+  color: #FFFFFF;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.add-task-btn:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
+}
+
+/* ============================================================================ */
+/* Add Task Input */
+/* ============================================================================ */
+
+.add-task-input {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 12px;
+  padding: 8px;
+  background: rgba(139, 92, 246, 0.05);
+  border-radius: 8px;
+  animation: slideDown 0.2s ease;
+}
+
+.add-task-input input {
+  flex: 1;
+  padding: 8px 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  color: #F3F4F6;
+  font-size: 12px;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.add-task-input input:focus {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(139, 92, 246, 0.5);
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+}
+
+.add-task-input input::placeholder {
+  color: #9CA3AF;
+}
+
+.submit-task-btn,
+.cancel-task-btn {
+  padding: 8px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.submit-task-btn {
+  background: linear-gradient(135deg, #10B981, #059669);
+  color: #FFFFFF;
+}
+
+.submit-task-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+}
+
+.cancel-task-btn {
+  background: rgba(239, 68, 68, 0.2);
+  color: #F87171;
+}
+
+.cancel-task-btn:hover {
+  background: rgba(239, 68, 68, 0.3);
+  transform: scale(1.05);
+}
+
+/* ============================================================================ */
+/* Task List */
+/* ============================================================================ */
+
+.tasks-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 16px;
+  color: #9CA3AF;
+  text-align: center;
+}
+
+.empty-icon {
+  width: 32px;
+  height: 32px;
+  margin-bottom: 8px;
+  opacity: 0.5;
+}
+
+.empty-state p {
+  font-size: 12px;
+  margin: 0;
+}
+
+.task-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.task-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(139, 92, 246, 0.3);
+}
+
+.task-item.completed {
+  opacity: 0.6;
+}
+
+.task-item.completed .task-title {
+  text-decoration: line-through;
+  color: #9CA3AF;
+}
+
+.task-checkbox {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(139, 92, 246, 0.5);
+  border-radius: 4px;
+  background: rgba(139, 92, 246, 0.1);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: transparent;
+}
+
+.task-checkbox:hover {
+  background: rgba(139, 92, 246, 0.2);
+  border-color: rgba(139, 92, 246, 0.8);
+  transform: scale(1.1);
+}
+
+.task-item.completed .task-checkbox {
+  background: linear-gradient(135deg, #8B5CF6, #06B6D4);
+  border-color: transparent;
+  color: #FFFFFF;
+}
+
+.task-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.task-title {
+  font-size: 12px;
+  font-weight: 500;
+  color: #E5E7EB;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.task-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.status-selector,
+.priority-selector {
+  font-size: 10px;
+  padding: 3px 6px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.3);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-weight: 500;
+  outline: none;
+}
+
+.status-selector {
+  min-width: 90px;
+}
+
+.priority-selector {
+  min-width: 70px;
+}
+
+.status-selector:hover,
+.priority-selector:hover {
+  background: rgba(0, 0, 0, 0.5);
+  border-color: rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
+}
+
+.status-selector:focus,
+.priority-selector:focus {
+  border-color: rgba(139, 92, 246, 0.5);
+  box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.1);
+}
+
+.status-selector option,
+.priority-selector option {
+  background: #1F2937;
+  color: #E5E7EB;
+  padding: 8px;
+}
+
+.time-tracking-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  margin-top: 2px;
+}
+
+.tracked-time {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  color: #60A5FA;
+  font-weight: 500;
+}
+
+.tracking-timer {
+  display: flex;
+  align-items: center;
+  padding: 2px 6px;
+  background: rgba(96, 165, 250, 0.2);
+  border-radius: 4px;
+  color: #60A5FA;
+  font-weight: 600;
+  font-family: 'Courier New', monospace;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+.ai-badge {
+  flex-shrink: 0;
+  color: #FBBF24;
+  filter: drop-shadow(0 0 6px rgba(251, 191, 36, 0.6));
+}
+
+.time-track-btn {
+  flex-shrink: 0;
+  padding: 4px;
+  background: rgba(96, 165, 250, 0.1);
+  border: 1px solid rgba(96, 165, 250, 0.2);
+  border-radius: 4px;
+  color: #60A5FA;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  opacity: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.task-item:hover .time-track-btn {
+  opacity: 1;
+}
+
+.time-track-btn:hover {
+  background: rgba(96, 165, 250, 0.2);
+  transform: scale(1.1);
+}
+
+.time-track-btn.tracking {
+  opacity: 1;
+  background: rgba(239, 68, 68, 0.2);
+  border-color: rgba(239, 68, 68, 0.3);
+  color: #F87171;
+  animation: trackingPulse 2s ease-in-out infinite;
+}
+
+@keyframes trackingPulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgba(239, 68, 68, 0);
+  }
+}
+
+.priority-indicator {
+  flex-shrink: 0;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  box-shadow: 0 0 8px currentColor;
+}
+
+.add-subtask-btn {
+  flex-shrink: 0;
+  padding: 4px;
+  background: rgba(139, 92, 246, 0.1);
+  border: 1px solid rgba(139, 92, 246, 0.2);
+  border-radius: 4px;
+  color: #A78BFA;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  opacity: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.task-item:hover .add-subtask-btn {
+  opacity: 1;
+}
+
+.add-subtask-btn:hover {
+  background: rgba(139, 92, 246, 0.2);
+  transform: scale(1.1);
+}
+
+.expand-btn {
+  flex-shrink: 0;
+  padding: 4px 6px;
+  background: rgba(96, 165, 250, 0.1);
+  border: 1px solid rgba(96, 165, 250, 0.2);
+  border-radius: 4px;
+  color: #60A5FA;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.expand-btn:hover {
+  background: rgba(96, 165, 250, 0.2);
+}
+
+.subtask-count {
+  min-width: 12px;
+  text-align: center;
+}
+
+.delete-task-btn {
+  flex-shrink: 0;
+  padding: 4px;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: 4px;
+  color: #F87171;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  opacity: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.task-item:hover .delete-task-btn {
+  opacity: 1;
+}
+
+.delete-task-btn:hover {
+  background: rgba(239, 68, 68, 0.2);
+  transform: scale(1.1);
+}
+
+/* Subtask input */
+.add-subtask-input {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 8px 8px 32px;
+  margin-top: 8px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 6px;
+  animation: fadeIn 0.2s ease;
+}
+
+.add-subtask-input input {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  padding: 6px 10px;
+  color: #E5E7EB;
+  font-size: 11px;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.add-subtask-input input:focus {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(139, 92, 246, 0.5);
+}
+
+.submit-subtask-btn,
+.cancel-subtask-btn {
+  padding: 6px;
+  border-radius: 4px;
+  border: 1px solid;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.submit-subtask-btn {
+  background: rgba(34, 197, 94, 0.2);
+  border-color: rgba(34, 197, 94, 0.3);
+  color: #34D399;
+}
+
+.submit-subtask-btn:hover {
+  background: rgba(34, 197, 94, 0.3);
+  transform: scale(1.05);
+}
+
+.cancel-subtask-btn {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: rgba(239, 68, 68, 0.3);
+  color: #F87171;
+}
+
+.cancel-subtask-btn:hover {
+  background: rgba(239, 68, 68, 0.3);
+  transform: scale(1.05);
+}
+
+/* Subtasks list */
+.subtasks-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 8px;
+  padding-left: 24px;
+  border-left: 2px solid rgba(139, 92, 246, 0.3);
+  animation: fadeIn 0.3s ease;
+}
+
+.subtask-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  background: rgba(139, 92, 246, 0.05);
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.subtask-item:hover {
+  background: rgba(139, 92, 246, 0.1);
+}
+
+.subtask-item.completed {
+  opacity: 0.5;
+}
+
+.subtask-item.completed .subtask-title {
+  text-decoration: line-through;
+  color: #9CA3AF;
+}
+
+.subtask-title {
+  flex: 1;
+  font-size: 11px;
+  color: #E5E7EB;
+}
+
+.delete-subtask-btn {
+  flex-shrink: 0;
+  padding: 3px;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: 3px;
+  color: #F87171;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  opacity: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.subtask-item:hover .delete-subtask-btn {
+  opacity: 1;
+}
+
+.delete-subtask-btn:hover {
+  background: rgba(239, 68, 68, 0.2);
+  transform: scale(1.1);
+}
+
+/* ============================================================================ */
+/* Scrollbar Customization */
+/* ============================================================================ */
+
+.todo-list-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.todo-list-container::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 10px;
+}
+
+.todo-list-container::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #8B5CF6, #06B6D4);
+  border-radius: 10px;
+}
+
+.todo-list-container::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #7C3AED, #0891B2);
+}
+
+/* ============================================================================ */
+/* Theme Variations */
+/* ============================================================================ */
+
+/* Light theme overrides */
+[data-theme="light"] .calendar-todo-widget {
+  background: rgba(255, 255, 255, 0.95);
+  border-color: rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="light"] .calendar-day {
+  color: #374151;
+  background: rgba(0, 0, 0, 0.02);
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="light"] .task-title,
+[data-theme="light"] .current-month {
+  color: #1F2937;
+}
+
+/* Professional dark theme refinements */
+[data-theme="professional-dark"] .calendar-todo-widget {
+  background: #2A2A2A;
+  border-color: #3A3A3A;
+}
+
+[data-theme="professional-dark"] .calendar-day {
+  background: #202020;
+  border-color: #3A3A3A;
+}
+
+/* ============================================================================ */
+/* Tab Component (Task/Event/Appointment) */
+/* ============================================================================ */
+
+.item-type-tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 12px;
+  padding: 4px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.tab-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: #9CA3AF;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+}
+
+.tab-btn:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: #D1D5DB;
+}
+
+.tab-btn.active {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.3), rgba(6, 182, 212, 0.3));
+  border-color: rgba(139, 92, 246, 0.5);
+  color: #FFFFFF;
+  box-shadow: 0 2px 8px rgba(139, 92, 246, 0.3);
+}
+
+.tab-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+.new-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  padding: 2px 4px;
+  background: linear-gradient(135deg, #F59E0B, #EF4444);
+  border-radius: 4px;
+  font-size: 8px;
+  font-weight: 700;
+  color: #FFFFFF;
+  text-transform: uppercase;
+  box-shadow: 0 2px 4px rgba(239, 68, 68, 0.4);
+}
+
+/* ============================================================================ */
+/* Voice Input Button */
+/* ============================================================================ */
+
+.voice-input-btn {
+  flex-shrink: 0;
+  padding: 8px;
+  background: rgba(139, 92, 246, 0.1);
+  border: 1px solid rgba(139, 92, 246, 0.2);
+  border-radius: 6px;
+  color: #8B5CF6;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.voice-input-btn:hover {
+  background: rgba(139, 92, 246, 0.2);
+  border-color: rgba(139, 92, 246, 0.4);
+  transform: scale(1.05);
+}
+
+.voice-input-btn.listening {
+  background: linear-gradient(135deg, #EF4444, #DC2626);
+  border-color: transparent;
+  color: #FFFFFF;
+  animation: listeningPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes listeningPulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(239, 68, 68, 0);
+  }
+}
+
+/* ============================================================================ */
+/* Event & Appointment Forms */
+/* ============================================================================ */
+
+.add-event-form,
+.add-appointment-form {
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  margin-bottom: 12px;
+  animation: slideDown 0.3s ease;
+  overflow: hidden;
+}
+
+.form-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  background: rgba(139, 92, 246, 0.1);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.form-header h5 {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: #F3F4F6;
+}
+
+.close-form-btn {
+  padding: 4px;
+  background: rgba(239, 68, 68, 0.2);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 4px;
+  color: #F87171;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.close-form-btn:hover {
+  background: rgba(239, 68, 68, 0.3);
+  transform: scale(1.1);
+}
+
+.form-body {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.form-group {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.form-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.form-row span {
+  color: #9CA3AF;
+  font-size: 12px;
+}
+
+.form-input,
+.form-select,
+.form-textarea {
+  flex: 1;
+  padding: 8px 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  color: #F3F4F6;
+  font-size: 12px;
+  outline: none;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.form-input:focus,
+.form-select:focus,
+.form-textarea:focus {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(139, 92, 246, 0.5);
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+}
+
+.form-input::placeholder,
+.form-textarea::placeholder {
+  color: #9CA3AF;
+}
+
+.form-select {
+  cursor: pointer;
+}
+
+.form-select option {
+  background: #1F2937;
+  color: #E5E7EB;
+  padding: 8px;
+}
+
+.form-textarea {
+  resize: vertical;
+  min-height: 60px;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  background: rgba(139, 92, 246, 0.05);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: 100%;
+}
+
+.checkbox-label:hover {
+  background: rgba(139, 92, 246, 0.1);
+}
+
+.checkbox-label input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: #8B5CF6;
+}
+
+.checkbox-label span {
+  flex: 1;
+  font-size: 12px;
+  color: #E5E7EB;
+}
+
+.checkbox-label svg {
+  width: 16px;
+  height: 16px;
+  color: #8B5CF6;
+}
+
+.appointment-info-banner {
+  padding: 10px;
+  background: rgba(6, 182, 212, 0.1);
+  border: 1px solid rgba(6, 182, 212, 0.3);
+  border-radius: 8px;
+  margin-bottom: 8px;
+}
+
+.appointment-info-banner p {
+  margin: 0 0 8px 0;
+  font-size: 11px;
+  color: #D1D5DB;
+  line-height: 1.5;
+}
+
+.learn-more-btn {
+  padding: 4px 10px;
+  background: rgba(6, 182, 212, 0.2);
+  border: 1px solid rgba(6, 182, 212, 0.4);
+  border-radius: 4px;
+  color: #06B6D4;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.learn-more-btn:hover {
+  background: rgba(6, 182, 212, 0.3);
+  transform: translateY(-1px);
+}
+
+.form-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.btn-save,
+.btn-setup-schedule {
+  flex: 1;
+  padding: 10px 16px;
+  background: linear-gradient(135deg, #8B5CF6, #06B6D4);
+  border: none;
+  border-radius: 8px;
+  color: #FFFFFF;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+}
+
+.btn-save:hover,
+.btn-setup-schedule:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(139, 92, 246, 0.4);
+}
+
+.btn-save:active,
+.btn-setup-schedule:active {
+  transform: translateY(0);
+}
+
+/* ============================================================================ */
+/* Responsive Adjustments */
+/* ============================================================================ */
+
+@media (max-width: 768px) {
+  .calendar-todo-widget {
+    width: 100%;
+  }
+
+  .calendar-grid {
+    gap: 4px;
+  }
+
+  .day-number {
+    font-size: 11px;
+  }
+
+  .tab-btn span {
+    display: none;
+  }
+
+  .tab-btn {
+    padding: 8px;
+  }
+}

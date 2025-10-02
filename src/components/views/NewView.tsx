@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { FileText, Link, Sparkles, Check } from 'lucide-react';
+import { FileText, Link, Sparkles, Check, Zap } from 'lucide-react';
 import type { DocumentContent } from '../../types/document';
 import { useTheme } from '../../contexts/ThemeContext';
 import SingleVoiceNarrationPanel from '../narration/SingleVoiceNarrationPanel';
 import MultiVoiceConversationPanel from '../narration/MultiVoiceConversationPanel';
+import AIContentDiscoveryPanel from '../narration/AIContentDiscoveryPanel';
 import ModernAudioPlayer from '../audio/ModernAudioPlayer';
 
 interface NewViewProps {
@@ -19,6 +20,8 @@ const NewView: React.FC<NewViewProps> = ({ currentView, onOpenUpload, uploadedCo
   const [isSingleVoicePanelMinimized, setIsSingleVoicePanelMinimized] = useState(false);
   const [isMultiVoicePanelOpen, setIsMultiVoicePanelOpen] = useState(false);
   const [isMultiVoicePanelMinimized, setIsMultiVoicePanelMinimized] = useState(false);
+  const [isAIDiscoveryPanelOpen, setIsAIDiscoveryPanelOpen] = useState(false);
+  const [isAIDiscoveryPanelMinimized, setIsAIDiscoveryPanelMinimized] = useState(false);
   const [persistentAudioData, setPersistentAudioData] = useState<{
     id: string;
     audioUrl: string;
@@ -83,11 +86,15 @@ const NewView: React.FC<NewViewProps> = ({ currentView, onOpenUpload, uploadedCo
       },
     },
     {
-      title: 'Expert Panel Discussion',
-      description: 'Professional analysis with multiple expert perspectives',
-      features: ['In-depth analysis', 'Opposing viewpoints', 'Expert insights'],
+      title: 'AI Content Discovery',
+      description: 'Let AI find trending topics and create podcasts automatically',
+      features: ['Trending topics discovery', 'Auto content generation', 'Smart scheduling'],
       recommended: false,
-      action: () => {},
+      isAiPowered: true,
+      action: () => {
+        setIsAIDiscoveryPanelOpen(true);
+        setIsAIDiscoveryPanelMinimized(false);
+      },
     },
   ];
 
@@ -164,7 +171,13 @@ const NewView: React.FC<NewViewProps> = ({ currentView, onOpenUpload, uploadedCo
               key={index}
               onClick={style.action}
               className={`relative p-8 rounded-2xl border-2 cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-lg ${
-                style.recommended
+                style.isAiPowered
+                  ? (theme === 'professional-dark'
+                      ? 'hover:shadow-lg border-gradient'
+                      : theme === 'dark'
+                      ? 'border-transparent bg-gradient-to-br from-purple-500/20 via-pink-500/20 to-orange-500/20 hover:shadow-purple-500/30'
+                      : 'border-transparent bg-gradient-to-br from-purple-100 via-pink-100 to-orange-100 hover:shadow-purple-500/20')
+                  : style.recommended
                   ? (theme === 'professional-dark'
                       ? 'hover:shadow-lg'
                       : theme === 'dark'
@@ -177,8 +190,9 @@ const NewView: React.FC<NewViewProps> = ({ currentView, onOpenUpload, uploadedCo
                       : 'border-gray-200 bg-gradient-to-br from-white to-gray-50 hover:border-blue-300 hover:shadow-blue-500/10')
               }`}
               style={{
-                backgroundColor: theme === 'professional-dark' ? (style.recommended ? 'rgba(32, 178, 170, 0.1)' : '#252526') : theme === 'light' && !style.recommended ? '#FFFFFF' : undefined,
-                borderColor: theme === 'professional-dark' ? (style.recommended ? '#2563EB' : '#3C4043') : theme === 'light' ? (style.recommended ? '#60A5FA' : 'rgba(156,163,175,0.2)') : (style.recommended ? '#6366F1' : undefined)
+                backgroundColor: theme === 'professional-dark' ? (style.isAiPowered ? 'rgba(147, 51, 234, 0.1)' : style.recommended ? 'rgba(32, 178, 170, 0.1)' : '#252526') : theme === 'light' && !style.recommended && !style.isAiPowered ? '#FFFFFF' : undefined,
+                borderColor: theme === 'professional-dark' ? (style.isAiPowered ? '#9333EA' : style.recommended ? '#2563EB' : '#3C4043') : theme === 'light' ? (style.isAiPowered ? '#9333EA' : style.recommended ? '#60A5FA' : 'rgba(156,163,175,0.2)') : (style.isAiPowered ? '#A855F7' : style.recommended ? '#6366F1' : undefined),
+                backgroundImage: style.isAiPowered && theme === 'professional-dark' ? 'linear-gradient(135deg, rgba(147, 51, 234, 0.15), rgba(236, 72, 153, 0.15))' : undefined
               }}
             >
               {style.recommended && (
@@ -188,9 +202,17 @@ const NewView: React.FC<NewViewProps> = ({ currentView, onOpenUpload, uploadedCo
                   </span>
                 </div>
               )}
+              {style.isAiPowered && (
+                <div className="absolute -top-4 left-6">
+                  <span className="px-4 py-2 text-sm font-bold rounded-full text-white shadow-lg animate-pulse" style={{background: 'linear-gradient(135deg, #9333EA, #EC4899)'}}>
+                    ✨ AI Powered
+                  </span>
+                </div>
+              )}
               
               <div className="space-y-4">
-                <h3 className="text-xl font-bold" style={{color: theme === 'professional-dark' ? '#E8EAED' : theme === 'dark' ? '#FFFFFF' : '#1F2937'}}>
+                <h3 className="text-xl font-bold flex items-center gap-2" style={{color: theme === 'professional-dark' ? '#E8EAED' : theme === 'dark' ? '#FFFFFF' : '#1F2937'}}>
+                  {style.isAiPowered && <Zap className="w-5 h-5 text-purple-500" />}
                   {style.title}
                 </h3>
                 <p className="text-sm leading-relaxed" style={{color: theme === 'professional-dark' ? '#9AA0A6' : theme === 'dark' ? '#C7D2FE' : '#4B5563'}}>
@@ -201,7 +223,7 @@ const NewView: React.FC<NewViewProps> = ({ currentView, onOpenUpload, uploadedCo
                   <ul className="space-y-3">
                     {style.features.map((feature, featureIndex) => (
                       <li key={featureIndex} className="flex items-center text-sm" style={{color: theme === 'professional-dark' ? '#80868B' : theme === 'dark' ? '#9CA3AF' : '#6B7280'}}>
-                        <div className="w-2 h-2 rounded-full mr-3 flex-shrink-0" style={{backgroundColor: theme === 'light' ? '#60A5FA' : theme === 'professional-dark' ? '#2563EB' : '#6366F1'}}></div>
+                        <div className="w-2 h-2 rounded-full mr-3 flex-shrink-0" style={{backgroundColor: style.isAiPowered ? '#A855F7' : theme === 'light' ? '#60A5FA' : theme === 'professional-dark' ? '#2563EB' : '#6366F1'}}></div>
                         {feature}
                       </li>
                     ))}
@@ -323,6 +345,19 @@ const NewView: React.FC<NewViewProps> = ({ currentView, onOpenUpload, uploadedCo
         }}
         uploadedContent={uploadedContent}
         uploadedFiles={uploadedFiles}
+      />
+
+      {/* AI Content Discovery Panel */}
+      <AIContentDiscoveryPanel
+        isOpen={isAIDiscoveryPanelOpen}
+        isMinimized={isAIDiscoveryPanelMinimized}
+        onClose={() => {
+          setIsAIDiscoveryPanelOpen(false);
+          setIsAIDiscoveryPanelMinimized(false);
+        }}
+        onMinimize={() => {
+          setIsAIDiscoveryPanelMinimized(!isAIDiscoveryPanelMinimized);
+        }}
       />
     </>
   );
