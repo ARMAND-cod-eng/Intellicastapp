@@ -1,0 +1,758 @@
+[
+  {
+    "timestamp": "2025-10-02T17:57:13.743604",
+    "service": "tts",
+    "model": "cartesia-sonic",
+    "tokens_used": 0,
+    "characters_generated": 281,
+    "estimated_cost": 0.007025,
+    "actual_cost": 0.007025,
+    "operation": "podcast_tts_generation",
+    "metadata": {
+      "voice_id": "694f9389-aac1-45b6-b726-9d9369183238",
+      "voice_name": "Confident Male"
+    }
+  },
+  {
+    "timestamp": "2025-10-02T17:57:18.440406",
+    "service": "tts",
+    "model": "cartesia-sonic",
+    "tokens_used": 0,
+    "characters_generated": 329,
+    "estimated_cost": 0.008225,
+    "actual_cost": 0.008225,
+    "operation": "podcast_tts_generation",
+    "metadata": {
+      "voice_id": "a0e99841-438c-4a64-b679-ae501e7d6091",
+      "voice_name": "Professional Female"
+    }
+  },
+  {
+    "timestamp": "2025-10-02T17:57:21.122068",
+    "service": "tts",
+    "model": "cartesia-sonic",
+    "tokens_used": 0,
+    "characters_generated": 109,
+    "estimated_cost": 0.002725,
+    "actual_cost": 0.002725,
+    "operation": "podcast_tts_generation",
+    "metadata": {
+      "voice_id": "2ee87190-8f84-4925-97da-e52547f9462c",
+      "voice_name": "Warm Female Co-Host"
+    }
+  },
+  {
+    "timestamp": "2025-10-02T17:57:24.696689",
+    "service": "tts",
+    "model": "cartesia-sonic",
+    "tokens_used": 0,
+    "characters_generated": 248,
+    "estimated_cost": 0.006200000000000001,
+    "actual_cost": 0.006200000000000001,
+    "operation": "podcast_tts_generation",
+    "metadata": {
+      "voice_id": "a0e99841-438c-4a64-b679-ae501e7d6091",
+      "voice_name": "Professional Female"
+    }
+  },
+  {
+    "timestamp": "2025-10-02T17:57:28.748714",
+    "service": "tts",
+    "model": "cartesia-sonic",
+    "tokens_used": 0,
+    "characters_generated": 214,
+    "estimated_cost": 0.005350000000000001,
+    "actual_cost": 0.005350000000000001,
+    "operation": "podcast_tts_generation",
+    "metadata": {
+      "voice_id": "694f9389-aac1-45b6-b726-9d9369183238",
+      "voice_name": "Confident Male"
+    }
+  },
+  {
+    "timestamp": "2025-10-02T17:57:32.560396",
+    "service": "tts",
+    "model": "cartesia-sonic",
+    "tokens_used": 0,
+    "characters_generated": 236,
+    "estimated_cost": 0.0059,
+    "actual_cost": 0.0059,
+    "operation": "podcast_tts_generation",
+    "metadata": {
+      "voice_id": "a0e99841-438c-4a64-b679-ae501e7d6091",
+      "voice_name": "Professional Female"
+    }
+  },
+  {
+    "timestamp": "2025-10-02T17:57:35.400218",
+    "service": "tts",
+    "model": "cartesia-sonic",
+    "tokens_used": 0,
+    "characters_generated": 104,
+    "estimated_cost": 0.0026000000000000003,
+    "actual_cost": 0.0026000000000000003,
+    "operation": "podcast_tts_generation",
+    "metadata": {
+      "voice_id": "2ee87190-8f84-4925-97da-e52547f9462c",
+      "voice_name": "Warm Female Co-Host"
+    }
+  },
+  {
+    "timestamp": "2025-10-02T17:57:38.736629",
+    "service": "tts",
+    "model": "cartesia-sonic",
+    "tokens_used": 0,
+    "characters_generated": 223,
+    "estimated_cost": 0.005575,
+    "actual_cost": 0.005575,
+    "operation": "podcast_tts_generation",
+    "metadata": {
+      "voice_id": "a0e99841-438c-4a64-b679-ae501e7d6091",
+      "voice_name": "Professional Female"
+    }
+  },
+  {
+    "timestamp": "2025-10-02T17:57:41.655777",
+    "service": "tts",
+    "model": "cartesia-sonic",
+    "tokens_used": 0,
+    "characters_generated": 135,
+    "estimated_cost": 0.003375,
+    "actual_cost": 0.003375,
+    "operation": "podcast_tts_generation",
+    "metadata": {
+      "voice_id": "694f9389-aac1-45b6-b726-9d9369183238",
+      "voice_name": "Confident Male"
+    }
+  },
+  {
+    "timestamp": "2025-10-02T17:57:45.943464",
+    "service": "tts",
+    "model": "cartesia-sonic",
+    "tokens_used": 0,
+    "characters_generated": 269,
+    "estimated_cost": 0.006725,
+    "actual_cost": 0.006725,
+    "operation": "podcast_tts_generation",
+    "metadata": {
+      "voice_id": "a0e99841-438c-4a64-b679-ae501e7d6091",
+      "voice_name": "Professional Female"
+    }
+  },
+  {
+    "timestamp": "2025-10-02T17:57:48.673350",
+    "service": "tts",
+    "model": "cartesia-sonic",
+    "tokens_used": 0,
+    "characters_generated": 143,
+    "estimated_cost": 0.003575,
+    "actual_cost": 0.003575,
+    "operation": "podcast_tts_generation",
+    "metadata": {
+      "voice_id": "2ee87190-8f84-4925-97da-e52547f9462c",
+      "voice_name": "Warm Female Co-Host"
+    }
+  },
+  {
+    "timestamp": "2025-10-02T17:57:52.036042",
+    "service": "tts",
+    "model": "cartesia-sonic",
+    "tokens_used": 0,
+    "characters_generated": 239,
+    "estimated_cost": 0.005975,
+    "actual_cost": 0.005975,
+    "operation": "podcast_tts_generation",
+    "metadata": {
+      "voice_id": "a0e99841-438c-4a64-b679-ae501e7d6091",
+      "voice_name": "Professional Female"
+    }
+  },
+  {
+    "timestamp": "2025-10-02T17:57:53.856228",
+    "service": "tts",
+    "model": "cartesia-sonic",
+    "tokens_used": 0,
+    "characters_generated": 94,
+    "estimated_cost": 0.00235,
+    "actual_cost": 0.00235,
+    "operation": "podcast_tts_generation",
+    "metadata": {
+      "voice_id": "694f9389-aac1-45b6-b726-9d9369183238",
+      "voice_name": "Confident Male"
+    }
+  },
+  {
+    "timestamp": "2025-10-02T17:57:58.020486",
+    "service": "tts",
+    "model": "cartesia-sonic",
+    "tokens_used": 0,
+    "characters_generated": 262,
+    "estimated_cost": 0.00655,
+    "actual_cost": 0.00655,
+    "operation": "podcast_tts_generation",
+    "metadata": {
+      "voice_id": "a0e99841-438c-4a64-b679-ae501e7d6091",
+      "voice_name": "Professional Female"
+    }
+  },
+  {
+    "timestamp": "2025-10-02T17:58:01.254027",
+    "service": "tts",
+    "model": "cartesia-sonic",
+    "tokens_used": 0,
+    "characters_generated": 124,
+    "estimated_cost": 0.0031000000000000003,
+    "actual_cost": 0.0031000000000000003,
+    "operation": "podcast_tts_generation",
+    "metadata": {
+      "voice_id": "2ee87190-8f84-4925-97da-e52547f9462c",
+      "voice_name": "Warm Female Co-Host"
+    }
+  },
+  {
+    "timestamp": "2025-10-02T17:58:03.959964",
+    "service": "tts",
+    "model": "cartesia-sonic",
+    "tokens_used": 0,
+    "characters_generated": 188,
+    "estimated_cost": 0.0047,
+    "actual_cost": 0.0047,
+    "operation": "podcast_tts_generation",
+    "metadata": {
+      "voice_id": "a0e99841-438c-4a64-b679-ae501e7d6091",
+      "voice_name": "Professional Female"
+    }
+  },
+  {
+    "timestamp": "2025-10-02T17:58:06.761411",
+    "service": "tts",
+    "model": "cartesia-sonic",
+    "tokens_used": 0,
+    "characters_generated": 146,
+    "estimated_cost": 0.00365,
+    "actual_cost": 0.00365,
+    "operation": "podcast_tts_generation",
+    "metadata": {
+      "voice_id": "694f9389-aac1-45b6-b726-9d9369183238",
+      "voice_name": "Confident Male"
+    }
+  },
+  {
+    "timestamp": "2025-10-02T17:58:08.426337",
+    "service": "tts",
+    "model": "cartesia-sonic",
+    "tokens_used": 0,
+    "characters_generated": 91,
+    "estimated_cost": 0.002275,
+    "actual_cost": 0.002275,
+    "operation": "podcast_tts_generation",
+    "metadata": {
+      "voice_id": "a0e99841-438c-4a64-b679-ae501e7d6091",
+      "voice_name": "Professional Female"
+    }
+  },
+  {
+    "timestamp": "2025-10-02T18:02:43.564602",
+    "service": "tts",
+    "model": "cartesia-sonic",
+    "tokens_used": 0,
+    "characters_generated": 172,
+    "estimated_cost": 0.0043,
+    "actual_cost": 0.0043,
+    "operation": "podcast_tts_generation",
+    "metadata": {
+      "voice_id": "694f9389-aac1-45b6-b726-9d9369183238",
+      "voice_name": "Confident Male"
+    }
+  },
+  {
+    "timestamp": "2025-10-02T18:02:47.881637",
+    "service": "tts",
+    "model": "cartesia-sonic",
+    "tokens_used": 0,
+    "characters_generated": 293,
+    "estimated_cost": 0.007325000000000001,
+    "actual_cost": 0.007325000000000001,
+    "operation": "podcast_tts_generation",
+    "metadata": {
+      "voice_id": "a0e99841-438c-4a64-b679-ae501e7d6091",
+      "voice_name": "Professional Female"
+    }
+  },
+  {
+    "timestamp": "2025-10-02T18:02:51.394130",
+    "service": "tts",
+    "model": "cartesia-sonic",
+    "tokens_used": 0,
+    "characters_generated": 167,
+    "estimated_cost": 0.004175,
+    "actual_cost": 0.004175,
+    "operation": "podcast_tts_generation",
+    "metadata": {
+      "voice_id": "694f9389-aac1-45b6-b726-9d9369183238",
+      "voice_name": "Confident Male"
+    }
+  },
+  {
+    "timestamp": "2025-10-02T18:02:55.331480",
+    "service": "tts",
+    "model": "cartesia-sonic",
+    "tokens_used": 0,
+    "characters_generated": 281,
+    "estimated_cost": 0.007025,
+    "actual_cost": 0.007025,
+    "operation": "podcast_tts_generation",
+    "metadata": {
+      "voice_id": "a0e99841-438c-4a64-b679-ae501e7d6091",
+      "voice_name": "Professional Female"
+    }
+  },
+  {
+    "timestamp": "2025-10-02T18:02:59.112472",
+    "service": "tts",
+    "model": "cartesia-sonic",
+    "tokens_used": 0,
+    "characters_generated": 206,
+    "estimated_cost": 0.00515,
+    "actual_cost": 0.00515,
+    "operation": "podcast_tts_generation",
+    "metadata": {
+      "voice_id": "694f9389-aac1-45b6-b726-9d9369183238",
+      "voice_name": "Confident Male"
+    }
+  },
+  {
+    "timestamp": "2025-10-02T18:03:04.029227",
+    "service": "tts",
+    "model": "cartesia-sonic",
+    "tokens_used": 0,
+    "characters_generated": 261,
+    "estimated_cost": 0.006525,
+    "actual_cost": 0.006525,
+    "operation": "podcast_tts_generation",
+    "metadata": {
+      "voice_id": "a0e99841-438c-4a64-b679-ae501e7d6091",
+      "voice_name": "Professional Female"
+    }
+  },
+  {
+    "timestamp": "2025-10-02T18:03:07.677934",
+    "service": "tts",
+    "model": "cartesia-sonic",
+    "tokens_used": 0,
+    "characters_generated": 188,
+    "estimated_cost": 0.0047,
+    "actual_cost": 0.0047,
+    "operation": "podcast_tts_generation",
+    "metadata": {
+      "voice_id": "694f9389-aac1-45b6-b726-9d9369183238",
+      "voice_name": "Confident Male"
+    }
+  },
+  {
+    "timestamp": "2025-10-02T18:03:11.573981",
+    "service": "tts",
+    "model": "cartesia-sonic",
+    "tokens_used": 0,
+    "characters_generated": 249,
+    "estimated_cost": 0.0062250000000000005,
+    "actual_cost": 0.0062250000000000005,
+    "operation": "podcast_tts_generation",
+    "metadata": {
+      "voice_id": "a0e99841-438c-4a64-b679-ae501e7d6091",
+      "voice_name": "Professional Female"
+    }
+  },
+  {
+    "timestamp": "2025-10-02T18:03:14.583228",
+    "service": "tts",
+    "model": "cartesia-sonic",
+    "tokens_used": 0,
+    "characters_generated": 161,
+    "estimated_cost": 0.004025,
+    "actual_cost": 0.004025,
+    "operation": "podcast_tts_generation",
+    "metadata": {
+      "voice_id": "694f9389-aac1-45b6-b726-9d9369183238",
+      "voice_name": "Confident Male"
+    }
+  },
+  {
+    "timestamp": "2025-10-02T18:03:18.704961",
+    "service": "tts",
+    "model": "cartesia-sonic",
+    "tokens_used": 0,
+    "characters_generated": 265,
+    "estimated_cost": 0.006625000000000001,
+    "actual_cost": 0.006625000000000001,
+    "operation": "podcast_tts_generation",
+    "metadata": {
+      "voice_id": "a0e99841-438c-4a64-b679-ae501e7d6091",
+      "voice_name": "Professional Female"
+    }
+  },
+  {
+    "timestamp": "2025-10-02T18:03:21.567271",
+    "service": "tts",
+    "model": "cartesia-sonic",
+    "tokens_used": 0,
+    "characters_generated": 163,
+    "estimated_cost": 0.0040750000000000005,
+    "actual_cost": 0.0040750000000000005,
+    "operation": "podcast_tts_generation",
+    "metadata": {
+      "voice_id": "694f9389-aac1-45b6-b726-9d9369183238",
+      "voice_name": "Confident Male"
+    }
+  },
+  {
+    "timestamp": "2025-10-02T18:03:25.928238",
+    "service": "tts",
+    "model": "cartesia-sonic",
+    "tokens_used": 0,
+    "characters_generated": 286,
+    "estimated_cost": 0.00715,
+    "actual_cost": 0.00715,
+    "operation": "podcast_tts_generation",
+    "metadata": {
+      "voice_id": "a0e99841-438c-4a64-b679-ae501e7d6091",
+      "voice_name": "Professional Female"
+    }
+  },
+  {
+    "timestamp": "2025-10-02T18:03:28.643832",
+    "service": "tts",
+    "model": "cartesia-sonic",
+    "tokens_used": 0,
+    "characters_generated": 145,
+    "estimated_cost": 0.003625,
+    "actual_cost": 0.003625,
+    "operation": "podcast_tts_generation",
+    "metadata": {
+      "voice_id": "694f9389-aac1-45b6-b726-9d9369183238",
+      "voice_name": "Confident Male"
+    }
+  },
+  {
+    "timestamp": "2025-10-02T18:03:32.825502",
+    "service": "tts",
+    "model": "cartesia-sonic",
+    "tokens_used": 0,
+    "characters_generated": 270,
+    "estimated_cost": 0.00675,
+    "actual_cost": 0.00675,
+    "operation": "podcast_tts_generation",
+    "metadata": {
+      "voice_id": "a0e99841-438c-4a64-b679-ae501e7d6091",
+      "voice_name": "Professional Female"
+    }
+  },
+  {
+    "timestamp": "2025-10-02T18:03:36.999509",
+    "service": "tts",
+    "model": "cartesia-sonic",
+    "tokens_used": 0,
+    "characters_generated": 251,
+    "estimated_cost": 0.006275,
+    "actual_cost": 0.006275,
+    "operation": "podcast_tts_generation",
+    "metadata": {
+      "voice_id": "694f9389-aac1-45b6-b726-9d9369183238",
+      "voice_name": "Confident Male"
+    }
+  },
+  {
+    "timestamp": "2025-10-02T18:03:40.658262",
+    "service": "tts",
+    "model": "cartesia-sonic",
+    "tokens_used": 0,
+    "characters_generated": 269,
+    "estimated_cost": 0.006725,
+    "actual_cost": 0.006725,
+    "operation": "podcast_tts_generation",
+    "metadata": {
+      "voice_id": "a0e99841-438c-4a64-b679-ae501e7d6091",
+      "voice_name": "Professional Female"
+    }
+  },
+  {
+    "timestamp": "2025-10-02T18:16:18.120196",
+    "service": "tts",
+    "model": "cartesia-sonic",
+    "tokens_used": 0,
+    "characters_generated": 242,
+    "estimated_cost": 0.006050000000000001,
+    "actual_cost": 0.006050000000000001,
+    "operation": "podcast_tts_generation",
+    "metadata": {
+      "voice_id": "694f9389-aac1-45b6-b726-9d9369183238",
+      "voice_name": "Confident Male"
+    }
+  },
+  {
+    "timestamp": "2025-10-02T18:16:22.741888",
+    "service": "tts",
+    "model": "cartesia-sonic",
+    "tokens_used": 0,
+    "characters_generated": 338,
+    "estimated_cost": 0.008450000000000001,
+    "actual_cost": 0.008450000000000001,
+    "operation": "podcast_tts_generation",
+    "metadata": {
+      "voice_id": "a0e99841-438c-4a64-b679-ae501e7d6091",
+      "voice_name": "Professional Female"
+    }
+  },
+  {
+    "timestamp": "2025-10-02T18:16:24.959371",
+    "service": "tts",
+    "model": "cartesia-sonic",
+    "tokens_used": 0,
+    "characters_generated": 73,
+    "estimated_cost": 0.001825,
+    "actual_cost": 0.001825,
+    "operation": "podcast_tts_generation",
+    "metadata": {
+      "voice_id": "2ee87190-8f84-4925-97da-e52547f9462c",
+      "voice_name": "Warm Female Co-Host"
+    }
+  },
+  {
+    "timestamp": "2025-10-02T18:16:29.488518",
+    "service": "tts",
+    "model": "cartesia-sonic",
+    "tokens_used": 0,
+    "characters_generated": 315,
+    "estimated_cost": 0.007875,
+    "actual_cost": 0.007875,
+    "operation": "podcast_tts_generation",
+    "metadata": {
+      "voice_id": "a0e99841-438c-4a64-b679-ae501e7d6091",
+      "voice_name": "Professional Female"
+    }
+  },
+  {
+    "timestamp": "2025-10-02T18:16:32.517376",
+    "service": "tts",
+    "model": "cartesia-sonic",
+    "tokens_used": 0,
+    "characters_generated": 155,
+    "estimated_cost": 0.003875,
+    "actual_cost": 0.003875,
+    "operation": "podcast_tts_generation",
+    "metadata": {
+      "voice_id": "694f9389-aac1-45b6-b726-9d9369183238",
+      "voice_name": "Confident Male"
+    }
+  },
+  {
+    "timestamp": "2025-10-02T18:16:36.357821",
+    "service": "tts",
+    "model": "cartesia-sonic",
+    "tokens_used": 0,
+    "characters_generated": 222,
+    "estimated_cost": 0.00555,
+    "actual_cost": 0.00555,
+    "operation": "podcast_tts_generation",
+    "metadata": {
+      "voice_id": "a0e99841-438c-4a64-b679-ae501e7d6091",
+      "voice_name": "Professional Female"
+    }
+  },
+  {
+    "timestamp": "2025-10-02T18:16:38.662612",
+    "service": "tts",
+    "model": "cartesia-sonic",
+    "tokens_used": 0,
+    "characters_generated": 83,
+    "estimated_cost": 0.002075,
+    "actual_cost": 0.002075,
+    "operation": "podcast_tts_generation",
+    "metadata": {
+      "voice_id": "2ee87190-8f84-4925-97da-e52547f9462c",
+      "voice_name": "Warm Female Co-Host"
+    }
+  },
+  {
+    "timestamp": "2025-10-02T18:16:41.870000",
+    "service": "tts",
+    "model": "cartesia-sonic",
+    "tokens_used": 0,
+    "characters_generated": 226,
+    "estimated_cost": 0.0056500000000000005,
+    "actual_cost": 0.0056500000000000005,
+    "operation": "podcast_tts_generation",
+    "metadata": {
+      "voice_id": "a0e99841-438c-4a64-b679-ae501e7d6091",
+      "voice_name": "Professional Female"
+    }
+  },
+  {
+    "timestamp": "2025-10-02T18:16:44.578104",
+    "service": "tts",
+    "model": "cartesia-sonic",
+    "tokens_used": 0,
+    "characters_generated": 131,
+    "estimated_cost": 0.003275,
+    "actual_cost": 0.003275,
+    "operation": "podcast_tts_generation",
+    "metadata": {
+      "voice_id": "694f9389-aac1-45b6-b726-9d9369183238",
+      "voice_name": "Confident Male"
+    }
+  },
+  {
+    "timestamp": "2025-10-02T18:16:48.748530",
+    "service": "tts",
+    "model": "cartesia-sonic",
+    "tokens_used": 0,
+    "characters_generated": 278,
+    "estimated_cost": 0.0069500000000000004,
+    "actual_cost": 0.0069500000000000004,
+    "operation": "podcast_tts_generation",
+    "metadata": {
+      "voice_id": "a0e99841-438c-4a64-b679-ae501e7d6091",
+      "voice_name": "Professional Female"
+    }
+  },
+  {
+    "timestamp": "2025-10-02T18:16:51.354059",
+    "service": "tts",
+    "model": "cartesia-sonic",
+    "tokens_used": 0,
+    "characters_generated": 82,
+    "estimated_cost": 0.00205,
+    "actual_cost": 0.00205,
+    "operation": "podcast_tts_generation",
+    "metadata": {
+      "voice_id": "2ee87190-8f84-4925-97da-e52547f9462c",
+      "voice_name": "Warm Female Co-Host"
+    }
+  },
+  {
+    "timestamp": "2025-10-02T18:16:54.611692",
+    "service": "tts",
+    "model": "cartesia-sonic",
+    "tokens_used": 0,
+    "characters_generated": 231,
+    "estimated_cost": 0.005775000000000001,
+    "actual_cost": 0.005775000000000001,
+    "operation": "podcast_tts_generation",
+    "metadata": {
+      "voice_id": "a0e99841-438c-4a64-b679-ae501e7d6091",
+      "voice_name": "Professional Female"
+    }
+  },
+  {
+    "timestamp": "2025-10-02T18:16:57.097411",
+    "service": "tts",
+    "model": "cartesia-sonic",
+    "tokens_used": 0,
+    "characters_generated": 151,
+    "estimated_cost": 0.003775,
+    "actual_cost": 0.003775,
+    "operation": "podcast_tts_generation",
+    "metadata": {
+      "voice_id": "694f9389-aac1-45b6-b726-9d9369183238",
+      "voice_name": "Confident Male"
+    }
+  },
+  {
+    "timestamp": "2025-10-02T18:17:00.568500",
+    "service": "tts",
+    "model": "cartesia-sonic",
+    "tokens_used": 0,
+    "characters_generated": 254,
+    "estimated_cost": 0.006350000000000001,
+    "actual_cost": 0.006350000000000001,
+    "operation": "podcast_tts_generation",
+    "metadata": {
+      "voice_id": "a0e99841-438c-4a64-b679-ae501e7d6091",
+      "voice_name": "Professional Female"
+    }
+  },
+  {
+    "timestamp": "2025-10-02T18:17:02.582000",
+    "service": "tts",
+    "model": "cartesia-sonic",
+    "tokens_used": 0,
+    "characters_generated": 77,
+    "estimated_cost": 0.001925,
+    "actual_cost": 0.001925,
+    "operation": "podcast_tts_generation",
+    "metadata": {
+      "voice_id": "2ee87190-8f84-4925-97da-e52547f9462c",
+      "voice_name": "Warm Female Co-Host"
+    }
+  },
+  {
+    "timestamp": "2025-10-02T18:17:05.647587",
+    "service": "tts",
+    "model": "cartesia-sonic",
+    "tokens_used": 0,
+    "characters_generated": 209,
+    "estimated_cost": 0.0052250000000000005,
+    "actual_cost": 0.0052250000000000005,
+    "operation": "podcast_tts_generation",
+    "metadata": {
+      "voice_id": "a0e99841-438c-4a64-b679-ae501e7d6091",
+      "voice_name": "Professional Female"
+    }
+  },
+  {
+    "timestamp": "2025-10-02T18:17:07.480458",
+    "service": "tts",
+    "model": "cartesia-sonic",
+    "tokens_used": 0,
+    "characters_generated": 86,
+    "estimated_cost": 0.00215,
+    "actual_cost": 0.00215,
+    "operation": "podcast_tts_generation",
+    "metadata": {
+      "voice_id": "694f9389-aac1-45b6-b726-9d9369183238",
+      "voice_name": "Confident Male"
+    }
+  },
+  {
+    "timestamp": "2025-10-02T18:17:12.058800",
+    "service": "tts",
+    "model": "cartesia-sonic",
+    "tokens_used": 0,
+    "characters_generated": 284,
+    "estimated_cost": 0.0071,
+    "actual_cost": 0.0071,
+    "operation": "podcast_tts_generation",
+    "metadata": {
+      "voice_id": "a0e99841-438c-4a64-b679-ae501e7d6091",
+      "voice_name": "Professional Female"
+    }
+  },
+  {
+    "timestamp": "2025-10-02T18:17:14.425761",
+    "service": "tts",
+    "model": "cartesia-sonic",
+    "tokens_used": 0,
+    "characters_generated": 71,
+    "estimated_cost": 0.001775,
+    "actual_cost": 0.001775,
+    "operation": "podcast_tts_generation",
+    "metadata": {
+      "voice_id": "2ee87190-8f84-4925-97da-e52547f9462c",
+      "voice_name": "Warm Female Co-Host"
+    }
+  },
+  {
+    "timestamp": "2025-10-02T18:17:16.283085",
+    "service": "tts",
+    "model": "cartesia-sonic",
+    "tokens_used": 0,
+    "characters_generated": 118,
+    "estimated_cost": 0.00295,
+    "actual_cost": 0.00295,
+    "operation": "podcast_tts_generation",
+    "metadata": {
+      "voice_id": "a0e99841-438c-4a64-b679-ae501e7d6091",
+      "voice_name": "Professional Female"
+    }
+  }
+]

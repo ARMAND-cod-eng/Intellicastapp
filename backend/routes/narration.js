@@ -6,6 +6,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import DocumentProcessor from '../services/DocumentProcessor.js';
 import OllamaService from '../services/OllamaService.js';
+import TogetherNarrationService from '../services/TogetherNarrationService.js';
 import TTSWrapper from '../services/TTSWrapper.js';
 
 const router = express.Router();
@@ -21,9 +22,9 @@ const storage = multer.diskStorage({
   }
 });
 
-const upload = multer({ 
+const upload = multer({
   storage,
-  limits: { 
+  limits: {
     fileSize: 50 * 1024 * 1024 // 50MB limit
   },
   fileFilter: (req, file, cb) => {
@@ -33,7 +34,7 @@ const upload = multer({
       'text/plain',
       'text/markdown'
     ];
-    
+
     if (allowedMimes.includes(file.mimetype)) {
       cb(null, true);
     } else {
@@ -44,7 +45,8 @@ const upload = multer({
 
 // Initialize services
 const docProcessor = new DocumentProcessor();
-const ollamaService = new OllamaService();
+const ollamaService = new OllamaService(); // Keep for fallback if needed
+const togetherService = new TogetherNarrationService(); // NEW: Together AI for high-quality narration
 const ttsService = new TTSWrapper();
 
 /**
@@ -122,21 +124,23 @@ router.post('/generate', async (req, res) => {
       return res.status(400).json({ error: 'Document content is required' });
     }
 
-    console.log(`🎙️  Generating ${narrationType} narration...`);
+    console.log(`🎙️  Generating ${narrationType} narration with Together AI...`);
 
     // Analyze the content
     const analysis = await docProcessor.analyzeContent(documentContent);
-    
-    // Generate narration script
-    const scriptResult = await ollamaService.generateNarrationScript(
-      documentContent, 
-      narrationType, 
+
+    // Generate narration script using Together AI (replaces Qwen/Ollama)
+    const scriptResult = await togetherService.generateNarrationScript(
+      documentContent,
+      narrationType,
       analysis
     );
 
     if (!scriptResult.success) {
       throw new Error('Failed to generate narration script');
     }
+
+    console.log(`✅ Together AI generated script: ${scriptResult.response.length} chars`);
 
     // Generate unique ID for narration
     const narrationId = uuidv4();
@@ -287,9 +291,10 @@ router.post('/ask-question', async (req, res) => {
       });
     }
 
-    console.log(`❓ Answering question: ${question.slice(0, 50)}...`);
+    console.log(`❓ Answering question with Together AI: ${question.slice(0, 50)}...`);
 
-    const answerResult = await ollamaService.answerQuestion(documentContent, question);
+    // Use Together AI for question answering (replaces Qwen/Ollama)
+    const answerResult = await togetherService.answerQuestion(documentContent, question);
 
     if (!answerResult.success) {
       throw new Error('Failed to generate answer');
@@ -319,20 +324,22 @@ router.post('/ask-question', async (req, res) => {
  */
 router.get('/health', async (req, res) => {
   try {
-    const ollamaHealth = await ollamaService.healthCheck();
-    
+    // Use Together AI service for health check
+    const togetherHealth = await togetherService.healthCheck();
+
     res.json({
       status: 'ok',
       services: {
-        ollama: ollamaHealth,
-        documentProcessor: { status: 'healthy' }
+        togetherAI: togetherHealth,
+        documentProcessor: { status: 'healthy' },
+        tts: { status: 'healthy' }
       },
       timestamp: new Date().toISOString()
     });
 
   } catch (error) {
     console.error('❌ Health check error:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       status: 'error',
       error: error.message,
       timestamp: new Date().toISOString()

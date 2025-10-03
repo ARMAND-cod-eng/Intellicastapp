@@ -1,0 +1,132 @@
+{
+  "title": "Unlocking AI Potential with Armand Junior Dongmo Notue",
+  "turns": [
+    {
+      "speaker": "host",
+      "text": "Welcome to today's episode! Our guest is Armand Junior Dongmo Notue, a seasoned Data Scientist with expertise in Machine Learning, Deep Learning, and AI. Armand, thanks for joining us! Can you walk us through your journey into the world of data science? What sparked your interest?",
+      "turn_number": 1,
+      "segment_type": "intro"
+    },
+    {
+      "speaker": "guest",
+      "text": "Thank you for having me! Growing up, I was always fascinated by how machines could learn from data. During my undergraduate studies in Petroleum Engineering, I realized the potential of machine learning in optimizing oil reservoir management. This curiosity led me to pursue a Master's in Data Science at Grand Canyon University.",
+      "turn_number": 2,
+      "segment_type": "dialogue"
+    },
+    {
+      "speaker": "cohost",
+      "text": "That's fascinating! How did your background in petroleum engineering influence your approach to data science?",
+      "turn_number": 3,
+      "segment_type": "dialogue"
+    },
+    {
+      "speaker": "guest",
+      "text": "My engineering background helped me understand the importance of problem-solving and critical thinking. In data science, I apply similar principles to tackle complex problems, like optimizing predictive models and developing real-time AI solutions.",
+      "turn_number": 4,
+      "segment_type": "dialogue"
+    },
+    {
+      "speaker": "host",
+      "text": "Let's dive deeper into your experience as a Data Scientist. You've worked on several projects, including a transformer-based NLP model for sentiment analysis. Can you tell us more about this project and its impact?",
+      "turn_number": 5,
+      "segment_type": "dialogue"
+    },
+    {
+      "speaker": "guest",
+      "text": "Yes! In this project, I fine-tuned a BERT model with CNN and RNN layers to analyze customer sentiments from social media. We achieved an impressive 88.3% accuracy, which significantly improved sentiment monitoring for business insights.",
+      "turn_number": 6,
+      "segment_type": "dialogue"
+    },
+    {
+      "speaker": "cohost",
+      "text": "Wow, that's impressive! How do you stay updated with the latest advancements in AI and machine learning?",
+      "turn_number": 7,
+      "segment_type": "dialogue"
+    },
+    {
+      "speaker": "guest",
+      "text": "I regularly participate in online courses and certifications, such as those from Harvard University, Google, and deeplearning.ai. Staying current with industry developments helps me innovate and deliver impactful solutions.",
+      "turn_number": 8,
+      "segment_type": "dialogue"
+    },
+    {
+      "speaker": "host",
+      "text": "You've also developed an AI-driven job market insights platform. What inspired this project, and what kind of insights did you uncover?",
+      "turn_number": 9,
+      "segment_type": "dialogue"
+    },
+    {
+      "speaker": "guest",
+      "text": "I analyzed 50,000 Upwork job postings to categorize descriptions, predict budgets, detect trends, and identify in-demand skills. The platform delivered actionable insights that improved hiring strategies by 20%. It was exciting to see how AI could drive business value.",
+      "turn_number": 10,
+      "segment_type": "dialogue"
+    },
+    {
+      "speaker": "cohost",
+      "text": "That's really cool! How do you balance the technical aspects of data science with the need to communicate insights effectively to stakeholders?",
+      "turn_number": 11,
+      "segment_type": "dialogue"
+    },
+    {
+      "speaker": "guest",
+      "text": "As a data scientist, it's crucial to be able to explain complex concepts simply. I strive to develop strong soft skills, like communication and adaptability, to ensure that my work resonates with both technical and non-technical audiences.",
+      "turn_number": 12,
+      "segment_type": "dialogue"
+    },
+    {
+      "speaker": "host",
+      "text": "Armand, can you share any advice for aspiring data scientists looking to break into the field?",
+      "turn_number": 13,
+      "segment_type": "dialogue"
+    },
+    {
+      "speaker": "guest",
+      "text": "Absolutely! My advice would be to stay curious, keep learning, and practice consistently. Focus on building a strong foundation in statistics, machine learning, and programming. Networking with professionals in the field can also open doors to new opportunities.",
+      "turn_number": 14,
+      "segment_type": "dialogue"
+    },
+    {
+      "speaker": "cohost",
+      "text": "Great advice! Before we wrap up, can you give us a sneak peek into any upcoming projects or areas you're excited to explore?",
+      "turn_number": 15,
+      "segment_type": "dialogue"
+    },
+    {
+      "speaker": "guest",
+      "text": "I'm currently exploring the applications of reinforcement learning in real-world scenarios. I believe it has tremendous potential to drive innovation and improve decision-making processes.",
+      "turn_number": 16,
+      "segment_type": "dialogue"
+    },
+    {
+      "speaker": "host",
+      "text": "Well, we look forward to seeing what you'll achieve next! Thanks again, Armand, for sharing your insights and experiences with our audience today.",
+      "turn_number": 17,
+      "segment_type": "dialogue"
+    },
+    {
+      "speaker": "guest",
+      "text": "Thank you! It's been a pleasure discussing my passion for data science and AI with you all.",
+      "turn_number": 18,
+      "segment_type": "outro"
+    }
+  ],
+  "metadata": {
+    "model": "meta-llama/Llama-3-70b-chat-hf",
+    "total_turns": 18,
+    "total_tokens": 2728
+  },
+  "options": {
+    "length": "15min",
+    "host_voice": "host_male_friendly",
+    "guest_voice": "guest_female_expert",
+    "cohost_voice": "cohost_female_warm",
+    "style": "interview",
+    "num_speakers": 3,
+    "output_format": "mp3",
+    "add_pauses": true,
+    "normalize_audio": true,
+    "temperature": 0.8,
+    "output_dir": "backend/audio/podcasts",
+    "save_script": true
+  }
+}

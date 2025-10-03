@@ -1,0 +1,144 @@
+{
+  "title": "Unlocking AI Potential with Armand Junior Dongmo Notue",
+  "turns": [
+    {
+      "speaker": "host",
+      "text": "Welcome to today's episode! Our guest is Armand Junior Dongmo Notue, a seasoned Data Scientist with expertise in Machine Learning, Deep Learning, and NLP. Armand, thanks for joining us! Can you tell us about your journey into the world of AI?",
+      "turn_number": 1,
+      "segment_type": "intro"
+    },
+    {
+      "speaker": "guest",
+      "text": "Thank you for having me! I've always been fascinated by the potential of AI to drive business impact. My background in petroleum engineering and reservoir management gave me a strong foundation in statistical analysis and data mining. I then pursued my Master's in Data Science, which opened doors to the world of machine learning and AI.",
+      "turn_number": 2,
+      "segment_type": "dialogue"
+    },
+    {
+      "speaker": "cohost",
+      "text": "That's fascinating! What drew you to transformers and MLOps specifically?",
+      "turn_number": 3,
+      "segment_type": "dialogue"
+    },
+    {
+      "speaker": "guest",
+      "text": "I realized that transformers have revolutionized the field of NLP, enabling us to tackle complex tasks like sentiment analysis and text summarization. MLOps, on the other hand, allows us to deploy and manage these models efficiently. It's essential to bridge the gap between development and production environments.",
+      "turn_number": 4,
+      "segment_type": "dialogue"
+    },
+    {
+      "speaker": "host",
+      "text": "Walk us through one of your projects that showcases your expertise in transformers and MLOps. Maybe the transformer-based NLP model for sentiment analysis?",
+      "turn_number": 5,
+      "segment_type": "dialogue"
+    },
+    {
+      "speaker": "guest",
+      "text": "We built a system to analyze customer sentiments from social media using a fine-tuned BERT model with CNN and RNN layers. We achieved 88.3% accuracy, which significantly improved sentiment monitoring for business insights.",
+      "turn_number": 6,
+      "segment_type": "dialogue"
+    },
+    {
+      "speaker": "cohost",
+      "text": "Wow, that's impressive! How did you handle the preprocessing step for this project?",
+      "turn_number": 7,
+      "segment_type": "dialogue"
+    },
+    {
+      "speaker": "guest",
+      "text": "We used advanced NLP techniques like tokenization, lemmatization, and part-of-speech tagging to prepare the data for the BERT model. This ensured that our model could capture nuanced sentiments and emotions from the text data.",
+      "turn_number": 8,
+      "segment_type": "dialogue"
+    },
+    {
+      "speaker": "host",
+      "text": "Let's talk about another project – the AI-driven job market insights platform. Can you share more about the challenge and solution?",
+      "turn_number": 9,
+      "segment_type": "dialogue"
+    },
+    {
+      "speaker": "guest",
+      "text": "We analyzed 50,000 Upwork job postings to categorize descriptions, predict budgets, detect trends, and identify in-demand skills. We implemented NLP models with Hugging Face and spaCy to extract key insights, delivering actionable results that improved hiring strategies by 20%.",
+      "turn_number": 10,
+      "segment_type": "dialogue"
+    },
+    {
+      "speaker": "cohost",
+      "text": "That's really cool! How do you see AI impacting the job market in the near future?",
+      "turn_number": 11,
+      "segment_type": "dialogue"
+    },
+    {
+      "speaker": "guest",
+      "text": "AI will continue to augment human capabilities, making certain tasks more efficient. However, it's crucial for professionals to develop skills that complement AI, ensuring they remain relevant in the rapidly changing job landscape.",
+      "turn_number": 12,
+      "segment_type": "dialogue"
+    },
+    {
+      "speaker": "host",
+      "text": "You've worked on several projects involving real-time AI solutions. What advice would you give to organizations looking to implement similar solutions?",
+      "turn_number": 13,
+      "segment_type": "dialogue"
+    },
+    {
+      "speaker": "guest",
+      "text": "It's essential to have a clear understanding of the problem you're trying to solve and to collaborate closely with stakeholders. Additionally, invest in developing a robust infrastructure that can support real-time processing and deployment of AI models.",
+      "turn_number": 14,
+      "segment_type": "dialogue"
+    },
+    {
+      "speaker": "cohost",
+      "text": "Can you elaborate on the importance of statistical analysis in your workflow?",
+      "turn_number": 15,
+      "segment_type": "dialogue"
+    },
+    {
+      "speaker": "guest",
+      "text": "Statistical analysis is the backbone of any data science project. It enables us to understand the underlying patterns and relationships in the data, making it possible to build accurate and reliable AI models.",
+      "turn_number": 16,
+      "segment_type": "dialogue"
+    },
+    {
+      "speaker": "host",
+      "text": "As we wrap up, what's next for you in terms of projects and professional affiliations?",
+      "turn_number": 17,
+      "segment_type": "dialogue"
+    },
+    {
+      "speaker": "guest",
+      "text": "I'm excited to explore more applications of AI in industries like healthcare and finance. I'm also involved with professional organizations like the American Statistical Association, IEEE Computer Society, and AAAI, which helps me stay updated on the latest developments in the field.",
+      "turn_number": 18,
+      "segment_type": "dialogue"
+    },
+    {
+      "speaker": "cohost",
+      "text": "Thanks for sharing your insights and experiences with us today, Armand!",
+      "turn_number": 19,
+      "segment_type": "dialogue"
+    },
+    {
+      "speaker": "guest",
+      "text": "Thank you for having me! It's been a pleasure discussing my passion for AI and its potential to drive positive change.",
+      "turn_number": 20,
+      "segment_type": "outro"
+    }
+  ],
+  "metadata": {
+    "model": "meta-llama/Llama-3-70b-chat-hf",
+    "total_turns": 20,
+    "total_tokens": 8221
+  },
+  "options": {
+    "length": "15min",
+    "host_voice": "host_male_friendly",
+    "guest_voice": "guest_female_expert",
+    "cohost_voice": "cohost_female_warm",
+    "style": "interview",
+    "num_speakers": 3,
+    "output_format": "mp3",
+    "add_pauses": true,
+    "normalize_audio": true,
+    "temperature": 0.8,
+    "output_dir": "backend/audio/podcasts",
+    "save_script": true
+  }
+}
