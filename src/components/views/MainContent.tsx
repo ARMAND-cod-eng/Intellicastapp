@@ -6,6 +6,7 @@ import DocumentUpload from '../upload/DocumentUpload';
 import { PodcastGenerationView } from '../../views/PodcastGenerationView';
 import NewsAudioView from '../../../modules/news-audio/frontend/views/NewsAudioView';
 import EnhancedAIDemo from '../../features/voice-search/components/EnhancedAIDemo';
+import PodcastView from '../podcast/PodcastView';
 import type { DocumentContent } from '../../types/document';
 
 interface MainContentProps {
@@ -38,6 +39,8 @@ const MainContent: React.FC<MainContentProps> = ({ currentView }) => {
         return <HomeView currentView={currentView} onOpenUpload={() => setIsUploadModalOpen(true)} uploadedContent={uploadedContent} />;
       case 'new':
         return <NewView currentView={currentView} onOpenUpload={() => setIsUploadModalOpen(true)} uploadedContent={uploadedContent} uploadedFiles={uploadedFiles} />;
+      case 'podcasts':
+        return <PodcastView />;
       case 'news':
         return <NewsAudioView />;
       case 'ai-demo':

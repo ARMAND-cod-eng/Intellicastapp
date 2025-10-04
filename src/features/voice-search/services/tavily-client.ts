@@ -1013,6 +1013,22 @@ class MockDataGenerator {
       domain: `news.example${index + 1}.com`
     }));
   }
+
+  /**
+   * Extract main topic from query for better content generation
+   */
+  private extractMainTopic(query: string): string {
+    // Remove common question words and prepositions
+    const cleanQuery = query
+      .replace(/^(what|how|when|where|why|who|which)\s+(is|are|do|does|can|should|will|would)?\s*/i, '')
+      .replace(/^(the|a|an)\s+/i, '')
+      .replace(/\?$/, '')
+      .trim();
+
+    // Take first few words as main topic
+    const words = cleanQuery.split(/\s+/);
+    return words.slice(0, Math.min(words.length, 4)).join(' ');
+  }
 }
 
 // ============================================================================

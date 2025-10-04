@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Home, Plus, Settings, User, Bell, MessageSquare, Compass, Newspaper, Brain, ChevronRight, ChevronLeft, Search } from 'lucide-react';
+import { Home, Plus, Settings, User, Bell, MessageSquare, Compass, Newspaper, Brain, ChevronRight, ChevronLeft, Library, Mic2 } from 'lucide-react';
 import { useTheme } from '../../contexts/ThemeContext';
 import CalendarTodoWidget from '../calendar/CalendarTodoWidget';
 
@@ -16,11 +16,12 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange, onOpenUplo
 
   const menuItems = [
     { id: 'home', icon: Home, label: 'Home' },
-    { id: 'search', icon: Search, label: 'Search' },
+    { id: 'search', icon: Compass, label: 'Search' },
     { id: 'new', icon: Plus, label: 'New' },
+    { id: 'podcasts', icon: Mic2, label: 'Podcasts' },
     { id: 'news', icon: Newspaper, label: 'News Audio' },
     { id: 'ai-demo', icon: Brain, label: 'Brain' },
-    { id: 'library', icon: Compass, label: 'Library' },
+    { id: 'library', icon: Library, label: 'Library' },
     { id: 'discover', icon: MessageSquare, label: 'Discover' },
   ];
 
