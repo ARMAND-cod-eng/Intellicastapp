@@ -191,7 +191,10 @@ router.post('/generate', async (req, res) => {
       });
     } catch (audioError) {
       console.error('❌ TTS generation failed:', audioError.message);
-      
+
+      // Check if it's a Cartesia credit limit error
+      const isCreditLimitError = audioError.message.includes('402') || audioError.message.includes('credit limit');
+
       // For summary types, create a placeholder success response so text can be displayed
       if (narrationType === 'document-summary' || narrationType === 'quick-summary') {
         console.log(`🔄 ${narrationType}: Returning text without audio due to TTS issue`);
@@ -201,7 +204,8 @@ router.post('/generate', async (req, res) => {
           audioUrl: null,
           duration: 0,
           fileSize: 0,
-          model: 'placeholder'
+          model: 'placeholder',
+          warning: isCreditLimitError ? 'Cartesia API credit limit reached. Please add credits at https://play.cartesia.ai/subscription' : 'Audio generation unavailable'
         };
       } else {
         // For other narration types, still throw the error

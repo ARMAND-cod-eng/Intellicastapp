@@ -21,16 +21,21 @@ class TogetherNarrationService {
    */
   async callPythonGenerator(method, data) {
     return new Promise((resolve, reject) => {
+      // Use base64 encoding to safely pass data with special characters
+      const dataJson = JSON.stringify(data);
+      const dataBase64 = Buffer.from(dataJson).toString('base64');
+
       const pythonProcess = spawn('python', [
         '-c',
         `
 import sys
 import json
+import base64
 sys.path.insert(0, '${path.dirname(this.pythonScript).replace(/\\/g, '\\\\')}')
 from narration_generator import TogetherNarrationGenerator
 
 generator = TogetherNarrationGenerator()
-data = json.loads('''${JSON.stringify(data).replace(/'/g, "\\'")}''')
+data = json.loads(base64.b64decode('${dataBase64}').decode('utf-8'))
 
 if '${method}' == 'generate_summary':
     result = generator.generate_summary(
