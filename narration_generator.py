@@ -601,6 +601,145 @@ Requirements:
 
         return prompts.get(narration_type, prompts['summary'])
 
+    def transform_script(
+        self,
+        original_script: str,
+        transformation_type: str = 'shorter',
+        temperature: float = 0.4,
+        max_tokens: int = 3000
+    ) -> Dict:
+        """
+        Transform existing narration script using AI
+
+        Args:
+            original_script: The original narration script to transform
+            transformation_type: 'shorter', 'casual', or 'formal'
+            temperature: Response creativity
+            max_tokens: Maximum output length
+
+        Returns:
+            Dictionary with transformed script and metadata
+        """
+
+        # Define transformation prompts
+        prompts = {
+            'shorter': """You are a professional script editor. Your task is to condense the narration script while preserving all key information and maintaining natural flow.
+
+Requirements:
+- Reduce the script to approximately 70% of its original length
+- Keep ALL essential information, main points, and key insights
+- Maintain the natural, conversational tone
+- Remove only redundant phrases, excessive elaboration, and filler content
+- Ensure smooth transitions between points
+- Keep the script ready for audio narration (natural, spoken language)
+- DO NOT add introductions, conclusions, or meta-commentary
+- Output ONLY the condensed narration script
+
+Original script to condense:""",
+
+            'casual': """You are a professional script editor. Your task is to rewrite the narration script in a more casual, conversational tone while keeping the same content and length.
+
+Requirements:
+- Rewrite in friendly, approachable, conversational language
+- Use contractions (it's, you're, we'll, etc.)
+- Replace formal phrases with everyday expressions
+- Add conversational markers (you know, well, so, basically)
+- Keep the same information and key points
+- Maintain natural speech patterns suitable for audio
+- Make it sound like a friend explaining something interesting
+- DO NOT change the core content or key messages
+- DO NOT add introductions, conclusions, or meta-commentary
+- Output ONLY the rewritten narration script
+
+Original script to make more casual:""",
+
+            'formal': """You are a professional script editor. Your task is to rewrite the narration script in a more formal, professional tone while keeping the same content and length.
+
+Requirements:
+- Use professional, academic language
+- Replace casual expressions with formal equivalents
+- Avoid contractions (use "it is" instead of "it's")
+- Use sophisticated vocabulary and precise terminology
+- Maintain objective, authoritative tone
+- Keep the same information and key points
+- Ensure clarity and professionalism
+- Make it suitable for educational or professional settings
+- DO NOT change the core content or key messages
+- DO NOT add introductions, conclusions, or meta-commentary
+- Output ONLY the rewritten narration script
+
+Original script to make more formal:"""
+        }
+
+        system_prompt = prompts.get(transformation_type, prompts['shorter'])
+
+        print(f"\n[TRANSFORM] Transforming script: {transformation_type}")
+        print(f"[MODEL] Model: {self.model}")
+        print(f"[ORIGINAL] Length: {len(original_script.split())} words")
+
+        try:
+            start_time = time.time()
+
+            response = self.client.chat.completions.create(
+                model=self.model,
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": original_script}
+                ],
+                temperature=temperature,
+                max_tokens=max_tokens,
+                top_p=0.9,
+                stream=False
+            )
+
+            generation_time = time.time() - start_time
+
+            # Extract and clean transformed script
+            transformed_script = response.choices[0].message.content.strip()
+            transformed_script = self._clean_narration_script(transformed_script)
+
+            # Calculate costs
+            input_tokens = response.usage.prompt_tokens
+            output_tokens = response.usage.completion_tokens
+
+            cost = {
+                'input_cost': (input_tokens / 1_000_000) * self.input_price_per_million,
+                'output_cost': (output_tokens / 1_000_000) * self.output_price_per_million
+            }
+            cost['total_cost'] = cost['input_cost'] + cost['output_cost']
+
+            word_count = len(transformed_script.split())
+            original_word_count = len(original_script.split())
+            reduction_percent = ((original_word_count - word_count) / original_word_count * 100) if transformation_type == 'shorter' else 0
+
+            print(f"[SUCCESS] Script transformed in {generation_time:.2f}s")
+            print(f"[TRANSFORMED] Length: {word_count} words ({reduction_percent:+.1f}%)")
+            print(f"[COST] Cost: ${cost['total_cost']:.4f}")
+
+            return {
+                'success': True,
+                'script': transformed_script,
+                'transformation_type': transformation_type,
+                'model': self.model,
+                'tokens': {
+                    'input': input_tokens,
+                    'output': output_tokens,
+                    'total': response.usage.total_tokens
+                },
+                'cost': cost,
+                'generation_time': generation_time,
+                'word_count': word_count,
+                'original_word_count': original_word_count
+            }
+
+        except Exception as e:
+            print(f"[ERROR] Script transformation failed: {str(e)}")
+            return {
+                'success': False,
+                'error': str(e),
+                'script': None
+            }
+
 
 # Standalone functions for easy import
 def generate_summary(content: str, summary_type: str = 'detailed') -> Dict:

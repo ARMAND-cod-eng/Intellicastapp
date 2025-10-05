@@ -15,6 +15,7 @@ import GlassCard from '../ui/GlassCard';
 import { narrationPresets, getRecommendedPreset } from '../../config/narrationPresets';
 import { getAudioUrl } from '../../config/api';
 import DocumentChatPanel from '../document/DocumentChatPanel';
+import { PresetStorage, type CustomPreset } from '../../services/presetStorage';
 
 interface QueueItem {
   id: string;
@@ -91,6 +92,32 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
   const [isGeneratingScript, setIsGeneratingScript] = useState(false);
   const [scriptWordCount, setScriptWordCount] = useState(0);
 
+  // Script Variants State
+  const [scriptVariants, setScriptVariants] = useState<{
+    original: string | null;
+    shorter: string | null;
+    casual: string | null;
+    formal: string | null;
+  }>({
+    original: null,
+    shorter: null,
+    casual: null,
+    formal: null
+  });
+  const [activeVariant, setActiveVariant] = useState<'original' | 'shorter' | 'casual' | 'formal'>('original');
+  const [variantWordCounts, setVariantWordCounts] = useState<{
+    original: number;
+    shorter: number;
+    casual: number;
+    formal: number;
+  }>({
+    original: 0,
+    shorter: 0,
+    casual: 0,
+    formal: 0
+  });
+  const [transformingVariant, setTransformingVariant] = useState<'shorter' | 'casual' | 'formal' | null>(null);
+
   // Generation State
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationProgress, setGenerationProgress] = useState(0);
@@ -114,8 +141,86 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
   const [voiceGenderFilter, setVoiceGenderFilter] = useState<'all' | 'male' | 'female'>('all');
   const [voiceAccentFilter, setVoiceAccentFilter] = useState<'all' | 'American' | 'British' | 'Spanish'>('all');
 
+  // Audio Preview State
+  const [isGeneratingPreview, setIsGeneratingPreview] = useState(false);
+  const [previewAudioUrl, setPreviewAudioUrl] = useState<string | null>(null);
+  const [showPreviewPlayer, setShowPreviewPlayer] = useState(false);
+
+  // Custom Presets State
+  const [customPresets, setCustomPresets] = useState<CustomPreset[]>([]);
+  const [showPresetManager, setShowPresetManager] = useState(false);
+  const [presetName, setPresetName] = useState('');
+  const [presetDescription, setPresetDescription] = useState('');
+
   // Toast notifications
   const toast = useToast();
+
+  // Load custom presets on mount
+  useEffect(() => {
+    const loaded = PresetStorage.getAll();
+    setCustomPresets(loaded);
+  }, []);
+
+  // Auto-generate script when entering Step 4 without a script
+  useEffect(() => {
+    if (currentStep === 4 && !generatedScript && !isGeneratingScript && backendProcessedContent && selectedPreset) {
+      // Automatically start script generation when Step 4 loads
+      handleGenerateScript();
+    }
+  }, [currentStep]);
+
+  // Save current settings as custom preset
+  const handleSaveAsPreset = () => {
+    if (!presetName.trim()) {
+      toast.error('Name required', 'Please enter a preset name');
+      return;
+    }
+
+    if (!selectedPreset) {
+      toast.error('Settings required', 'Complete setup first');
+      return;
+    }
+
+    const newPreset = PresetStorage.save({
+      name: presetName.trim(),
+      description: presetDescription.trim() || undefined,
+      voice: customVoice || selectedPreset.voice,
+      speed: customSpeed,
+      backgroundMusic,
+      musicVolume,
+      addIntroOutro,
+      pauseAtPunctuation,
+      pauseDuration,
+      podcastStyle: selectedPreset.podcastStyle,
+      tags: [selectedPreset.name]
+    });
+
+    setCustomPresets([...customPresets, newPreset]);
+    setPresetName('');
+    setPresetDescription('');
+    setShowPresetManager(false);
+    toast.success('Preset saved!', `"${newPreset.name}" is ready to use`);
+  };
+
+  // Load a custom preset
+  const handleLoadPreset = (preset: CustomPreset) => {
+    setCustomVoice(preset.voice);
+    setCustomSpeed(preset.speed);
+    setBackgroundMusic(preset.backgroundMusic);
+    setMusicVolume(preset.musicVolume);
+    setAddIntroOutro(preset.addIntroOutro);
+    setPauseAtPunctuation(preset.pauseAtPunctuation);
+    setPauseDuration(preset.pauseDuration);
+    toast.success('Preset loaded!', `Applied "${preset.name}" settings`);
+  };
+
+  // Delete a custom preset
+  const handleDeletePreset = (id: string) => {
+    if (PresetStorage.delete(id)) {
+      setCustomPresets(customPresets.filter(p => p.id !== id));
+      toast.success('Preset deleted', 'Removed from library');
+    }
+  };
 
   // File drop handling
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
@@ -241,7 +346,153 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
     return { duration, cost };
   };
 
-  // Generate script only (without TTS)
+  // Generate audio preview
+  const handleGeneratePreview = async () => {
+    if (!backendProcessedContent || !selectedPreset) {
+      toast.error('Missing information', 'Please complete previous steps');
+      return;
+    }
+
+    setIsGeneratingPreview(true);
+    toast.info('Generating preview...', '15-second sample with your settings');
+
+    try {
+      const response = await fetch('http://localhost:3004/api/narration/generate-preview', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          documentContent: backendProcessedContent,
+          voice: customVoice || selectedPreset.voice,
+          speed: customSpeed,
+          backgroundMusic: backgroundMusic !== 'none',
+          musicType: backgroundMusic,
+          musicVolume,
+          podcastStyle: selectedPreset.podcastStyle
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Preview failed: ${response.statusText}`);
+      }
+
+      const result = await response.json();
+
+      if (result.success && result.audioUrl) {
+        setPreviewAudioUrl(`http://localhost:3004${result.audioUrl}`);
+        setShowPreviewPlayer(true);
+        toast.success('Preview ready!', 'Listen to your audio mix');
+      } else {
+        throw new Error('No preview audio URL returned');
+      }
+    } catch (error: any) {
+      console.error('Preview generation error:', error);
+      toast.error('Preview failed', error.message || 'Please try again');
+    } finally {
+      setIsGeneratingPreview(false);
+    }
+  };
+
+  // Switch between script variants
+  const handleSwitchVariant = (variant: 'original' | 'shorter' | 'casual' | 'formal') => {
+    const script = scriptVariants[variant];
+    if (!script) {
+      toast.error('Variant not generated', `Please generate the ${variant} version first`);
+      return;
+    }
+
+    setActiveVariant(variant);
+    setGeneratedScript(script);
+    setScriptWordCount(variantWordCounts[variant]);
+    toast.info(`Switched to ${variant} version`, `${variantWordCounts[variant]} words`);
+  };
+
+  // Transform script using AI (shorter, casual, formal)
+  const handleTransformScript = async (transformationType: 'shorter' | 'casual' | 'formal') => {
+    if (!scriptVariants.original) {
+      toast.error('No script to transform', 'Please generate the original script first');
+      return;
+    }
+
+    setTransformingVariant(transformationType);
+    toast.info(`Generating ${transformationType} version...`, 'Watch it appear in real-time!');
+
+    try {
+      const response = await fetch('http://localhost:3004/api/narration/transform-script', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          originalScript: scriptVariants.original,
+          transformationType,
+          stream: true
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to transform script: ${response.statusText}`);
+      }
+
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+      let accumulatedScript = '';
+
+      if (reader) {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          const chunk = decoder.decode(value);
+          const lines = chunk.split('\n');
+
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              const data = JSON.parse(line.slice(6));
+
+              if (data.done) {
+                // Final transformed script received
+                const newWordCount = data.wordCount || data.fullScript.split(/\s+/).length;
+
+                // Store the variant
+                setScriptVariants(prev => ({
+                  ...prev,
+                  [transformationType]: data.fullScript
+                }));
+
+                setVariantWordCounts(prev => ({
+                  ...prev,
+                  [transformationType]: newWordCount
+                }));
+
+                // Switch to the new variant
+                setActiveVariant(transformationType);
+                setGeneratedScript(data.fullScript);
+                setScriptWordCount(newWordCount);
+
+                const reduction = transformationType === 'shorter'
+                  ? ` (-${Math.round((1 - newWordCount / variantWordCounts.original) * 100)}%)`
+                  : '';
+
+                toast.success(`${transformationType} version ready!${reduction}`, 'Now viewing this variant');
+              } else if (data.chunk) {
+                // Stream chunk received (preview only, don't update main script yet)
+                accumulatedScript += data.chunk;
+              }
+            }
+          }
+        }
+      }
+    } catch (error: any) {
+      console.error('Script transformation error:', error);
+      toast.error('Transformation failed', error.message || 'Please try again');
+    } finally {
+      setTransformingVariant(null);
+    }
+  };
+
+  // Generate script only (without TTS) - WITH STREAMING
   const handleGenerateScript = async () => {
     if (!selectedPreset || !backendProcessedContent) {
       toast.error('Missing information', 'Please complete all steps');
@@ -249,27 +500,83 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
     }
 
     setIsGeneratingScript(true);
-    toast.info('Generating script...', 'This may take 10-20 seconds');
+    setGeneratedScript(''); // Clear previous script
+    setGenerationStage('Initializing...');
+    toast.info('Generating script...', 'Watch it appear in real-time!');
 
     try {
-      const response = await NarrationAPI.generateScript(
-        backendProcessedContent,
-        selectedPreset.narrationType
-      );
+      const response = await fetch('http://localhost:3004/api/narration/generate-script', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          documentContent: backendProcessedContent,
+          narrationType: selectedPreset.narrationType,
+          stream: true
+        }),
+      });
 
-      if (response.success) {
-        setGeneratedScript(response.script);
-        setScriptWordCount(response.script.split(/\s+/).length);
-        toast.success('Script generated!', 'You can now review and edit it');
-        setCurrentStep(4); // Move to preview step
-      } else {
-        throw new Error('Script generation failed');
+      if (!response.ok) {
+        throw new Error(`Failed to generate script: ${response.statusText}`);
+      }
+
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+      let accumulatedScript = '';
+
+      if (reader) {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          const chunk = decoder.decode(value);
+          const lines = chunk.split('\n');
+
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              const data = JSON.parse(line.slice(6));
+
+              if (data.done) {
+                // Final script received - store as original variant
+                setGeneratedScript(data.fullScript);
+                setScriptWordCount(data.fullScript.split(/\s+/).length);
+
+                // Store in variants
+                setScriptVariants({
+                  original: data.fullScript,
+                  shorter: null,
+                  casual: null,
+                  formal: null
+                });
+                setActiveVariant('original');
+                setVariantWordCounts({
+                  original: data.fullScript.split(/\s+/).length,
+                  shorter: 0,
+                  casual: 0,
+                  formal: 0
+                });
+
+                toast.success('Script generated!', 'Click Continue to preview and edit');
+                // Don't auto-advance - let user click Next when ready
+              } else if (data.chunk) {
+                // Stream chunk received
+                accumulatedScript += data.chunk;
+                setGeneratedScript(accumulatedScript);
+                setGenerationStage(data.stage || 'Generating...');
+                setGenerationProgress(data.progress || 0);
+              }
+            }
+          }
+        }
       }
     } catch (error: any) {
       console.error('Script generation error:', error);
       toast.error('Generation failed', error.message || 'Please try again');
     } finally {
       setIsGeneratingScript(false);
+      setGenerationProgress(0);
+      setGenerationStage('');
     }
   };
 
@@ -853,6 +1160,10 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
                   voiceId={customVoice || selectedPreset.voice}
                   voiceName={getVoiceName()}
                   voiceDescription="Neural AI Voice"
+                  previewText={backendProcessedContent ?
+                    backendProcessedContent.split(/\s+/).slice(0, 150).join(' ') + '...' :
+                    undefined
+                  }
                   podcastStyle={selectedPreset.podcastStyle}
                   speed={customSpeed}
                 />
@@ -1167,6 +1478,158 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
                     </div>
                   )}
                 </div>
+
+                {/* Audio Preview Button */}
+                <div className="mt-4 pt-4 border-t border-gray-700/50">
+                  <button
+                    onClick={handleGeneratePreview}
+                    disabled={isGeneratingPreview || !backendProcessedContent}
+                    className="w-full px-4 py-3 rounded-lg bg-gradient-to-r from-orange-600 to-yellow-600 hover:from-orange-700 hover:to-yellow-700 text-white font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+                  >
+                    {isGeneratingPreview ? (
+                      <>
+                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        <span>Generating Preview...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>🎧</span>
+                        <span>Preview Voice + Speed (15s sample)</span>
+                      </>
+                    )}
+                  </button>
+                  <p className="text-xs text-gray-400 text-center mt-2">
+                    Hear how your voice and speed settings sound (music mixing coming soon!)
+                  </p>
+                </div>
+
+                {/* Preview Audio Player */}
+                {showPreviewPlayer && previewAudioUrl && (
+                  <div className="mt-4 p-4 rounded-lg bg-black/40 border border-orange-500/30">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm font-semibold text-orange-400">🎧 Preview Audio</span>
+                      <button
+                        onClick={() => {
+                          setShowPreviewPlayer(false);
+                          setPreviewAudioUrl(null);
+                        }}
+                        className="text-xs text-gray-400 hover:text-white transition-colors"
+                      >
+                        Close
+                      </button>
+                    </div>
+                    <audio
+                      src={previewAudioUrl}
+                      controls
+                      autoPlay
+                      className="w-full"
+                      style={{
+                        height: '40px',
+                        borderRadius: '8px'
+                      }}
+                    />
+                    <p className="text-xs text-gray-400 mt-2 text-center">
+                      15-second preview of your voice + speed settings
+                    </p>
+                  </div>
+                )}
+
+                {/* Save as Custom Preset */}
+                <div className="mt-4 pt-4 border-t border-gray-700/50">
+                  <button
+                    onClick={() => setShowPresetManager(!showPresetManager)}
+                    className="w-full px-4 py-2 rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold transition-all flex items-center justify-center space-x-2"
+                  >
+                    <span>💾</span>
+                    <span>{showPresetManager ? 'Cancel' : 'Save as Custom Preset'}</span>
+                  </button>
+                </div>
+
+                {/* Preset Save Form */}
+                {showPresetManager && (
+                  <div className="mt-4 p-4 rounded-lg bg-blue-900/20 border border-blue-500/30 space-y-3">
+                    <div>
+                      <label className="text-sm text-gray-300 mb-1 block">Preset Name *</label>
+                      <input
+                        type="text"
+                        value={presetName}
+                        onChange={(e) => setPresetName(e.target.value)}
+                        placeholder="e.g., My Business Voice"
+                        className="w-full px-3 py-2 rounded-lg bg-black/40 border border-gray-600 text-white placeholder-gray-500 focus:border-blue-500 focus:outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-sm text-gray-300 mb-1 block">Description (optional)</label>
+                      <textarea
+                        value={presetDescription}
+                        onChange={(e) => setPresetDescription(e.target.value)}
+                        placeholder="Professional voice for corporate content"
+                        rows={2}
+                        className="w-full px-3 py-2 rounded-lg bg-black/40 border border-gray-600 text-white placeholder-gray-500 focus:border-blue-500 focus:outline-none resize-none"
+                      />
+                    </div>
+                    <button
+                      onClick={handleSaveAsPreset}
+                      disabled={!presetName.trim()}
+                      className="w-full px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      💾 Save Preset
+                    </button>
+                  </div>
+                )}
+
+                {/* Custom Presets Library */}
+                {customPresets.length > 0 && (
+                  <div className="mt-4 p-4 rounded-lg bg-purple-900/20 border border-purple-500/30">
+                    <h4 className="text-sm font-semibold text-purple-300 mb-3 flex items-center space-x-2">
+                      <span>📚</span>
+                      <span>My Custom Presets ({customPresets.length})</span>
+                    </h4>
+                    <div className="space-y-2 max-h-40 overflow-y-auto">
+                      {customPresets.map((preset) => (
+                        <div
+                          key={preset.id}
+                          className="p-3 rounded-lg bg-black/40 border border-gray-700 hover:border-purple-500/50 transition-all"
+                        >
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <h5 className="text-sm font-semibold text-white">{preset.name}</h5>
+                              {preset.description && (
+                                <p className="text-xs text-gray-400 mt-1">{preset.description}</p>
+                              )}
+                              <div className="flex items-center space-x-2 mt-2">
+                                <span className="text-xs px-2 py-0.5 rounded bg-purple-600/30 text-purple-300">
+                                  Speed: {preset.speed}x
+                                </span>
+                                {preset.backgroundMusic !== 'none' && (
+                                  <span className="text-xs px-2 py-0.5 rounded bg-orange-600/30 text-orange-300">
+                                    Music: {preset.backgroundMusic}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                            <div className="flex items-center space-x-2 ml-3">
+                              <button
+                                onClick={() => handleLoadPreset(preset)}
+                                className="px-3 py-1 rounded-lg bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold transition-all"
+                                title="Load this preset"
+                              >
+                                Load
+                              </button>
+                              <button
+                                onClick={() => handleDeletePreset(preset.id)}
+                                className="px-2 py-1 rounded-lg bg-red-600/20 hover:bg-red-600 text-red-400 hover:text-white text-xs transition-all"
+                                title="Delete preset"
+                              >
+                                ✕
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -1180,7 +1643,7 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
               <p className="text-gray-400">Review the generated script and make any edits before creating audio</p>
             </div>
 
-            {!generatedScript ? (
+            {!generatedScript && !isGeneratingScript ? (
               <div className="p-8 rounded-2xl bg-gradient-to-br from-purple-900/20 to-blue-900/20 border border-purple-500/30 text-center">
                 <Sparkles className="w-16 h-16 mx-auto mb-4 text-purple-400" />
                 <h3 className="text-xl font-bold text-white mb-2">Generate Your Script</h3>
@@ -1189,28 +1652,113 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
                 </p>
                 <button
                   onClick={handleGenerateScript}
-                  disabled={isGeneratingScript}
-                  className="px-8 py-3 rounded-lg bg-purple-600 hover:bg-purple-700 text-white font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2 mx-auto"
+                  className="px-8 py-3 rounded-lg bg-purple-600 hover:bg-purple-700 text-white font-semibold transition-all flex items-center space-x-2 mx-auto"
                 >
-                  {isGeneratingScript ? (
-                    <>
-                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      <span>Generating Script...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles className="w-5 h-5" />
-                      <span>Generate Script</span>
-                    </>
-                  )}
+                  <Sparkles className="w-5 h-5" />
+                  <span>Generate Script</span>
                 </button>
+              </div>
+            ) : isGeneratingScript ? (
+              <div className="p-8 rounded-2xl bg-gradient-to-br from-purple-900/20 to-blue-900/20 border border-purple-500/30">
+                <div className="text-center mb-6">
+                  <div className="w-16 h-16 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+                  <h3 className="text-xl font-bold text-white mb-2">Generating Script...</h3>
+                  <p className="text-purple-300 text-sm">{generationStage}</p>
+                </div>
+
+                {/* Progress Bar */}
+                {generationProgress > 0 && (
+                  <div className="mb-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm text-gray-400">Progress</span>
+                      <span className="text-sm font-bold text-purple-400">{Math.round(generationProgress)}%</span>
+                    </div>
+                    <div className="relative h-2 bg-gray-700 rounded-full overflow-hidden">
+                      <div
+                        className="absolute inset-y-0 left-0 bg-gradient-to-r from-purple-500 to-blue-500 transition-all duration-300 rounded-full"
+                        style={{ width: `${generationProgress}%` }}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* Live Script Preview */}
+                {generatedScript && (
+                  <div className="p-4 rounded-lg bg-black/30 border border-gray-700/50">
+                    <p className="text-xs text-gray-400 mb-2">Script Preview (streaming...)</p>
+                    <div className="text-sm text-gray-300 font-mono leading-relaxed max-h-40 overflow-y-auto">
+                      {generatedScript}
+                      <span className="inline-block w-2 h-4 bg-purple-500 animate-pulse ml-1" />
+                    </div>
+                  </div>
+                )}
               </div>
             ) : (
               <>
+                {/* Variant Selector Tabs */}
+                {(scriptVariants.original || scriptVariants.shorter || scriptVariants.casual || scriptVariants.formal) && (
+                  <div className="flex items-center space-x-2 mb-4">
+                    <p className="text-xs text-gray-400 mr-2">Script Variants:</p>
+                    {scriptVariants.original && (
+                      <button
+                        onClick={() => handleSwitchVariant('original')}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                          activeVariant === 'original'
+                            ? 'bg-[#00D4E4] text-black shadow-lg shadow-[#00D4E4]/30'
+                            : 'bg-gray-800 text-gray-300 hover:bg-gray-700 border border-gray-700'
+                        }`}
+                      >
+                        Original ({variantWordCounts.original}w)
+                      </button>
+                    )}
+                    {scriptVariants.shorter && (
+                      <button
+                        onClick={() => handleSwitchVariant('shorter')}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                          activeVariant === 'shorter'
+                            ? 'bg-[#00D4E4] text-black shadow-lg shadow-[#00D4E4]/30'
+                            : 'bg-gray-800 text-gray-300 hover:bg-gray-700 border border-gray-700'
+                        }`}
+                      >
+                        Shorter ({variantWordCounts.shorter}w, -{Math.round((1 - variantWordCounts.shorter / variantWordCounts.original) * 100)}%)
+                      </button>
+                    )}
+                    {scriptVariants.casual && (
+                      <button
+                        onClick={() => handleSwitchVariant('casual')}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                          activeVariant === 'casual'
+                            ? 'bg-[#00D4E4] text-black shadow-lg shadow-[#00D4E4]/30'
+                            : 'bg-gray-800 text-gray-300 hover:bg-gray-700 border border-gray-700'
+                        }`}
+                      >
+                        Casual ({variantWordCounts.casual}w)
+                      </button>
+                    )}
+                    {scriptVariants.formal && (
+                      <button
+                        onClick={() => handleSwitchVariant('formal')}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                          activeVariant === 'formal'
+                            ? 'bg-[#00D4E4] text-black shadow-lg shadow-[#00D4E4]/30'
+                            : 'bg-gray-800 text-gray-300 hover:bg-gray-700 border border-gray-700'
+                        }`}
+                      >
+                        Formal ({variantWordCounts.formal}w)
+                      </button>
+                    )}
+                  </div>
+                )}
+
                 {/* Script Editor */}
                 <div className="p-6 rounded-xl bg-gradient-to-br from-gray-900 to-gray-800 border border-gray-700">
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-white font-semibold">Generated Script</h3>
+                    <h3 className="text-white font-semibold">
+                      Generated Script
+                      {activeVariant !== 'original' && (
+                        <span className="ml-2 text-xs text-[#00D4E4]">({activeVariant})</span>
+                      )}
+                    </h3>
                     <div className="flex items-center space-x-4">
                       <span className="text-sm text-gray-400">
                         {scriptWordCount} words • ~{Math.ceil(scriptWordCount / 150)} min
@@ -1219,10 +1767,17 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
                         onClick={() => {
                           setGeneratedScript('');
                           setScriptWordCount(0);
+                          setScriptVariants({
+                            original: null,
+                            shorter: null,
+                            casual: null,
+                            formal: null
+                          });
+                          setActiveVariant('original');
                         }}
                         className="text-xs text-gray-400 hover:text-white transition-colors"
                       >
-                        Regenerate
+                        Regenerate All
                       </button>
                     </div>
                   </div>
@@ -1230,8 +1785,21 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
                   <textarea
                     value={generatedScript}
                     onChange={(e) => {
-                      setGeneratedScript(e.target.value);
-                      setScriptWordCount(e.target.value.split(/\s+/).length);
+                      const newScript = e.target.value;
+                      const newWordCount = newScript.split(/\s+/).length;
+
+                      setGeneratedScript(newScript);
+                      setScriptWordCount(newWordCount);
+
+                      // Update the active variant when manually edited
+                      setScriptVariants(prev => ({
+                        ...prev,
+                        [activeVariant]: newScript
+                      }));
+                      setVariantWordCounts(prev => ({
+                        ...prev,
+                        [activeVariant]: newWordCount
+                      }));
                     }}
                     className="w-full h-96 px-4 py-3 rounded-lg bg-gray-800 border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-[#00D4E4] transition-colors resize-none font-mono text-sm leading-relaxed"
                     placeholder="Your generated script will appear here..."
@@ -1244,40 +1812,72 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
                   </div>
                 </div>
 
-                {/* Script Actions */}
+                {/* Script Actions - AI-Powered Transformations */}
                 <div className="grid grid-cols-3 gap-3">
                   <button
-                    onClick={() => {
-                      const shorter = generatedScript.split('.').slice(0, Math.floor(generatedScript.split('.').length * 0.7)).join('.') + '.';
-                      setGeneratedScript(shorter);
-                      setScriptWordCount(shorter.split(/\s+/).length);
-                    }}
-                    className="p-3 rounded-lg bg-gray-800 hover:bg-gray-700 border border-gray-700 text-white transition-all"
+                    onClick={() => handleTransformScript('shorter')}
+                    disabled={transformingVariant === 'shorter' || !scriptVariants.original}
+                    className={`p-3 rounded-lg border text-white transition-all relative ${
+                      activeVariant === 'shorter'
+                        ? 'bg-[#00D4E4]/20 border-[#00D4E4] shadow-lg shadow-[#00D4E4]/20'
+                        : 'bg-gray-800 hover:bg-gray-700 border-gray-700'
+                    } ${transformingVariant === 'shorter' ? 'opacity-50 cursor-not-allowed' : ''}`}
                   >
-                    <p className="font-semibold text-sm">Make Shorter</p>
-                    <p className="text-xs text-gray-400 mt-1">Reduce to 70%</p>
+                    {scriptVariants.shorter && activeVariant === 'shorter' && (
+                      <div className="absolute top-1 right-1">
+                        <div className="w-2 h-2 rounded-full bg-[#00D4E4]"></div>
+                      </div>
+                    )}
+                    <p className="font-semibold text-sm">
+                      {transformingVariant === 'shorter' ? '🤖 Generating...' : scriptVariants.shorter ? '✓ Make Shorter' : 'Make Shorter'}
+                    </p>
+                    <p className="text-xs text-gray-400 mt-1">
+                      {scriptVariants.shorter
+                        ? `${variantWordCounts.shorter} words (-${Math.round((1 - variantWordCounts.shorter / variantWordCounts.original) * 100)}%)`
+                        : 'AI condenses to ~70%'}
+                    </p>
                   </button>
                   <button
-                    onClick={() => {
-                      const casual = generatedScript.replace(/\b(therefore|furthermore|moreover)\b/gi, 'so');
-                      setGeneratedScript(casual);
-                    }}
-                    className="p-3 rounded-lg bg-gray-800 hover:bg-gray-700 border border-gray-700 text-white transition-all"
+                    onClick={() => handleTransformScript('casual')}
+                    disabled={transformingVariant === 'casual' || !scriptVariants.original}
+                    className={`p-3 rounded-lg border text-white transition-all relative ${
+                      activeVariant === 'casual'
+                        ? 'bg-[#00D4E4]/20 border-[#00D4E4] shadow-lg shadow-[#00D4E4]/20'
+                        : 'bg-gray-800 hover:bg-gray-700 border-gray-700'
+                    } ${transformingVariant === 'casual' ? 'opacity-50 cursor-not-allowed' : ''}`}
                   >
-                    <p className="font-semibold text-sm">More Casual</p>
-                    <p className="text-xs text-gray-400 mt-1">Conversational tone</p>
+                    {scriptVariants.casual && activeVariant === 'casual' && (
+                      <div className="absolute top-1 right-1">
+                        <div className="w-2 h-2 rounded-full bg-[#00D4E4]"></div>
+                      </div>
+                    )}
+                    <p className="font-semibold text-sm">
+                      {transformingVariant === 'casual' ? '🤖 Generating...' : scriptVariants.casual ? '✓ More Casual' : 'More Casual'}
+                    </p>
+                    <p className="text-xs text-gray-400 mt-1">
+                      {scriptVariants.casual ? `${variantWordCounts.casual} words` : 'AI rewrites conversationally'}
+                    </p>
                   </button>
                   <button
-                    onClick={() => {
-                      const formal = generatedScript.replace(/\b(so|really|very)\b/gi, match =>
-                        match.toLowerCase() === 'so' ? 'therefore' : match.toLowerCase() === 'really' ? 'significantly' : 'considerably'
-                      );
-                      setGeneratedScript(formal);
-                    }}
-                    className="p-3 rounded-lg bg-gray-800 hover:bg-gray-700 border border-gray-700 text-white transition-all"
+                    onClick={() => handleTransformScript('formal')}
+                    disabled={transformingVariant === 'formal' || !scriptVariants.original}
+                    className={`p-3 rounded-lg border text-white transition-all relative ${
+                      activeVariant === 'formal'
+                        ? 'bg-[#00D4E4]/20 border-[#00D4E4] shadow-lg shadow-[#00D4E4]/20'
+                        : 'bg-gray-800 hover:bg-gray-700 border-gray-700'
+                    } ${transformingVariant === 'formal' ? 'opacity-50 cursor-not-allowed' : ''}`}
                   >
-                    <p className="font-semibold text-sm">More Formal</p>
-                    <p className="text-xs text-gray-400 mt-1">Professional tone</p>
+                    {scriptVariants.formal && activeVariant === 'formal' && (
+                      <div className="absolute top-1 right-1">
+                        <div className="w-2 h-2 rounded-full bg-[#00D4E4]"></div>
+                      </div>
+                    )}
+                    <p className="font-semibold text-sm">
+                      {transformingVariant === 'formal' ? '🤖 Generating...' : scriptVariants.formal ? '✓ More Formal' : 'More Formal'}
+                    </p>
+                    <p className="text-xs text-gray-400 mt-1">
+                      {scriptVariants.formal ? `${variantWordCounts.formal} words` : 'AI rewrites professionally'}
+                    </p>
                   </button>
                 </div>
               </>
@@ -1693,12 +2293,7 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
               {currentStep < 5 && (
                 <button
                   onClick={() => {
-                    // Auto-generate script when moving from step 3 to 4
-                    if (currentStep === 3 && !generatedScript) {
-                      handleGenerateScript();
-                    } else {
-                      setCurrentStep(prev => Math.min(5, prev + 1));
-                    }
+                    setCurrentStep(prev => Math.min(5, prev + 1));
                   }}
                   disabled={
                     (currentStep === 1 && !backendProcessedContent) ||
@@ -1708,7 +2303,7 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
                   }
                   className="px-6 py-3 rounded-lg bg-[#00D4E4] hover:bg-[#00E8FA] text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
                 >
-                  <span>{currentStep === 3 ? 'Generate Script' : 'Continue'}</span>
+                  <span>Continue</span>
                   <ArrowRight className="w-5 h-5" />
                 </button>
               )}

@@ -16,7 +16,7 @@ const VoicePreview: React.FC<VoicePreviewProps> = ({
   voiceId,
   voiceName,
   voiceDescription,
-  previewText = "Welcome to IntelliCast AI. This is a preview of how your podcast will sound with this voice. We use advanced neural text-to-speech technology to create natural, engaging audio content.",
+  previewText = "This is how your voice will sound. Clear, natural, and engaging audio for your podcast.",
   podcastStyle = 'conversational',
   speed = 1.0,
   onPreviewStart,
@@ -35,24 +35,21 @@ const VoicePreview: React.FC<VoicePreviewProps> = ({
     setError(null);
 
     try {
-      // Call backend to generate a short preview
-      const response = await fetch('http://localhost:3004/api/narration/generate', {
+      // Use dedicated voice preview endpoint (short, voice-only)
+      const response = await fetch('http://localhost:3004/api/narration/voice-preview', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          documentContent: previewText,
-          narrationType: 'summary',
+          text: previewText, // Will be limited to 30 words in backend
           voice: voiceId,
-          speed: 1.0,
-          podcastStyle: podcastStyle,
-          backgroundMusic: false
+          podcastStyle: podcastStyle || 'conversational'
         }),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to generate preview');
+        throw new Error('Failed to generate voice preview');
       }
 
       const result = await response.json();
@@ -63,7 +60,7 @@ const VoicePreview: React.FC<VoicePreviewProps> = ({
         throw new Error('No audio URL returned');
       }
     } catch (err) {
-      console.error('Preview generation error:', err);
+      console.error('Voice preview error:', err);
       setError('Unable to generate preview. Please try again.');
     } finally {
       setIsLoading(false);

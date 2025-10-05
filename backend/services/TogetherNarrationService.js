@@ -66,6 +66,13 @@ elif '${method}' == 'answer_question_with_citations':
         data.get('temperature', 0.5),
         data.get('max_tokens', 1000)
     )
+elif '${method}' == 'transform_script':
+    result = generator.transform_script(
+        data['original_script'],
+        data.get('transformation_type', 'shorter'),
+        data.get('temperature', 0.4),
+        data.get('max_tokens', 3000)
+    )
 else:
     result = {'success': False, 'error': 'Unknown method'}
 
@@ -316,6 +323,52 @@ print(json.dumps(result))
         error: error.message,
         timestamp: new Date().toISOString()
       };
+    }
+  }
+
+  /**
+   * Transform narration script using AI
+   */
+  async transformScript(originalScript, transformationType = 'shorter', options = {}) {
+    const {
+      temperature = 0.4,
+      maxTokens = 3000
+    } = options;
+
+    console.log(`🔄 Transforming script: ${transformationType}...`);
+
+    try {
+      const result = await this.callPythonGenerator('transform_script', {
+        original_script: originalScript,
+        transformation_type: transformationType,
+        temperature,
+        max_tokens: maxTokens
+      });
+
+      if (!result.success) {
+        throw new Error(result.error || 'Script transformation failed');
+      }
+
+      console.log(`✅ Script transformed: ${result.word_count} words (${transformationType}), $${result.cost.total_cost.toFixed(4)}`);
+
+      return {
+        success: true,
+        script: result.script,
+        transformationType: result.transformation_type,
+        model: result.model,
+        tokensGenerated: result.tokens.output,
+        wordCount: result.word_count,
+        originalWordCount: result.original_word_count,
+        metadata: {
+          tokens: result.tokens,
+          cost: result.cost,
+          generation_time: result.generation_time
+        }
+      };
+
+    } catch (error) {
+      console.error('❌ Script transformation failed:', error);
+      throw error;
     }
   }
 

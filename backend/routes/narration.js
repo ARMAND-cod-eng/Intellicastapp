@@ -300,13 +300,64 @@ router.post('/generate-script', async (req, res) => {
   try {
     const {
       documentContent,
-      narrationType = 'summary'
+      narrationType = 'summary',
+      stream = false
     } = req.body;
 
     if (!documentContent) {
       return res.status(400).json({ error: 'Document content is required' });
     }
 
+    // Handle streaming request
+    if (stream) {
+      res.setHeader('Content-Type', 'text/event-stream');
+      res.setHeader('Cache-Control', 'no-cache');
+      res.setHeader('Connection', 'keep-alive');
+
+      console.log(`📝 Generating ${narrationType} script (streaming)...`);
+
+      // Simulate streaming for now (real implementation would use Together AI streaming)
+      const analysis = await docProcessor.analyzeContent(documentContent);
+      const scriptResult = await togetherService.generateNarrationScript(
+        documentContent,
+        narrationType,
+        analysis
+      );
+
+      if (scriptResult.success) {
+        const words = scriptResult.response.split(' ');
+        const chunkSize = 5; // Send 5 words at a time
+
+        for (let i = 0; i < words.length; i += chunkSize) {
+          const chunk = words.slice(i, i + chunkSize).join(' ') + ' ';
+          const progress = Math.min(100, Math.floor((i / words.length) * 100));
+
+          res.write(`data: ${JSON.stringify({
+            chunk,
+            progress,
+            stage: progress < 30 ? 'Analyzing document...' :
+                   progress < 60 ? 'Generating script...' :
+                   progress < 90 ? 'Refining content...' : 'Finalizing...'
+          })}\n\n`);
+
+          // Small delay to simulate streaming
+          await new Promise(resolve => setTimeout(resolve, 100));
+        }
+
+        res.write(`data: ${JSON.stringify({
+          done: true,
+          fullScript: scriptResult.response,
+          analysis,
+          model: scriptResult.model,
+          tokensGenerated: scriptResult.tokensGenerated
+        })}\n\n`);
+      }
+
+      res.end();
+      return;
+    }
+
+    // Non-streaming (original implementation)
     console.log(`📝 Generating ${narrationType} script (no audio)...`);
 
     // Analyze the content
@@ -338,6 +389,220 @@ router.post('/generate-script', async (req, res) => {
     console.error('❌ Script generation error:', error);
     res.status(500).json({
       error: 'Script generation failed',
+      message: error.message
+    });
+  }
+});
+
+/**
+ * POST /api/narration/voice-preview
+ * Generate ultra-short voice preview (5-10 seconds, voice only)
+ */
+router.post('/voice-preview', async (req, res) => {
+  try {
+    const {
+      text,
+      voice = '829ccd10-f8b3-43cd-b8a0-4aeaa81f3b30',
+      podcastStyle = 'conversational'
+    } = req.body;
+
+    if (!text) {
+      return res.status(400).json({ error: 'Preview text is required' });
+    }
+
+    // Limit to 30 words maximum for short preview (~6-8 seconds)
+    const shortText = text.split(/\s+/).slice(0, 30).join(' ');
+
+    console.log(`🎧 Generating short voice preview (${shortText.split(/\s+/).length} words)...`);
+
+    // Generate ONLY voice audio (no music, no enhancements)
+    const audioResult = await ttsService.generateAudio(shortText, {
+      voice,
+      podcastStyle,
+      speed: 1.0,
+      outputFile: `voice_preview_${Date.now()}.wav`
+    });
+
+    if (!audioResult || !audioResult.success) {
+      throw new Error('Voice preview generation failed');
+    }
+
+    console.log(`✅ Voice preview generated: ${audioResult.fileName}`);
+
+    res.json({
+      success: true,
+      audioUrl: audioResult.audioUrl,
+      duration: Math.ceil(shortText.split(/\s+/).length / 2.5), // Estimate: ~2.5 words/sec
+      previewText: shortText
+    });
+
+  } catch (error) {
+    console.error('❌ Voice preview error:', error);
+    res.status(500).json({
+      error: 'Voice preview failed',
+      message: error.message
+    });
+  }
+});
+
+/**
+ * POST /api/narration/transform-script
+ * Transform narration script using AI (shorter, casual, formal)
+ */
+router.post('/transform-script', async (req, res) => {
+  try {
+    const {
+      originalScript,
+      transformationType = 'shorter', // 'shorter', 'casual', 'formal'
+      stream = false
+    } = req.body;
+
+    if (!originalScript) {
+      return res.status(400).json({ error: 'Original script is required' });
+    }
+
+    if (!['shorter', 'casual', 'formal'].includes(transformationType)) {
+      return res.status(400).json({ error: 'Invalid transformation type. Must be: shorter, casual, or formal' });
+    }
+
+    console.log(`🔄 Transforming script: ${transformationType} (${originalScript.split(/\s+/).length} words)`);
+
+    // If streaming is requested
+    if (stream) {
+      res.setHeader('Content-Type', 'text/event-stream');
+      res.setHeader('Cache-Control', 'no-cache');
+      res.setHeader('Connection', 'keep-alive');
+
+      try {
+        // Send initial status
+        res.write(`data: ${JSON.stringify({
+          stage: `Transforming to ${transformationType}...`,
+          progress: 10
+        })}\n\n`);
+
+        // Generate transformation
+        const result = await togetherService.transformScript(originalScript, transformationType);
+
+        if (!result.success) {
+          throw new Error(result.error || 'Transformation failed');
+        }
+
+        // Stream the transformed script word by word
+        const words = result.script.split(' ');
+        const chunkSize = 5;
+
+        for (let i = 0; i < words.length; i += chunkSize) {
+          const chunk = words.slice(i, i + chunkSize).join(' ') + ' ';
+          const progress = Math.min(100, Math.floor((i / words.length) * 100));
+
+          res.write(`data: ${JSON.stringify({
+            chunk,
+            progress,
+            stage: `Generating ${transformationType} version...`
+          })}\n\n`);
+
+          await new Promise(resolve => setTimeout(resolve, 100));
+        }
+
+        // Send completion
+        res.write(`data: ${JSON.stringify({
+          done: true,
+          fullScript: result.script,
+          transformationType: result.transformationType,
+          wordCount: result.wordCount,
+          originalWordCount: result.originalWordCount,
+          model: result.model,
+          metadata: result.metadata
+        })}\n\n`);
+
+        res.end();
+
+      } catch (error) {
+        res.write(`data: ${JSON.stringify({ error: error.message })}\n\n`);
+        res.end();
+      }
+
+    } else {
+      // Non-streaming response
+      const result = await togetherService.transformScript(originalScript, transformationType);
+
+      if (!result.success) {
+        throw new Error(result.error || 'Transformation failed');
+      }
+
+      res.json({
+        success: true,
+        script: result.script,
+        transformationType: result.transformationType,
+        wordCount: result.wordCount,
+        originalWordCount: result.originalWordCount,
+        model: result.model,
+        metadata: result.metadata
+      });
+    }
+
+  } catch (error) {
+    console.error('❌ Script transformation error:', error);
+    res.status(500).json({
+      error: 'Script transformation failed',
+      message: error.message
+    });
+  }
+});
+
+/**
+ * POST /api/narration/generate-preview
+ * Generate short audio preview with voice + music mix
+ */
+router.post('/generate-preview', async (req, res) => {
+  try {
+    const {
+      documentContent,
+      voice = '829ccd10-f8b3-43cd-b8a0-4aeaa81f3b30',
+      speed = 1.0,
+      backgroundMusic = false,
+      musicType = 'none',
+      musicVolume = 0.3,
+      podcastStyle = 'conversational'
+    } = req.body;
+
+    if (!documentContent) {
+      return res.status(400).json({ error: 'Document content is required' });
+    }
+
+    console.log(`🎧 Generating audio mix preview...`);
+
+    // Extract first 40 words for ~15 second preview
+    const previewText = documentContent.split(/\s+/).slice(0, 40).join(' ');
+    console.log(`📝 Preview text: ${previewText.split(/\s+/).length} words (~15 seconds)`);
+
+    // Generate preview audio
+    const audioResult = await ttsService.generateAudio(previewText, {
+      voice,
+      speed,
+      podcastStyle,
+      backgroundMusic: backgroundMusic ? musicType : null,
+      musicVolume,
+      preview: true // Flag for shorter processing
+    });
+
+    if (!audioResult || !audioResult.success) {
+      throw new Error('Preview audio generation failed');
+    }
+
+    console.log(`✅ Preview generated: ${audioResult.duration}s`);
+
+    res.json({
+      success: true,
+      audioUrl: audioResult.audioUrl,
+      duration: audioResult.duration,
+      previewText: previewText.slice(0, 200) + '...'
+    });
+
+  } catch (error) {
+    console.error('❌ Preview generation error:', error);
+    res.status(500).json({
+      error: 'Preview generation failed',
       message: error.message
     });
   }
