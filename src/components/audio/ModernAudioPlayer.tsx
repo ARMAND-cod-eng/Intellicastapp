@@ -14,7 +14,8 @@ import {
   Heart,
   Share2,
   Maximize2,
-  Minimize2
+  Minimize2,
+  Loader2
 } from 'lucide-react';
 import WaveformVisualizer from './WaveformVisualizer';
 import GlassCard from '../ui/GlassCard';
@@ -50,6 +51,11 @@ const ModernAudioPlayer: React.FC<ModernAudioPlayerProps> = ({
   const [isShuffle, setIsShuffle] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
   const [visualizerType, setVisualizerType] = useState<'bars' | 'wave' | 'spectrum'>('bars');
+  const [playbackRate, setPlaybackRate] = useState(1.0);
+  const [previousVolume, setPreviousVolume] = useState(0.8);
+  const [isDragging, setIsDragging] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const audioRef = useRef<HTMLAudioElement>(null);
   const progressRef = useRef<HTMLDivElement>(null);
 
@@ -69,9 +75,11 @@ const ModernAudioPlayer: React.FC<ModernAudioPlayerProps> = ({
       audio.src = audioUrl;
       audio.volume = volume;
       audio.muted = isMuted;
+      setIsLoading(true);
 
       const handleLoadedMetadata = () => {
         setDuration(audio.duration);
+        setIsLoading(false);
       };
 
       const handleTimeUpdate = () => {
@@ -92,35 +100,34 @@ const ModernAudioPlayer: React.FC<ModernAudioPlayerProps> = ({
       const handleError = (e: Event) => {
         console.error('Audio playback error:', e);
         setIsPlaying(false);
+        setIsLoading(false);
+      };
+
+      const handleWaiting = () => {
+        setIsLoading(true);
+      };
+
+      const handleCanPlay = () => {
+        setIsLoading(false);
       };
 
       audio.addEventListener('loadedmetadata', handleLoadedMetadata);
       audio.addEventListener('timeupdate', handleTimeUpdate);
       audio.addEventListener('ended', handleEnded);
       audio.addEventListener('error', handleError);
+      audio.addEventListener('waiting', handleWaiting);
+      audio.addEventListener('canplay', handleCanPlay);
 
       return () => {
         audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
         audio.removeEventListener('timeupdate', handleTimeUpdate);
         audio.removeEventListener('ended', handleEnded);
         audio.removeEventListener('error', handleError);
+        audio.removeEventListener('waiting', handleWaiting);
+        audio.removeEventListener('canplay', handleCanPlay);
       };
     }
   }, [audioUrl, volume, isMuted, isRepeat]);
-
-  // Update audio playback state
-  useEffect(() => {
-    if (audioRef.current) {
-      if (isPlaying) {
-        audioRef.current.play().catch(error => {
-          console.error('Failed to play audio:', error);
-          setIsPlaying(false);
-        });
-      } else {
-        audioRef.current.pause();
-      }
-    }
-  }, [isPlaying]);
 
   const formatTime = (time: number) => {
     const minutes = Math.floor(time / 60);
@@ -128,9 +135,22 @@ const ModernAudioPlayer: React.FC<ModernAudioPlayerProps> = ({
     return `${minutes}:${seconds.toString().padStart(2, '0')}`;
   };
 
-  const handlePlayPause = () => {
-    if (!audioUrl) return;
-    setIsPlaying(!isPlaying);
+  const handlePlayPause = async () => {
+    if (!audioRef.current || !audioUrl) return;
+
+    try {
+      if (isPlaying) {
+        audioRef.current.pause();
+        setIsPlaying(false);
+      } else {
+        await audioRef.current.play();
+        setIsPlaying(true);
+      }
+    } catch (error) {
+      console.error('Playback error:', error);
+      setIsPlaying(false);
+      // Could add toast notification here
+    }
   };
 
   const handleSeek = (time: number) => {
@@ -150,10 +170,36 @@ const ModernAudioPlayer: React.FC<ModernAudioPlayerProps> = ({
   };
 
   const toggleMute = () => {
-    setIsMuted(!isMuted);
-    if (audioRef.current) {
-      audioRef.current.muted = !isMuted;
+    if (isMuted) {
+      setVolume(previousVolume);
+      setIsMuted(false);
+      if (audioRef.current) {
+        audioRef.current.muted = false;
+        audioRef.current.volume = previousVolume;
+      }
+    } else {
+      setPreviousVolume(volume);
+      setVolume(0);
+      setIsMuted(true);
+      if (audioRef.current) {
+        audioRef.current.muted = true;
+      }
     }
+  };
+
+  const handleSpeedChange = (speed: number) => {
+    setPlaybackRate(speed);
+    if (audioRef.current) {
+      audioRef.current.playbackRate = speed;
+    }
+  };
+
+  const skipForward = () => {
+    handleSeek(Math.min(duration, currentTime + 10));
+  };
+
+  const skipBackward = () => {
+    handleSeek(Math.max(0, currentTime - 10));
   };
 
   const handleProgressClick = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -163,6 +209,84 @@ const ModernAudioPlayer: React.FC<ModernAudioPlayerProps> = ({
     const time = progress * duration;
     handleSeek(Math.max(0, Math.min(duration, time)));
   };
+
+  const handleMouseDown = () => {
+    setIsDragging(true);
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  const handleMouseMove = (e: MouseEvent) => {
+    if (!isDragging || !progressRef.current) return;
+    const rect = progressRef.current.getBoundingClientRect();
+    const progress = (e.clientX - rect.left) / rect.width;
+    const time = progress * duration;
+    handleSeek(Math.max(0, Math.min(duration, time)));
+  };
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      // Ignore if user is typing in an input field
+      if ((e.target as HTMLElement).tagName === 'INPUT' || (e.target as HTMLElement).tagName === 'TEXTAREA') {
+        return;
+      }
+
+      switch (e.code) {
+        case 'Space':
+          e.preventDefault();
+          handlePlayPause();
+          break;
+        case 'ArrowLeft':
+          e.preventDefault();
+          skipBackward();
+          break;
+        case 'ArrowRight':
+          e.preventDefault();
+          skipForward();
+          break;
+        case 'KeyM':
+          e.preventDefault();
+          toggleMute();
+          break;
+        case 'ArrowUp':
+          e.preventDefault();
+          setVolume(prev => Math.min(1, prev + 0.1));
+          break;
+        case 'ArrowDown':
+          e.preventDefault();
+          setVolume(prev => Math.max(0, prev - 0.1));
+          break;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [isPlaying, currentTime, duration, volume]);
+
+  // Detect mobile device
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  // Dragging listeners
+  useEffect(() => {
+    if (isDragging) {
+      window.addEventListener('mousemove', handleMouseMove);
+      window.addEventListener('mouseup', handleMouseUp);
+      return () => {
+        window.removeEventListener('mousemove', handleMouseMove);
+        window.removeEventListener('mouseup', handleMouseUp);
+      };
+    }
+  }, [isDragging, duration]);
 
   if (isMinimized) {
     return (
@@ -240,6 +364,8 @@ const ModernAudioPlayer: React.FC<ModernAudioPlayerProps> = ({
         animate={{ y: 0, opacity: 1 }}
         exit={{ y: 100, opacity: 0 }}
         className="fixed bottom-0 left-0 right-0 z-50"
+        role="region"
+        aria-label="Audio player"
       >
         <div className="rounded-t-3xl rounded-b-none border-b-0 backdrop-blur-3xl relative overflow-hidden">
           {/* Background gradient */}
@@ -298,17 +424,17 @@ const ModernAudioPlayer: React.FC<ModernAudioPlayerProps> = ({
             </div>
 
             {/* Track Info & Artwork */}
-            <div className="flex items-start space-x-6 mb-6">
+            <div className={`flex items-start ${isMobile ? 'flex-col' : 'space-x-6'} mb-6`}>
               <motion.div
                 initial={{ scale: 0.8, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 transition={{ delay: 0.2 }}
-                className="relative"
+                className={`relative ${isMobile ? 'w-full mb-4' : ''}`}
               >
-                <img 
-                  src={currentTrack.artwork} 
-                  alt="Artwork" 
-                  className="w-24 h-24 rounded-2xl object-cover shadow-2xl"
+                <img
+                  src={currentTrack.artwork}
+                  alt="Artwork"
+                  className={`${isMobile ? 'w-full aspect-square' : 'w-24 h-24'} rounded-2xl object-cover shadow-2xl`}
                 />
                 {isPlaying && (
                   <motion.div
@@ -357,6 +483,8 @@ const ModernAudioPlayer: React.FC<ModernAudioPlayerProps> = ({
                     onMouseLeave={(e) => {
                       if (!isLiked) e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.05)';
                     }}
+                    aria-label={isLiked ? 'Unlike this track' : 'Like this track'}
+                    aria-pressed={isLiked}
                   >
                     <Heart size={16} fill={isLiked ? 'currentColor' : 'none'} />
                   </button>
@@ -369,11 +497,14 @@ const ModernAudioPlayer: React.FC<ModernAudioPlayerProps> = ({
                     }}
                     onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(0, 212, 228, 0.1)'}
                     onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.05)'}
+                    aria-label="Share this track"
                   >
                     <Share2 size={16} />
                   </button>
 
-                  <button
+                  <a
+                    href={audioUrl}
+                    download={`${currentTrack.title}.mp3`}
                     className="w-8 h-8 p-0 rounded-full flex items-center justify-center transition-all"
                     style={{
                       backgroundColor: 'rgba(255, 255, 255, 0.05)',
@@ -381,12 +512,42 @@ const ModernAudioPlayer: React.FC<ModernAudioPlayerProps> = ({
                     }}
                     onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(0, 212, 228, 0.1)'}
                     onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.05)'}
+                    title="Download audio"
                   >
                     <Download size={16} />
-                  </button>
+                  </a>
                 </div>
               </motion.div>
             </div>
+
+            {/* Playback Speed & Waveform Controls */}
+            <motion.div
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.35 }}
+              className={`mb-3 flex items-center ${isMobile ? 'flex-col space-y-3' : 'justify-between'}`}
+            >
+              <div className="flex items-center space-x-2">
+                <span className="text-sm" style={{color: 'rgba(255, 255, 255, 0.7)'}}>Speed:</span>
+                <div className="flex space-x-1 flex-wrap">
+                  {[0.5, 0.75, 1.0, 1.25, 1.5, 2.0].map((speed) => (
+                    <button
+                      key={speed}
+                      onClick={() => handleSpeedChange(speed)}
+                      className="px-2 py-1 text-xs rounded-lg transition-all"
+                      style={{
+                        backgroundColor: playbackRate === speed ? '#00D4E4' : 'rgba(255, 255, 255, 0.05)',
+                        color: playbackRate === speed ? '#000000' : '#FFFFFF'
+                      }}
+                      title={`Playback speed: ${speed}x`}
+                      aria-label={`Set playback speed to ${speed}x`}
+                    >
+                      {speed}x
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </motion.div>
 
             {/* Waveform Visualizer */}
             <motion.div
@@ -446,6 +607,14 @@ const ModernAudioPlayer: React.FC<ModernAudioPlayerProps> = ({
                   backgroundColor: 'rgba(255, 255, 255, 0.1)'
                 }}
                 onClick={handleProgressClick}
+                onMouseDown={handleMouseDown}
+                role="slider"
+                aria-label="Audio progress"
+                aria-valuemin={0}
+                aria-valuemax={duration}
+                aria-valuenow={currentTime}
+                aria-valuetext={`${formatTime(currentTime)} of ${formatTime(duration)}`}
+                tabIndex={0}
               >
                 <motion.div
                   className="absolute left-0 top-0 h-full rounded-full"
@@ -485,6 +654,8 @@ const ModernAudioPlayer: React.FC<ModernAudioPlayerProps> = ({
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.6 }}
+              role="group"
+              aria-label="Playback controls"
             >
               {/* Left controls */}
               <div className="flex items-center space-x-3">
@@ -501,11 +672,14 @@ const ModernAudioPlayer: React.FC<ModernAudioPlayerProps> = ({
                   onMouseLeave={(e) => {
                     if (!isShuffle) e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.05)';
                   }}
+                  aria-label={isShuffle ? 'Disable shuffle' : 'Enable shuffle'}
+                  aria-pressed={isShuffle}
                 >
                   <Shuffle size={18} />
                 </button>
 
                 <button
+                  onClick={skipBackward}
                   className="w-10 h-10 p-0 rounded-full flex items-center justify-center transition-all"
                   style={{
                     backgroundColor: 'rgba(255, 255, 255, 0.05)',
@@ -513,6 +687,8 @@ const ModernAudioPlayer: React.FC<ModernAudioPlayerProps> = ({
                   }}
                   onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(0, 212, 228, 0.1)'}
                   onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.05)'}
+                  title="Skip back 10s (←)"
+                  aria-label="Skip backward 10 seconds"
                 >
                   <SkipBack size={20} />
                 </button>
@@ -527,13 +703,22 @@ const ModernAudioPlayer: React.FC<ModernAudioPlayerProps> = ({
                   color: '#000000',
                   boxShadow: isPlaying ? '0 0 30px rgba(0, 212, 228, 0.5)' : '0 10px 30px rgba(0, 0, 0, 0.3)'
                 }}
+                aria-label={isLoading ? 'Loading audio' : (isPlaying ? 'Pause' : 'Play')}
+                disabled={isLoading}
               >
-                {isPlaying ? <Pause size={24} /> : <Play size={24} className="ml-1" />}
+                {isLoading ? (
+                  <Loader2 size={24} className="animate-spin" />
+                ) : isPlaying ? (
+                  <Pause size={24} />
+                ) : (
+                  <Play size={24} className="ml-1" />
+                )}
               </button>
 
               {/* Right controls */}
               <div className="flex items-center space-x-3">
                 <button
+                  onClick={skipForward}
                   className="w-10 h-10 p-0 rounded-full flex items-center justify-center transition-all"
                   style={{
                     backgroundColor: 'rgba(255, 255, 255, 0.05)',
@@ -541,6 +726,8 @@ const ModernAudioPlayer: React.FC<ModernAudioPlayerProps> = ({
                   }}
                   onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(0, 212, 228, 0.1)'}
                   onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.05)'}
+                  title="Skip forward 10s (→)"
+                  aria-label="Skip forward 10 seconds"
                 >
                   <SkipForward size={20} />
                 </button>
@@ -558,6 +745,8 @@ const ModernAudioPlayer: React.FC<ModernAudioPlayerProps> = ({
                   onMouseLeave={(e) => {
                     if (!isRepeat) e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.05)';
                   }}
+                  aria-label={isRepeat ? 'Disable repeat' : 'Enable repeat'}
+                  aria-pressed={isRepeat}
                 >
                   <Repeat size={18} />
                 </button>
@@ -580,6 +769,7 @@ const ModernAudioPlayer: React.FC<ModernAudioPlayerProps> = ({
                 }}
                 onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(0, 212, 228, 0.1)'}
                 onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.05)'}
+                aria-label={isMuted || volume === 0 ? 'Unmute' : 'Mute'}
               >
                 {isMuted || volume === 0 ? <VolumeX size={18} /> : <Volume2 size={18} />}
               </button>
@@ -597,6 +787,11 @@ const ModernAudioPlayer: React.FC<ModernAudioPlayerProps> = ({
                     backgroundColor: 'rgba(255, 255, 255, 0.1)',
                     accentColor: '#00D4E4'
                   }}
+                  aria-label="Volume control"
+                  aria-valuemin={0}
+                  aria-valuemax={1}
+                  aria-valuenow={isMuted ? 0 : volume}
+                  aria-valuetext={`Volume ${Math.round((isMuted ? 0 : volume) * 100)}%`}
                 />
               </div>
 
