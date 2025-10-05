@@ -465,7 +465,7 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
                     <span className="text-xs text-gray-400">{Math.ceil(wordCount / 150)} min read</span>
                   </div>
 
-                  <div className="relative max-h-40 overflow-y-auto custom-scrollbar">
+                  <div id="document-text-display" className="relative max-h-40 overflow-y-auto custom-scrollbar">
                     <p className="text-sm text-gray-300 leading-relaxed">
                       {backendProcessedContent.slice(0, 500)}
                       {backendProcessedContent.length > 500 && '...'}
@@ -1054,6 +1054,41 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
                 documentContent={backendProcessedContent}
                 documentTitle={getDocumentTitle()}
                 documentSummary={documentSummary}
+                onHighlightText={(position) => {
+                  // Find document viewer and scroll to highlighted text
+                  const viewerElement = document.getElementById('document-text-display');
+                  if (viewerElement) {
+                    // Scroll to approximate position
+                    const scrollPercentage = position / backendProcessedContent.length;
+                    const scrollPosition = viewerElement.scrollHeight * scrollPercentage;
+
+                    viewerElement.scrollTo({
+                      top: Math.max(0, scrollPosition - 100),
+                      behavior: 'smooth'
+                    });
+
+                    // Flash highlight effect
+                    const highlightOverlay = document.createElement('div');
+                    highlightOverlay.style.position = 'absolute';
+                    highlightOverlay.style.left = '0';
+                    highlightOverlay.style.right = '0';
+                    highlightOverlay.style.height = '100px';
+                    highlightOverlay.style.top = `${scrollPosition}px`;
+                    highlightOverlay.style.background = 'linear-gradient(90deg, rgba(0,212,228,0.3), rgba(0,232,250,0.3))';
+                    highlightOverlay.style.pointerEvents = 'none';
+                    highlightOverlay.style.transition = 'opacity 0.5s';
+                    highlightOverlay.style.zIndex = '10';
+
+                    viewerElement.style.position = 'relative';
+                    viewerElement.appendChild(highlightOverlay);
+
+                    // Fade out and remove
+                    setTimeout(() => {
+                      highlightOverlay.style.opacity = '0';
+                      setTimeout(() => highlightOverlay.remove(), 500);
+                    }, 2000);
+                  }
+                }}
               />
             </div>
           )}

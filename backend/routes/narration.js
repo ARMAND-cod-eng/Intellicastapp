@@ -290,8 +290,8 @@ router.post('/ask-question', async (req, res) => {
     const { documentContent, question } = req.body;
 
     if (!documentContent || !question) {
-      return res.status(400).json({ 
-        error: 'Document content and question are required' 
+      return res.status(400).json({
+        error: 'Document content and question are required'
       });
     }
 
@@ -315,9 +315,56 @@ router.post('/ask-question', async (req, res) => {
 
   } catch (error) {
     console.error('❌ Question answering error:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Question answering failed',
-      message: error.message 
+      message: error.message
+    });
+  }
+});
+
+/**
+ * POST /api/narration/chat
+ * Advanced chat with citations and conversation context
+ */
+router.post('/chat', async (req, res) => {
+  try {
+    const { documentContent, question, conversationHistory = [] } = req.body;
+
+    if (!documentContent || !question) {
+      return res.status(400).json({
+        error: 'Document content and question are required'
+      });
+    }
+
+    console.log(`💬 Chat question with context: ${question.slice(0, 50)}...`);
+
+    // Use Together AI with citations and conversation context
+    const chatResult = await togetherService.answerQuestionWithCitations(
+      documentContent,
+      question,
+      conversationHistory
+    );
+
+    if (!chatResult.success) {
+      throw new Error('Failed to generate chat response');
+    }
+
+    res.json({
+      success: true,
+      question,
+      answer: chatResult.answer,
+      citations: chatResult.citations,
+      model: chatResult.model,
+      tokens: chatResult.tokens,
+      cost: chatResult.cost,
+      timestamp: new Date().toISOString()
+    });
+
+  } catch (error) {
+    console.error('❌ Chat error:', error);
+    res.status(500).json({
+      error: 'Chat failed',
+      message: error.message
     });
   }
 });

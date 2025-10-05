@@ -303,6 +303,144 @@ Requirements:
                 'answer': None
             }
 
+    def answer_question_with_citations(
+        self,
+        content: str,
+        question: str,
+        conversation_history: list = None,
+        temperature: float = 0.5,
+        max_tokens: int = 1000
+    ) -> Dict:
+        """
+        Answer questions with citations and conversation context
+
+        Args:
+            content: Document content
+            question: User's question
+            conversation_history: Previous Q&A pairs for context
+            temperature: Response creativity
+            max_tokens: Maximum answer length
+
+        Returns:
+            Dictionary with answer, citations, and metadata
+        """
+
+        # Build conversation context
+        context_text = ""
+        if conversation_history:
+            context_text = "\n\nPrevious conversation:\n"
+            for i, msg in enumerate(conversation_history[-6:]):  # Last 3 exchanges
+                if msg['role'] == 'user':
+                    context_text += f"Q: {msg['content']}\n"
+                else:
+                    context_text += f"A: {msg['content']}\n"
+
+        system_prompt = """You are an expert document analyst with deep comprehension abilities. Answer questions about the document with precision and provide relevant citations.
+
+Requirements:
+- Provide accurate, well-reasoned answers based strictly on the document content
+- Reference specific passages that support your answer
+- Use clear, conversational language suitable for chat
+- If the answer isn't explicitly in the document, say so honestly
+- Consider the conversation history to provide contextual answers
+- Format your response as: [Your answer]
+
+Then on new lines, list citations as:
+CITATION: [exact quote from document]"""
+
+        print(f"\n[QUESTION+CITATIONS] Answering with citations and context")
+
+        try:
+            response = self.client.chat.completions.create(
+                model=self.model,
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": f"Document:\n{content}\n{context_text}\n\nCurrent Question: {question}"}
+                ],
+                temperature=temperature,
+                max_tokens=max_tokens,
+                stream=False
+            )
+
+            full_response = response.choices[0].message.content.strip()
+
+            # Parse answer and citations
+            parts = full_response.split('CITATION:')
+            answer = parts[0].strip()
+
+            citations = []
+            for i, citation_text in enumerate(parts[1:]):
+                citation_text = citation_text.strip()
+                # Find position in original content
+                position = content.find(citation_text)
+                if position == -1:
+                    # Try to find a partial match
+                    words = citation_text.split()[:10]  # First 10 words
+                    partial = ' '.join(words)
+                    position = content.find(partial)
+
+                if position != -1:
+                    citations.append({
+                        'text': citation_text,
+                        'position': position,
+                        'id': f'citation_{i}'
+                    })
+
+            # If no explicit citations found, try to extract relevant sentences
+            if not citations:
+                import re
+                sentences = re.split(r'[.!?]+', content)
+                question_keywords = set(question.lower().split()) - {'what', 'how', 'why', 'when', 'where', 'who', 'is', 'the', 'a', 'an', 'in', 'on', 'at'}
+
+                for sentence in sentences:
+                    if any(keyword in sentence.lower() for keyword in question_keywords):
+                        sentence = sentence.strip()
+                        if len(sentence) > 20:
+                            position = content.find(sentence)
+                            if position != -1:
+                                citations.append({
+                                    'text': sentence,
+                                    'position': position,
+                                    'id': f'citation_{len(citations)}'
+                                })
+                                if len(citations) >= 2:  # Limit to 2 auto-citations
+                                    break
+
+            # Calculate cost
+            input_tokens = response.usage.prompt_tokens
+            output_tokens = response.usage.completion_tokens
+            cost = {
+                'input_cost': (input_tokens / 1_000_000) * self.input_price_per_million,
+                'output_cost': (output_tokens / 1_000_000) * self.output_price_per_million
+            }
+            cost['total_cost'] = cost['input_cost'] + cost['output_cost']
+
+            print(f"[SUCCESS] Answer with {len(citations)} citations generated")
+            print(f"[COST] Cost: ${cost['total_cost']:.4f}")
+
+            return {
+                'success': True,
+                'answer': answer,
+                'citations': citations,
+                'question': question,
+                'model': self.model,
+                'tokens': {
+                    'input': input_tokens,
+                    'output': output_tokens,
+                    'total': input_tokens + output_tokens
+                },
+                'cost': cost
+            }
+
+        except Exception as e:
+            print(f"[ERROR] Question answering failed: {str(e)}")
+            return {
+                'success': False,
+                'error': str(e),
+                'answer': None,
+                'citations': []
+            }
+
     def _clean_summary(self, text: str) -> str:
         """Clean up summary text"""
         import re

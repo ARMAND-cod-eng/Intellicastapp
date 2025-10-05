@@ -58,6 +58,14 @@ elif '${method}' == 'answer_question':
         data.get('temperature', 0.5),
         data.get('max_tokens', 1000)
     )
+elif '${method}' == 'answer_question_with_citations':
+    result = generator.answer_question_with_citations(
+        data['content'],
+        data['question'],
+        data.get('conversation_history', []),
+        data.get('temperature', 0.5),
+        data.get('max_tokens', 1000)
+    )
 else:
     result = {'success': False, 'error': 'Unknown method'}
 
@@ -230,6 +238,42 @@ print(json.dumps(result))
 
     } catch (error) {
       console.error('❌ Question answering failed:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Answer question with citations and conversation context
+   */
+  async answerQuestionWithCitations(content, question, conversationHistory = [], context = {}) {
+    console.log(`❓ Answering with citations: ${question.slice(0, 50)}...`);
+
+    try {
+      const result = await this.callPythonGenerator('answer_question_with_citations', {
+        content,
+        question,
+        conversation_history: conversationHistory,
+        temperature: 0.5,
+        max_tokens: 1000
+      });
+
+      if (!result.success) {
+        throw new Error(result.error || 'Question answering with citations failed');
+      }
+
+      console.log(`✅ Answer generated with ${result.citations?.length || 0} citations`);
+
+      return {
+        success: true,
+        answer: result.answer,
+        citations: result.citations || [],
+        model: result.model,
+        tokens: result.tokens,
+        cost: result.cost
+      };
+
+    } catch (error) {
+      console.error('❌ Question answering with citations failed:', error);
       throw error;
     }
   }
