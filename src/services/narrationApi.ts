@@ -40,7 +40,37 @@ export interface AskQuestionResponse {
   audioUrl: string | null;
 }
 
+export interface GenerateScriptResponse {
+  success: boolean;
+  script: string;
+  analysis: DocumentAnalysis;
+  model: string;
+  tokensGenerated: number;
+  metadata: any;
+}
+
 export class NarrationAPI {
+  static async generateScript(
+    documentContent: string,
+    narrationType: string = 'summary'
+  ): Promise<GenerateScriptResponse> {
+    const response = await fetch(`${API_BASE_URL}/narration/generate-script`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        documentContent,
+        narrationType
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to generate script: ${response.statusText}`);
+    }
+
+    return await response.json();
+  }
   static async generateDocumentSummary(
     documentContent: string,
     summaryType: 'quick' | 'detailed' = 'detailed'
@@ -102,15 +132,11 @@ export class NarrationAPI {
     backgroundMusic: boolean = false,
     musicType: string = 'none',
     podcastStyle: string = 'conversational',
-    voiceSettings?: {
-      exaggeration?: number;
-      temperature?: number;
-      cfg_weight?: number;
-      min_p?: number;
-      top_p?: number;
-      repetition_penalty?: number;
-      seed?: number;
-      reference_audio?: File | null;
+    audioEnhancements?: {
+      musicVolume?: number;
+      addIntroOutro?: boolean;
+      pauseAtPunctuation?: boolean;
+      pauseDuration?: number;
     }
   ): Promise<GenerateNarrationResponse> {
     const response = await fetch(`${API_BASE_URL}/narration/generate`, {
@@ -126,15 +152,11 @@ export class NarrationAPI {
         backgroundMusic,
         musicType,
         podcastStyle,
-        ...(voiceSettings && {
-          exaggeration: voiceSettings.exaggeration,
-          temperature: voiceSettings.temperature,
-          cfg_weight: voiceSettings.cfg_weight,
-          min_p: voiceSettings.min_p,
-          top_p: voiceSettings.top_p,
-          repetition_penalty: voiceSettings.repetition_penalty,
-          seed: voiceSettings.seed,
-          // Note: reference_audio file upload would need FormData, handling separately
+        ...(audioEnhancements && {
+          musicVolume: audioEnhancements.musicVolume,
+          addIntroOutro: audioEnhancements.addIntroOutro,
+          pauseAtPunctuation: audioEnhancements.pauseAtPunctuation,
+          pauseDuration: audioEnhancements.pauseDuration
         }),
       }),
     });

@@ -117,7 +117,12 @@ router.post('/generate', async (req, res) => {
       podcastStyle = 'conversational',
       speed = 1.0,
       backgroundMusic = false,
-      musicType = 'none'
+      musicType = 'none',
+      // Audio enhancement options
+      musicVolume = 0.3,
+      addIntroOutro = false,
+      pauseAtPunctuation = false,
+      pauseDuration = 0.3
     } = req.body;
 
     if (!documentContent) {
@@ -187,7 +192,13 @@ router.post('/generate', async (req, res) => {
       audioResult = await ttsService.generateAudio(scriptResult.response, {
         voice: voice,
         podcastStyle: podcastStyle,
-        speed
+        speed,
+        // Audio enhancements
+        backgroundMusic: backgroundMusic ? musicType : null,
+        musicVolume,
+        addIntroOutro,
+        pauseAtPunctuation,
+        pauseDuration
       });
     } catch (audioError) {
       console.error('❌ TTS generation failed:', audioError.message);
@@ -277,6 +288,57 @@ router.post('/generate', async (req, res) => {
     res.status(500).json({ 
       error: 'Narration generation failed',
       message: error.message 
+    });
+  }
+});
+
+/**
+ * POST /api/narration/generate-script
+ * Generate narration script only (without TTS)
+ */
+router.post('/generate-script', async (req, res) => {
+  try {
+    const {
+      documentContent,
+      narrationType = 'summary'
+    } = req.body;
+
+    if (!documentContent) {
+      return res.status(400).json({ error: 'Document content is required' });
+    }
+
+    console.log(`📝 Generating ${narrationType} script (no audio)...`);
+
+    // Analyze the content
+    const analysis = await docProcessor.analyzeContent(documentContent);
+
+    // Generate narration script using Together AI
+    const scriptResult = await togetherService.generateNarrationScript(
+      documentContent,
+      narrationType,
+      analysis
+    );
+
+    if (!scriptResult.success) {
+      throw new Error('Failed to generate narration script');
+    }
+
+    console.log(`✅ Script generated: ${scriptResult.response.length} chars`);
+
+    res.json({
+      success: true,
+      script: scriptResult.response,
+      analysis,
+      model: scriptResult.model,
+      tokensGenerated: scriptResult.tokensGenerated,
+      metadata: scriptResult.metadata
+    });
+
+  } catch (error) {
+    console.error('❌ Script generation error:', error);
+    res.status(500).json({
+      error: 'Script generation failed',
+      message: error.message
     });
   }
 });
