@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { X, FileText, ArrowRight, ArrowLeft, Sparkles, History, Minimize2, Maximize2 } from 'lucide-react';
+import { X, FileText, ArrowRight, ArrowLeft, Sparkles, History, Minimize2, Maximize2, MessageCircle } from 'lucide-react';
 import type { DocumentContent } from '../../types/document';
 import { NarrationAPI } from '../../services/narrationApi';
 import WizardNavigation from '../ui/WizardNavigation';
@@ -14,6 +14,7 @@ import type { PresetConfig, HistoryItem } from '../../types/narration';
 import GlassCard from '../ui/GlassCard';
 import { narrationPresets, getRecommendedPreset } from '../../config/narrationPresets';
 import { getAudioUrl } from '../../config/api';
+import DocumentChatPanel from '../document/DocumentChatPanel';
 
 interface SingleVoiceNarrationPanelProps {
   isOpen: boolean;
@@ -81,6 +82,9 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
   // History State
   const [generationHistory, setGenerationHistory] = useState<HistoryItem[]>([]);
   const [showHistory, setShowHistory] = useState(false);
+
+  // Document Chat State
+  const [showDocumentChat, setShowDocumentChat] = useState(false);
 
   // Toast notifications
   const toast = useToast();
@@ -186,6 +190,7 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
         setCustomSpeed(recommended.speed); // Initialize speed from preset
 
         toast.success('Document processed!', `${response.document.analysis.wordCount} words analyzed`);
+        setShowDocumentChat(true); // Auto-open document chat
         setCurrentStep(2); // Auto-advance to preset selection
       }
     } catch (error) {
@@ -1042,6 +1047,17 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
         <div className="flex-1 bg-black/30 backdrop-blur-sm" onClick={onClose} />
 
         <div className={`${isExpanded ? 'w-3/4' : 'w-1/2'} bg-black border-l border-[#00D4E4]/30 shadow-2xl flex transition-all duration-300`}>
+          {/* Document Chat Panel (Left Side) */}
+          {showDocumentChat && backendProcessedContent && (
+            <div className="w-96 border-r border-gray-700">
+              <DocumentChatPanel
+                documentContent={backendProcessedContent}
+                documentTitle={getDocumentTitle()}
+                documentSummary={documentSummary}
+              />
+            </div>
+          )}
+
           {/* History Sidebar */}
           {showHistory && (
             <div className="w-80 border-r border-gray-700 bg-gray-900">
@@ -1084,6 +1100,19 @@ const SingleVoiceNarrationPanel: React.FC<SingleVoiceNarrationPanelProps> = ({
             <div className="p-6 border-b border-gray-700 flex items-center justify-between">
               <h1 className="text-2xl font-bold text-white">Single Voice Narration</h1>
               <div className="flex items-center space-x-2">
+                {backendProcessedContent && (
+                  <button
+                    onClick={() => setShowDocumentChat(!showDocumentChat)}
+                    className={`p-2 rounded-lg transition-colors ${
+                      showDocumentChat
+                        ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                        : 'bg-gray-800 hover:bg-gray-700 text-white'
+                    }`}
+                    title="Toggle Document Chat"
+                  >
+                    <MessageCircle className="w-5 h-5" />
+                  </button>
+                )}
                 <button
                   onClick={() => setShowHistory(!showHistory)}
                   className="p-2 rounded-lg bg-gray-800 hover:bg-gray-700 text-white transition-colors"
