@@ -259,25 +259,65 @@ const AIContentDiscoveryPanel: React.FC<AIContentDiscoveryPanelProps> = ({
     }
 
     const topicsToQueue = trendingTopics.filter(t => selectedTopics.has(t.id));
+    const history = ContentDiscoveryStorage.getHistory();
+
+    let reusedCount = 0;
+    let newCount = 0;
 
     for (const topic of topicsToQueue) {
       if (!topic.content) continue;
 
-      const queueItem = ContentDiscoveryStorage.addToQueue({
-        id: `queue_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-        topicId: topic.id,
-        topicTitle: topic.title,
-        documentContent: topic.content,
-        hostVoice: selectedHostVoice,
-        guestVoice: selectedGuestVoice,
-        status: 'pending',
-        progress: 0
-      });
+      // Check if this topic already exists in history with matching voice settings
+      const existingGeneration = history.find(h =>
+        h.topicId === topic.id &&
+        h.hostVoice === selectedHostVoice &&
+        h.guestVoice === selectedGuestVoice
+      );
 
-      setGenerationQueue(prev => [...prev, queueItem]);
+      if (existingGeneration) {
+        // Reuse already-generated audio
+        const queueItem = ContentDiscoveryStorage.addToQueue({
+          id: `queue_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          topicId: topic.id,
+          topicTitle: topic.title,
+          documentContent: topic.content,
+          hostVoice: selectedHostVoice,
+          guestVoice: selectedGuestVoice,
+          status: 'completed',
+          progress: 100,
+          result: {
+            audioUrl: existingGeneration.audioUrl,
+            filename: existingGeneration.audioUrl.split('/').pop()
+          }
+        });
+
+        setGenerationQueue(prev => [...prev, queueItem]);
+        reusedCount++;
+      } else {
+        // Add as pending for generation
+        const queueItem = ContentDiscoveryStorage.addToQueue({
+          id: `queue_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          topicId: topic.id,
+          topicTitle: topic.title,
+          documentContent: topic.content,
+          hostVoice: selectedHostVoice,
+          guestVoice: selectedGuestVoice,
+          status: 'pending',
+          progress: 0
+        });
+
+        setGenerationQueue(prev => [...prev, queueItem]);
+        newCount++;
+      }
     }
 
-    toast.success('Added to queue', `${topicsToQueue.length} topic(s) queued`);
+    const message = reusedCount > 0 && newCount > 0
+      ? `${reusedCount} reused, ${newCount} pending`
+      : reusedCount > 0
+      ? `${reusedCount} audio(s) reused`
+      : `${newCount} topic(s) queued`;
+
+    toast.success('Added to queue', message);
     setSelectedTopics(new Set());
     setShowQueue(true);
   };
