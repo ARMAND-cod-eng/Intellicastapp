@@ -1,12 +1,18 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { X, Users, Minimize2, ChevronDown, Settings, Sparkles, FileText, Upload, Play, Download, Mic, Maximize2 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { useDropzone } from 'react-dropzone';
-import GlassCard from '../ui/GlassCard';
-import { NarrationAPI } from '../../services/narrationApi';
-import { useTheme } from '../../contexts/ThemeContext';
-import { getPodcastDownloadUrl } from '../../config/api';
+import { X, FileText, ArrowRight, ArrowLeft, Sparkles, History, Minimize2, Maximize2, Users, Settings, Play, Download, Mic, Trash2, Save } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import type { DocumentContent } from '../../types/document';
+import { NarrationAPI } from '../../services/narrationApi';
+import WizardNavigation from '../ui/WizardNavigation';
+import VoicePreview from '../voice/VoicePreview';
+import EstimationPanel from '../ui/EstimationPanel';
+import { ToastContainer, useToast } from '../ui/ToastNotification';
+import GenerationHistory from '../ui/GenerationHistory';
+import ModernAudioPlayer from '../audio/ModernAudioPlayer';
+import GlassCard from '../ui/GlassCard';
+import { getPodcastDownloadUrl } from '../../config/api';
+import { PresetStorage, type CustomPreset } from '../../services/presetStorage';
 
 interface MultiVoiceConversationPanelProps {
   isOpen: boolean;
@@ -17,6 +23,24 @@ interface MultiVoiceConversationPanelProps {
   isMinimized?: boolean;
 }
 
+interface HistoryItem {
+  id: string;
+  title: string;
+  voiceName: string;
+  duration: string;
+  createdAt: Date;
+  audioUrl: string;
+  presetName: string;
+}
+
+const wizardSteps = [
+  { id: 1, title: 'Upload', description: 'Add your document' },
+  { id: 2, title: 'Analyze', description: 'AI content analysis' },
+  { id: 3, title: 'Choose Style', description: 'Select conversation type' },
+  { id: 4, title: 'Configure Voices', description: 'Customize speakers' },
+  { id: 5, title: 'Generate', description: 'Create podcast' }
+];
+
 const MultiVoiceConversationPanel: React.FC<MultiVoiceConversationPanelProps> = ({
   isOpen,
   onClose,
@@ -25,23 +49,79 @@ const MultiVoiceConversationPanel: React.FC<MultiVoiceConversationPanelProps> = 
   onMinimize,
   isMinimized = false
 }) => {
-  const { theme } = useTheme();
+  const toast = useToast();
+
+  // Wizard State
+  const [currentStep, setCurrentStep] = useState(1);
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  // Document State
+  const [internalUploadedFiles, setInternalUploadedFiles] = useState<File[] | null>(null);
+  const [backendProcessedContent, setBackendProcessedContent] = useState<string>('');
+  const [isProcessingDocument, setIsProcessingDocument] = useState(false);
+  const [documentSummary, setDocumentSummary] = useState<string>('');
+  const [wordCount, setWordCount] = useState(0);
+  const [contentAnalysis, setContentAnalysis] = useState<{
+    tone: string;
+    readingLevel: string;
+    contentType: string;
+    topics: string[];
+    complexity: 'simple' | 'moderate' | 'complex';
+  } | null>(null);
+
+  // Style & Configuration State
   const [selectedStyle, setSelectedStyle] = useState('conversational');
   const [numberOfSpeakers, setNumberOfSpeakers] = useState(2);
   const [conversationTone, setConversationTone] = useState('friendly');
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [internalUploadedFiles, setInternalUploadedFiles] = useState<File[] | null>(null);
-  const [isProcessingDocument, setIsProcessingDocument] = useState(false);
-  const [backendProcessedContent, setBackendProcessedContent] = useState<string>('');
-  const [documentSummary, setDocumentSummary] = useState<string>('');
-  const [isLoadingSummary, setIsLoadingSummary] = useState(false);
-  const [summaryType, setSummaryType] = useState<'quick' | 'detailed' | 'full'>('detailed');
-  const [podcastAudioUrl, setPodcastAudioUrl] = useState<string | null>(null);
-  const [podcastMetadata, setPodcastMetadata] = useState<any>(null);
   const [aiRecommendation, setAiRecommendation] = useState<any>(null);
   const [isAnalyzingContent, setIsAnalyzingContent] = useState(false);
   const [showAiInsights, setShowAiInsights] = useState(false);
-  const [isExpanded, setIsExpanded] = useState(false);
+
+  // Script State
+  const [generatedScript, setGeneratedScript] = useState<string>('');
+  const [isGeneratingScript, setIsGeneratingScript] = useState(false);
+  const [scriptWordCount, setScriptWordCount] = useState(0);
+  const [scriptVariants, setScriptVariants] = useState<{
+    original: string | null;
+    shorter: string | null;
+    casual: string | null;
+    formal: string | null;
+  }>({
+    original: null,
+    shorter: null,
+    casual: null,
+    formal: null
+  });
+  const [activeVariant, setActiveVariant] = useState<'original' | 'shorter' | 'casual' | 'formal'>('original');
+  const [transformingVariant, setTransformingVariant] = useState<'shorter' | 'casual' | 'formal' | null>(null);
+
+  // Voice Configuration State
+  const [hostVoice, setHostVoice] = useState('829ccd10-f8b3-43cd-b8a0-4aeaa81f3b30'); // Linda
+  const [guestVoice, setGuestVoice] = useState('e07c00bc-4134-4eae-9ea4-1a55fb45746b'); // Brooke
+  const [cohostVoice, setCohostVoice] = useState('a167e0f3-df7e-4d52-a9c3-f949145efdab'); // Blake
+  const [voiceSpeed, setVoiceSpeed] = useState(1.0);
+
+  // Advanced Audio State
+  const [backgroundMusic, setBackgroundMusic] = useState<string>('none');
+  const [musicVolume, setMusicVolume] = useState<number>(0.3);
+  const [addIntroOutro, setAddIntroOutro] = useState<boolean>(false);
+
+  // Generation State
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [generationProgress, setGenerationProgress] = useState(0);
+  const [generationStage, setGenerationStage] = useState('');
+  const [currentAudio, setCurrentAudio] = useState<any>(null);
+  const [showPlayer, setShowPlayer] = useState(false);
+
+  // History State
+  const [generationHistory, setGenerationHistory] = useState<HistoryItem[]>([]);
+  const [showHistory, setShowHistory] = useState(false);
+
+  // Custom Presets State
+  const [customPresets, setCustomPresets] = useState<CustomPreset[]>([]);
+  const [showPresetManager, setShowPresetManager] = useState(false);
+  const [presetName, setPresetName] = useState('');
+  const [presetDescription, setPresetDescription] = useState('');
 
   const podcastStyles = [
     {
@@ -84,11 +164,32 @@ const MultiVoiceConversationPanel: React.FC<MultiVoiceConversationPanelProps> = 
     { id: 'analytical', name: 'Analytical', description: 'Deep dive and thorough' },
   ];
 
-  // Handle file drop for internal uploads
-  const onDrop = useCallback((acceptedFiles: File[]) => {
+  // All available Cartesia voices
+  const allVoices = [
+    { id: '829ccd10-f8b3-43cd-b8a0-4aeaa81f3b30', name: 'Linda', desc: 'Professional & Clear', gender: 'female', accent: 'American' },
+    { id: 'e07c00bc-4134-4eae-9ea4-1a55fb45746b', name: 'Brooke', desc: 'Friendly & Approachable', gender: 'female', accent: 'American' },
+    { id: 'f786b574-daa5-4673-aa0c-cbe3e8534c02', name: 'Katie', desc: 'Young & Energetic', gender: 'female', accent: 'American' },
+    { id: '694f9389-aac1-45b6-b726-9d9369183238', name: 'Sarah', desc: 'Calm & Soothing', gender: 'female', accent: 'American' },
+    { id: '9626c31c-bec5-4cca-baa8-f8ba9e84c8bc', name: 'Jacqueline', desc: 'Elegant & Refined', gender: 'female', accent: 'British' },
+    { id: 'f9836c6e-a0bd-460e-9d3c-f7299fa60f94', name: 'Caroline', desc: 'Dynamic & Confident', gender: 'female', accent: 'American' },
+    { id: '5ee9feff-1265-424a-9d7f-8e4d431a12c7', name: 'Ronald', desc: 'Authoritative Thinker', gender: 'male', accent: 'British' },
+    { id: 'a167e0f3-df7e-4d52-a9c3-f949145efdab', name: 'Blake', desc: 'Helpful & Energetic', gender: 'male', accent: 'American' },
+    { id: '248be419-c632-4f23-adf1-5324ed7dbf1d', name: 'Elizabeth', desc: 'Warm & Professional', gender: 'female', accent: 'American' },
+    { id: '5c5ad5e7-1020-476b-8b91-fdcbe9cc313c', name: 'Daniela', desc: 'Relaxed & Friendly', gender: 'female', accent: 'Spanish' }
+  ];
+
+  // Load custom presets
+  useEffect(() => {
+    const loaded = PresetStorage.getAll();
+    setCustomPresets(loaded);
+  }, []);
+
+  // File drop handling
+  const onDrop = useCallback(async (acceptedFiles: File[]) => {
     if (acceptedFiles.length > 0) {
       setInternalUploadedFiles(acceptedFiles);
-      processDocumentThroughBackend(acceptedFiles);
+      await processDocument(acceptedFiles);
+      toast.success('Document uploaded!', 'Processing your document...');
     }
   }, []);
 
@@ -101,178 +202,116 @@ const MultiVoiceConversationPanel: React.FC<MultiVoiceConversationPanelProps> = 
       'text/markdown': ['.md'],
     },
     maxFiles: 1,
-    maxSize: 50 * 1024 * 1024, // 50MB
+    maxSize: 50 * 1024 * 1024,
   });
 
-  // Process document through backend API
-  const processDocumentThroughBackend = async (filesToProcess?: File[]) => {
-    const files = filesToProcess || uploadedFiles || internalUploadedFiles;
-    if (!files || files.length === 0) {
-      return;
+  // AI Content Analysis
+  const analyzeContent = (text: string) => {
+    const words = text.toLowerCase();
+
+    // Determine tone
+    let tone = 'Neutral';
+    if (words.includes('exciting') || words.includes('amazing') || words.includes('innovative')) {
+      tone = 'Enthusiastic';
+    } else if (words.includes('important') || words.includes('critical') || words.includes('essential')) {
+      tone = 'Serious';
+    } else if (words.includes('story') || words.includes('journey') || words.includes('experience')) {
+      tone = 'Narrative';
     }
 
-    const file = files[0];
-    setIsProcessingDocument(true);
+    // Determine reading level
+    const avgWordLength = text.split(/\s+/).reduce((sum, word) => sum + word.length, 0) / wordCount;
+    let readingLevel = 'General';
+    let complexity: 'simple' | 'moderate' | 'complex' = 'moderate';
+    if (avgWordLength < 5) {
+      readingLevel = 'Easy';
+      complexity = 'simple';
+    } else if (avgWordLength > 7) {
+      readingLevel = 'Advanced';
+      complexity = 'complex';
+    }
 
+    // Extract topics
+    const commonWords = ['the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by'];
+    const wordFreq = new Map<string, number>();
+    text.toLowerCase().split(/\W+/).forEach(word => {
+      if (word.length > 4 && !commonWords.includes(word)) {
+        wordFreq.set(word, (wordFreq.get(word) || 0) + 1);
+      }
+    });
+    const topics = Array.from(wordFreq.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([word]) => word.charAt(0).toUpperCase() + word.slice(1));
+
+    // Determine content type
+    let contentType = 'General';
+    if (words.includes('business') || words.includes('market') || words.includes('revenue')) {
+      contentType = 'Business';
+    } else if (words.includes('technology') || words.includes('software') || words.includes('code')) {
+      contentType = 'Technical';
+    } else if (words.includes('learn') || words.includes('education') || words.includes('study')) {
+      contentType = 'Educational';
+    } else if (words.includes('news') || words.includes('today') || words.includes('report')) {
+      contentType = 'News';
+    }
+
+    return { tone, readingLevel, contentType, topics, complexity };
+  };
+
+  // Process document
+  const processDocument = async (files?: File[]) => {
+    const filesToProcess = files || uploadedFiles || internalUploadedFiles;
+    if (!filesToProcess || filesToProcess.length === 0) return;
+
+    setIsProcessingDocument(true);
     try {
-      const response = await NarrationAPI.processDocument(file);
+      const response = await NarrationAPI.processDocument(filesToProcess[0]);
 
       if (response.success) {
         setBackendProcessedContent(response.document.text);
-        return response.document.text;
-      } else {
-        console.error('Backend processing failed:', response);
-        return null;
+        setWordCount(response.document.analysis.wordCount);
+
+        // Perform AI content analysis
+        const analysis = analyzeContent(response.document.text);
+        setContentAnalysis(analysis);
+
+        toast.success('Document processed!', `${response.document.analysis.wordCount} words analyzed`);
+        setCurrentStep(2); // Auto-advance to analysis step
       }
     } catch (error) {
-      console.error('Error processing document through backend:', error);
-      return null;
+      console.error('Error processing document:', error);
+      toast.error('Processing failed', 'Please try uploading again');
     } finally {
       setIsProcessingDocument(false);
     }
   };
 
-  // Generate AI summary from uploaded content
-  const generateDocumentSummary = async () => {
-    let content = '';
-
-    // First try to get content from backend processing
-    if (internalUploadedFiles && internalUploadedFiles.length > 0) {
-      if (!backendProcessedContent) {
-        content = await processDocumentThroughBackend(internalUploadedFiles) || '';
-      } else {
-        content = backendProcessedContent;
-      }
-    } else if (uploadedFiles && uploadedFiles.length > 0) {
-      if (!backendProcessedContent) {
-        content = await processDocumentThroughBackend() || '';
-      } else {
-        content = backendProcessedContent;
-      }
-    }
-    // Fallback to frontend processed content if backend fails
-    else if (uploadedContent && uploadedContent.length > 0) {
-      content = uploadedContent[0].content;
-    }
-
-    if (!content) {
-      setDocumentSummary('Processing your document... Please wait while we extract the content.');
-      // Try processing again after a brief delay
-      setTimeout(async () => {
-        if (internalUploadedFiles || uploadedFiles) {
-          const retryContent = await processDocumentThroughBackend();
-          if (retryContent) {
-            setBackendProcessedContent(retryContent);
-            generateDocumentSummary();
-          } else {
-            setDocumentSummary('Unable to process document. Please try uploading again or use a different file format.');
-          }
-        }
-      }, 1000);
-      return;
-    }
-
-    // Handle different summary types
-    if (summaryType === 'full') {
-      setDocumentSummary(content);
-      return;
-    }
-
-    setIsLoadingSummary(true);
-    try {
-      const response = await NarrationAPI.generateDocumentSummary(content, summaryType);
-
-      if (response.success) {
-        setDocumentSummary(response.summary);
-      } else {
-        setDocumentSummary('Failed to generate summary. Please try again.');
-      }
-    } catch (error) {
-      console.error('Error generating summary:', error);
-      setDocumentSummary('Error generating summary. Please check your connection.');
-    } finally {
-      setIsLoadingSummary(false);
-    }
-  };
-
-  // Get document summary for display
-  const getDocumentSummary = () => {
-    if ((!uploadedContent || uploadedContent.length === 0) &&
-        (!uploadedFiles || uploadedFiles.length === 0) &&
-        (!internalUploadedFiles || internalUploadedFiles.length === 0)) {
-      return "No document uploaded. Please upload a document to see the summary.";
-    }
-
-    if (isProcessingDocument) {
-      return "Processing document through backend...";
-    }
-
-    if (isLoadingSummary) {
-      return "Generating AI summary...";
-    }
-
-    if (documentSummary) {
-      return documentSummary;
-    }
-
-    return "Click 'Generate Summary' to see an AI-generated summary of your document.";
-  };
-
-  // Get document title
-  const getDocumentTitle = () => {
-    if (uploadedContent && uploadedContent.length > 0) {
-      return uploadedContent[0].metadata?.fileName || uploadedContent[0].title || 'Document';
-    }
-    if (internalUploadedFiles && internalUploadedFiles.length > 0) {
-      return internalUploadedFiles[0].name.replace(/\.[^/.]+$/, '') || 'Document';
-    }
-    if (uploadedFiles && uploadedFiles.length > 0) {
-      return uploadedFiles[0].name.replace(/\.[^/.]+$/, '') || 'Document';
-    }
-    return 'Document';
-  };
-
   // Get AI recommendation for podcast style
   const getAiStyleRecommendation = async () => {
-    let content = '';
-
-    if (backendProcessedContent) {
-      content = backendProcessedContent;
-    } else if (uploadedContent && uploadedContent.length > 0) {
-      content = uploadedContent[0].content;
-    } else if (internalUploadedFiles || uploadedFiles) {
-      const processedText = await processDocumentThroughBackend();
-      content = processedText || '';
-    }
-
-    if (!content) {
-      alert('Please upload a document first to get AI recommendations');
+    if (!backendProcessedContent) {
+      toast.error('No content', 'Please upload a document first');
       return;
     }
 
     setIsAnalyzingContent(true);
     try {
-      const response = await NarrationAPI.recommendPodcastStyle(content);
+      const response = await NarrationAPI.recommendPodcastStyle(backendProcessedContent);
 
       if (response.success) {
         setAiRecommendation(response.recommendation);
         setShowAiInsights(true);
 
         // Auto-apply the recommended style
-        const recommendedStyle = response.recommendation.style;
-        setSelectedStyle(recommendedStyle);
+        setSelectedStyle(response.recommendation.style);
         setConversationTone(response.recommendation.tone_suggestion || conversationTone);
         setNumberOfSpeakers(response.recommendation.num_speakers || numberOfSpeakers);
 
-        console.log('AI Recommendation:', response.recommendation);
-      } else {
-        console.error('AI recommendation failed:', response);
-        alert('Failed to get AI recommendation. Using conversational style as default.');
-        setSelectedStyle('conversational');
+        toast.success('AI Analysis Complete!', `Recommended: ${response.recommendation.style}`);
       }
     } catch (error) {
       console.error('Error getting AI recommendation:', error);
-      alert('Error getting AI recommendation. Please try again or select a style manually.');
+      toast.error('AI Analysis failed', 'Please select a style manually');
     } finally {
       setIsAnalyzingContent(false);
     }
@@ -288,95 +327,223 @@ const MultiVoiceConversationPanel: React.FC<MultiVoiceConversationPanelProps> = 
     }
   };
 
-  // Generate summary when document is loaded
-  useEffect(() => {
-    const hasContent = (uploadedContent && uploadedContent.length > 0) ||
-                      (uploadedFiles && uploadedFiles.length > 0) ||
-                      (internalUploadedFiles && internalUploadedFiles.length > 0);
-    if (hasContent && !documentSummary && !isLoadingSummary && !isProcessingDocument) {
-      generateDocumentSummary();
+  // Generate conversation script with streaming
+  const handleGenerateScript = async () => {
+    if (!backendProcessedContent || !selectedStyle) {
+      toast.error('Missing information', 'Please complete previous steps');
+      return;
     }
-  }, [uploadedContent, uploadedFiles, internalUploadedFiles]);
 
-  const handleGenerate = async () => {
-    setIsGenerating(true);
+    setIsGeneratingScript(true);
+    setGeneratedScript('');
+    toast.info('Generating script...', 'Watch it appear in real-time!');
 
     try {
-      // Get document content
-      let content = '';
-      if (backendProcessedContent) {
-        content = backendProcessedContent;
-      } else if (uploadedContent && uploadedContent.length > 0) {
-        content = uploadedContent[0].content;
-      } else if (internalUploadedFiles || uploadedFiles) {
-        const processedText = await processDocumentThroughBackend();
-        content = processedText || '';
+      const response = await fetch('http://localhost:3004/api/narration/generate-conversation-script', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          documentContent: backendProcessedContent,
+          style: selectedStyle,
+          numSpeakers: numberOfSpeakers,
+          tone: conversationTone,
+          stream: true
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to generate script: ${response.statusText}`);
       }
 
-      if (!content) {
-        alert('Please upload a document first');
-        setIsGenerating(false);
-        return;
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+      let accumulatedScript = '';
+
+      if (reader) {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          const chunk = decoder.decode(value);
+          const lines = chunk.split('\n');
+
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              const data = JSON.parse(line.slice(6));
+
+              if (data.done) {
+                setGeneratedScript(data.fullScript);
+                setScriptWordCount(data.fullScript.split(/\s+/).length);
+                setScriptVariants({
+                  original: data.fullScript,
+                  shorter: null,
+                  casual: null,
+                  formal: null
+                });
+                setActiveVariant('original');
+                toast.success('Script generated!', 'Review and edit before generating audio');
+              } else if (data.chunk) {
+                accumulatedScript += data.chunk;
+                setGeneratedScript(accumulatedScript);
+              }
+            }
+          }
+        }
+      }
+    } catch (error: any) {
+      console.error('Script generation error:', error);
+      toast.error('Generation failed', error.message || 'Please try again');
+    } finally {
+      setIsGeneratingScript(false);
+    }
+  };
+
+  // Transform script variants
+  const handleTransformScript = async (transformationType: 'shorter' | 'casual' | 'formal') => {
+    if (!scriptVariants.original) {
+      toast.error('No script to transform', 'Please generate the original script first');
+      return;
+    }
+
+    setTransformingVariant(transformationType);
+    toast.info(`Generating ${transformationType} version...`, 'Watch it appear in real-time!');
+
+    try {
+      const response = await fetch('http://localhost:3004/api/narration/transform-conversation-script', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          originalScript: scriptVariants.original,
+          transformationType,
+          numSpeakers: numberOfSpeakers,
+          stream: true
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to transform script: ${response.statusText}`);
       }
 
-      // Map UI options to API parameters
-      const lengthMap: { [key: number]: string } = {
-        2: '10min',
-        3: '15min',
-        4: '20min'
-      };
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
 
-      // Voice mapping for 2 and 3 speakers
-      const voiceMap2Speakers: { [key: string]: { host: string; guest: string } } = {
-        'conversational': { host: 'host_male_friendly', guest: 'guest_female_expert' },
-        'expert-panel': { host: 'host_male_casual', guest: 'guest_female_warm' },
-        'debate': { host: 'host_male_friendly', guest: 'guest_female_expert' },
-        'interview': { host: 'host_male_friendly', guest: 'guest_female_expert' }
-      };
+      if (reader) {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
 
-      const voiceMap3Speakers: { [key: string]: { host: string; guest: string; cohost: string } } = {
-        'conversational': { host: 'host_male_friendly', guest: 'guest_female_expert', cohost: 'cohost_male_casual' },
-        'expert-panel': { host: 'host_female', guest: 'guest_male', cohost: 'cohost_female_casual' },
-        'debate': { host: 'host_male_friendly', guest: 'guest_female_expert', cohost: 'cohost_male_energetic' },
-        'interview': { host: 'host_male_friendly', guest: 'guest_female_expert', cohost: 'cohost_female_warm' }
-      };
+          const chunk = decoder.decode(value);
+          const lines = chunk.split('\n');
 
-      const voices = numberOfSpeakers === 2
-        ? voiceMap2Speakers[selectedStyle] || voiceMap2Speakers['conversational']
-        : voiceMap3Speakers[selectedStyle] || voiceMap3Speakers['conversational'];
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              const data = JSON.parse(line.slice(6));
 
-      // Start podcast generation
-      console.log('🎙️ Starting podcast generation...');
-      console.log('📊 Number of Speakers:', numberOfSpeakers);
-      console.log('🎨 Style:', selectedStyle);
-      console.log('🎵 Voices:', voices);
+              if (data.done) {
+                const newWordCount = data.fullScript.split(/\s+/).length;
 
-      const podcastParams = {
-        documentText: content,
-        length: lengthMap[numberOfSpeakers] || '10min',
-        hostVoice: voices.host,
-        guestVoice: voices.guest,
-        cohostVoice: numberOfSpeakers === 3 ? (voices as any).cohost : undefined,
+                setScriptVariants(prev => ({
+                  ...prev,
+                  [transformationType]: data.fullScript
+                }));
+
+                setActiveVariant(transformationType);
+                setGeneratedScript(data.fullScript);
+                setScriptWordCount(newWordCount);
+
+                toast.success(`${transformationType} version ready!`, `${newWordCount} words`);
+              }
+            }
+          }
+        }
+      }
+    } catch (error: any) {
+      console.error('Script transformation error:', error);
+      toast.error('Transformation failed', error.message || 'Please try again');
+    } finally {
+      setTransformingVariant(null);
+    }
+  };
+
+  // Calculate estimates
+  const getEstimation = () => {
+    const wordsPerMinute = 150;
+    const words = scriptWordCount > 0 ? scriptWordCount : wordCount;
+    const minutes = Math.ceil(words / wordsPerMinute);
+    const seconds = words / (wordsPerMinute / 60);
+    const duration = `${minutes}:${String(Math.floor(seconds % 60)).padStart(2, '0')}`;
+
+    // Multi-speaker costs more
+    const baseCost = words * 0.00002;
+    const multiSpeakerMultiplier = numberOfSpeakers;
+    const cost = `$${(baseCost * multiSpeakerMultiplier).toFixed(4)}`;
+
+    return { duration, cost, words };
+  };
+
+  // Generate podcast
+  const handleGenerate = async () => {
+    if (!backendProcessedContent) {
+      toast.error('Missing document', 'Please upload a document first');
+      return;
+    }
+
+    setIsGenerating(true);
+    setGenerationProgress(0);
+    setGenerationStage('Initializing...');
+    toast.info('Generating podcast...', 'This may take 1-2 minutes');
+
+    // Simulate progress
+    const progressInterval = setInterval(() => {
+      setGenerationProgress(prev => {
+        if (prev >= 90) return prev;
+        return prev + Math.random() * 10;
+      });
+    }, 800);
+
+    const stageTimeout1 = setTimeout(() => setGenerationStage('Processing document...'), 1000);
+    const stageTimeout2 = setTimeout(() => setGenerationStage('Generating voices...'), 5000);
+    const stageTimeout3 = setTimeout(() => setGenerationStage('Mixing audio...'), 15000);
+    const stageTimeout4 = setTimeout(() => setGenerationStage('Finalizing podcast...'), 25000);
+
+    try {
+      const voiceMap = numberOfSpeakers === 2
+        ? { host: hostVoice, guest: guestVoice }
+        : { host: hostVoice, guest: guestVoice, cohost: cohostVoice };
+
+      const response = await NarrationAPI.generatePodcast({
+        documentText: backendProcessedContent,
+        length: '10min',
+        hostVoice: hostVoice,
+        guestVoice: guestVoice,
+        cohostVoice: numberOfSpeakers === 3 ? cohostVoice : undefined,
         style: selectedStyle,
         tone: conversationTone,
         numSpeakers: numberOfSpeakers,
         outputFormat: 'mp3',
         saveScript: true
-      };
+      });
 
-      console.log('📤 Sending to API:', podcastParams);
-
-      const response = await NarrationAPI.generatePodcast(podcastParams);
+      clearInterval(progressInterval);
+      clearTimeout(stageTimeout1);
+      clearTimeout(stageTimeout2);
+      clearTimeout(stageTimeout3);
+      clearTimeout(stageTimeout4);
+      setGenerationProgress(100);
+      setGenerationStage('Complete!');
 
       if (response.success) {
         // Poll for completion
         const jobId = response.job_id;
         let completed = false;
         let attempts = 0;
-        const maxAttempts = 60; // 5 minutes max
 
-        while (!completed && attempts < maxAttempts) {
-          await new Promise(resolve => setTimeout(resolve, 5000)); // Check every 5 seconds
+        while (!completed && attempts < 60) {
+          await new Promise(resolve => setTimeout(resolve, 5000));
 
           const statusResponse = await NarrationAPI.getPodcastStatus(jobId);
 
@@ -386,27 +553,37 @@ const MultiVoiceConversationPanel: React.FC<MultiVoiceConversationPanelProps> = 
             if (job.status === 'completed') {
               completed = true;
 
-              // Extract filename from path
               const audioFile = job.result.audio_file;
-              const filename = audioFile.split(/[\/\\]/).pop(); // Handle both / and \ separators
-
-              // Set audio URL for the player using centralized config
+              const filename = audioFile.split(/[\/\\]/).pop();
               const audioUrl = getPodcastDownloadUrl(filename);
-              setPodcastAudioUrl(audioUrl);
-              setPodcastMetadata({
-                duration: job.result.duration_seconds,
-                cost: job.result.total_cost,
-                turns: job.result.metadata?.total_turns || 0,
-                voices: job.result.metadata?.voices || {},
-                title: job.result.metadata?.title || 'Podcast'
+
+              const newHistoryItem: HistoryItem = {
+                id: jobId,
+                title: getDocumentTitle(),
+                voiceName: `${numberOfSpeakers} Speakers`,
+                duration: getEstimation().duration,
+                createdAt: new Date(),
+                audioUrl: audioUrl,
+                presetName: selectedStyle
+              };
+
+              setGenerationHistory(prev => [newHistoryItem, ...prev]);
+              setCurrentAudio({
+                id: jobId,
+                audioUrl: audioUrl,
+                trackData: {
+                  title: getDocumentTitle(),
+                  artist: `Multi-Voice Podcast • IntelliCast AI`,
+                  duration: getEstimation().duration,
+                  artwork: "https://images.unsplash.com/photo-1478737270239-2f02b77fc618?w=400",
+                  description: documentSummary
+                }
               });
+              setShowPlayer(true);
 
-              console.log('Podcast generated:', { audioUrl, metadata: job.result });
-
+              toast.success('Podcast generated!', 'Ready to play');
             } else if (job.status === 'failed') {
               throw new Error(job.message || 'Generation failed');
-            } else {
-              console.log(`Generation progress: ${job.message}`);
             }
           }
 
@@ -414,24 +591,80 @@ const MultiVoiceConversationPanel: React.FC<MultiVoiceConversationPanelProps> = 
         }
 
         if (!completed) {
-          throw new Error('Generation timed out. Please try again.');
+          throw new Error('Generation timed out');
         }
-
-      } else {
-        throw new Error(response.error || 'Generation failed');
       }
-
-    } catch (error) {
-      console.error('Podcast generation error:', error);
-      alert(`Error generating podcast: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } catch (error: any) {
+      clearInterval(progressInterval);
+      clearTimeout(stageTimeout1);
+      clearTimeout(stageTimeout2);
+      clearTimeout(stageTimeout3);
+      clearTimeout(stageTimeout4);
+      console.error('Generation error:', error);
+      toast.error('Generation failed', error.message || 'Please try again');
     } finally {
       setIsGenerating(false);
+      setTimeout(() => {
+        setGenerationProgress(0);
+        setGenerationStage('');
+      }, 2000);
     }
   };
 
+  // Helper functions
+  const getDocumentTitle = () => {
+    if (internalUploadedFiles?.[0]) return internalUploadedFiles[0].name.replace(/\.[^/.]+$/, '');
+    if (uploadedFiles?.[0]) return uploadedFiles[0].name.replace(/\.[^/.]+$/, '');
+    if (uploadedContent?.[0]) return uploadedContent[0].title || 'Document';
+    return 'Multi-Voice Podcast';
+  };
+
+  // Save current settings as preset
+  const handleSaveAsPreset = () => {
+    if (!presetName.trim()) {
+      toast.error('Name required', 'Please enter a preset name');
+      return;
+    }
+
+    const newPreset = PresetStorage.save({
+      name: presetName.trim(),
+      description: presetDescription.trim() || undefined,
+      voice: hostVoice,
+      speed: voiceSpeed,
+      backgroundMusic,
+      musicVolume,
+      addIntroOutro,
+      pauseAtPunctuation: false,
+      pauseDuration: 0.3,
+      podcastStyle: selectedStyle,
+      tags: [selectedStyle, `${numberOfSpeakers}-speakers`]
+    });
+
+    setCustomPresets([...customPresets, newPreset]);
+    setPresetName('');
+    setPresetDescription('');
+    setShowPresetManager(false);
+    toast.success('Preset saved!', `"${newPreset.name}" is ready to use`);
+  };
+
+  // Auto-process uploaded content
+  useEffect(() => {
+    if ((uploadedFiles || uploadedContent) && !backendProcessedContent) {
+      if (uploadedFiles) {
+        processDocument();
+      } else if (uploadedContent?.[0]) {
+        setBackendProcessedContent(uploadedContent[0].content);
+        setWordCount(uploadedContent[0].content.split(' ').length);
+        setCurrentStep(2);
+      }
+    }
+  }, [uploadedFiles, uploadedContent]);
+
+  // Script generation removed - going directly to voice configuration
+
   if (!isOpen) return null;
 
-  // Minimized panel view
+  // Minimized view
   if (isMinimized) {
     return (
       <div className="fixed right-4 top-1/2 transform -translate-y-1/2 z-50">
@@ -445,31 +678,14 @@ const MultiVoiceConversationPanel: React.FC<MultiVoiceConversationPanelProps> = 
                  backgroundColor: 'rgba(255, 255, 255, 0.05)',
                  borderColor: 'rgba(255, 255, 255, 0.1)'
                }}>
-            <div className={`w-6 h-6 rounded-full flex items-center justify-center`}
-                 style={{
-                   backgroundColor: '#00D4E4'
-                 }}>
+            <div className="w-6 h-6 rounded-full flex items-center justify-center bg-[#00D4E4]">
               <Users className="w-3 h-3 text-white" />
             </div>
             <div className="flex flex-col items-center space-y-1">
-              <button
-                onClick={onMinimize}
-                className="p-1 rounded transition-colors"
-                style={{
-                  color: 'rgba(255, 255, 255, 0.7)'
-                }}
-                title="Expand Panel"
-              >
-                <ChevronDown className="w-4 h-4 transform rotate-90" />
+              <button onClick={onMinimize} className="p-1 rounded transition-colors text-white/70 hover:text-white">
+                <Maximize2 className="w-4 h-4" />
               </button>
-              <button
-                onClick={onClose}
-                className="p-1 rounded transition-colors"
-                style={{
-                  color: 'rgba(255, 255, 255, 0.7)'
-                }}
-                title="Close Panel"
-              >
+              <button onClick={onClose} className="p-1 rounded transition-colors text-white/70 hover:text-white">
                 <X className="w-4 h-4" />
               </button>
             </div>
@@ -479,285 +695,186 @@ const MultiVoiceConversationPanel: React.FC<MultiVoiceConversationPanelProps> = 
     );
   }
 
-  return (
-    <div className="fixed inset-0 z-50 flex">
-      {/* Backdrop */}
-      <div className="flex-1 bg-black/30 backdrop-blur-sm" onClick={onClose} />
-
-      {/* Main Panel Container - Half Screen */}
-      <div className={`${isExpanded ? 'w-3/4' : 'w-1/2'} backdrop-blur-3xl border-l shadow-2xl overflow-hidden flex flex-col relative`} style={{
-        backgroundColor: '#000000',
-        borderColor: 'rgba(255, 255, 255, 0.1)',
-        transition: 'all 0.5s ease-in-out'
-      }}>
-        {/* Top Control Bar */}
-        <div className="absolute top-6 left-6 z-[100] flex items-center space-x-3">
-          <button
-            onClick={() => setIsExpanded(!isExpanded)}
-            className="p-3 text-white rounded-lg transition-colors shadow-xl border"
-            style={{
-              backgroundColor: 'rgba(0, 212, 228, 0.1)',
-              borderColor: 'rgba(0, 212, 228, 0.3)',
-              color: '#00D4E4'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = 'rgba(0, 212, 228, 0.2)';
-              e.currentTarget.style.boxShadow = '0 0 20px rgba(0, 212, 228, 0.3)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'rgba(0, 212, 228, 0.1)';
-              e.currentTarget.style.boxShadow = '';
-            }}
-            title={isExpanded ? "Collapse Panel" : "Expand Panel"}
-          >
-            {isExpanded ? <Minimize2 className="w-6 h-6" /> : <Maximize2 className="w-6 h-6" />}
-          </button>
-          <button
-            onClick={onMinimize || (() => console.log('Minimize clicked'))}
-            className="p-3 text-white rounded-lg transition-colors shadow-xl border-2"
-            style={{
-              backgroundColor: '#00D4E4',
-              borderColor: '#00D4E4'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = '#00E8FA';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = '#00D4E4';
-            }}
-            title="Minimize Panel"
-          >
-            <Minimize2 className="w-6 h-6" />
-          </button>
-          <button
-            onClick={onClose}
-            className="p-3 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors shadow-xl border-2 border-red-500"
-            title="Close Panel"
-          >
-            <X className="w-6 h-6" />
-          </button>
-        </div>
-
-        {/* Header */}
-        <div className="relative flex items-center justify-between p-6 backdrop-blur-md border-b z-10" style={{
-          backgroundColor: '#14191a',
-          borderColor: 'rgba(255, 255, 255, 0.1)'
-        }}>
-          <h1 className="text-2xl font-bold flex items-center space-x-3" style={{
-            color: '#FFFFFF'
-          }}>
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center`}
-                 style={{
-                   backgroundColor: '#00D4E4'
-                 }}>
-              <Users className="w-4 h-4 text-white" />
+  // Render wizard step content
+  const renderStepContent = () => {
+    switch (currentStep) {
+      case 1: // Upload Document
+        return (
+          <div className="space-y-6">
+            <div className="text-center mb-8">
+              <h2 className="text-2xl font-bold text-white mb-2">Upload Your Document</h2>
+              <p className="text-gray-400">Supports PDF, DOCX, TXT, and Markdown files up to 50MB</p>
             </div>
-            <span>Multi-Voice Conversation</span>
-          </h1>
-        </div>
 
-        {/* Main Content */}
-        <div className="flex-1 overflow-y-auto relative z-10 p-6 space-y-6">
+            <div
+              {...getRootProps()}
+              className={`border-2 border-dashed rounded-2xl p-12 text-center cursor-pointer transition-all duration-300 ${
+                isDragActive
+                  ? 'border-[#00D4E4] bg-[#00D4E4]/10'
+                  : 'border-gray-600 hover:border-[#00D4E4]/50 bg-gray-900/50'
+              }`}
+            >
+              <input {...getInputProps()} />
+              <FileText className="w-16 h-16 mx-auto mb-4 text-gray-500" />
+              {isDragActive ? (
+                <p className="text-[#00D4E4] text-lg font-medium">Drop your file here</p>
+              ) : isProcessingDocument ? (
+                <div className="space-y-3">
+                  <div className="w-8 h-8 border-4 border-[#00D4E4] border-t-transparent rounded-full animate-spin mx-auto" />
+                  <p className="text-white">Processing document...</p>
+                </div>
+              ) : (
+                <>
+                  <p className="text-white text-lg mb-2">Drag & drop your file here</p>
+                  <p className="text-gray-400 mb-4">or</p>
+                  <button className="px-6 py-3 bg-[#00D4E4] hover:bg-[#00E8FA] text-white rounded-lg font-medium transition-colors">
+                    Browse Files
+                  </button>
+                </>
+              )}
+            </div>
 
-          {/* Document Upload & Summary Section */}
-          <GlassCard variant="medium" className="p-6" glow>
-            {(uploadedContent && uploadedContent.length > 0) ||
-             (uploadedFiles && uploadedFiles.length > 0) ||
-             (internalUploadedFiles && internalUploadedFiles.length > 0) ? (
+            {backendProcessedContent && (
               <>
-                <h2 className="text-xl font-bold mb-2" style={{
-                  color: '#FFFFFF'
-                }}>Document Summary</h2>
-                <div className="mb-4">
-                  <div className="flex items-center space-x-2 mb-3">
-                    <FileText className="w-5 h-5" style={{
-                      color: '#00D4E4'
-                    }} />
-                    <span className="text-sm font-medium" style={{
-                      color: '#FFFFFF'
-                    }}>
-                      {getDocumentTitle()}
-                    </span>
-                  </div>
-
-                  {/* Summary Type Selector */}
-                  <div className="mb-3">
-                    <label className="text-xs block mb-2" style={{
-                      color: 'rgba(255, 255, 255, 0.7)'
-                    }}>Summary Type</label>
-                    <div className="grid grid-cols-3 gap-2">
-                      {[
-                        { id: 'quick', name: 'Quick', desc: 'Key points' },
-                        { id: 'detailed', name: 'Detailed', desc: 'In-depth' },
-                        { id: 'full', name: 'Full', desc: 'Complete' }
-                      ].map((type) => (
-                        <button
-                          key={type.id}
-                          onClick={() => setSummaryType(type.id as 'quick' | 'detailed' | 'full')}
-                          className={`p-2 text-xs rounded-lg transition-all duration-200 border`}
-                          style={{
-                            backgroundColor: summaryType === type.id
-                              ? 'rgba(0, 212, 228, 0.2)'
-                              : 'transparent',
-                            borderColor: summaryType === type.id
-                              ? '#00D4E4'
-                              : 'rgba(255, 255, 255, 0.1)',
-                            color: summaryType === type.id
-                              ? '#00D4E4'
-                              : 'rgba(255, 255, 255, 0.7)'
-                          }}
-                        >
-                          <div className="font-medium">{type.name}</div>
-                          <div className="text-xs opacity-75 mt-0.5">{type.desc}</div>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
+                <div className="p-4 rounded-xl bg-green-900/20 border border-green-500/30">
+                  <p className="text-green-400 font-medium">✓ Document loaded: {wordCount} words</p>
                 </div>
 
-                {/* Document Summary Content */}
-                <div className="backdrop-blur-sm rounded-lg p-4 mb-4 border" style={{
-                  backgroundColor: '#14191a',
-                  borderColor: 'rgba(255, 255, 255, 0.1)'
-                }}>
-                  <div className="flex items-start justify-between mb-3">
-                    <p className="text-sm leading-relaxed flex-1" style={{
-                      color: 'rgba(255, 255, 255, 0.7)'
-                    }}>
-                      {getDocumentSummary()}
+                {/* Document Preview */}
+                <div className="p-6 rounded-xl bg-gradient-to-br from-gray-900 to-gray-800 border border-gray-700">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-white font-semibold">Document Preview</h3>
+                    <span className="text-xs text-gray-400">{Math.ceil(wordCount / 150)} min read</span>
+                  </div>
+
+                  <div className="relative max-h-40 overflow-y-auto custom-scrollbar">
+                    <p className="text-sm text-gray-300 leading-relaxed">
+                      {backendProcessedContent.slice(0, 500)}
+                      {backendProcessedContent.length > 500 && '...'}
                     </p>
-                    {!documentSummary && !isLoadingSummary && (
-                      <button
-                        onClick={generateDocumentSummary}
-                        className="ml-3 px-3 py-1 text-white rounded-lg transition-all duration-300 text-xs whitespace-nowrap shadow-lg"
-                        style={{
-                          backgroundColor: '#00D4E4'
-                        }}
-                      >
-                        Generate Summary
-                      </button>
+
+                    {backendProcessedContent.length > 500 && (
+                      <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-gray-800 to-transparent pointer-events-none" />
                     )}
                   </div>
-                  {isLoadingSummary && (
-                    <div className="flex items-center space-x-2 mt-2">
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2" style={{ borderColor: '#00D4E4' }}></div>
-                      <span className="text-xs" style={{ color: '#00D4E4' }}>AI is analyzing your document...</span>
-                    </div>
-                  )}
-                </div>
 
-                {/* Document Stats */}
-                {uploadedContent && uploadedContent.length > 0 && (
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div className="backdrop-blur-sm rounded-lg p-3 border" style={{
-                      backgroundColor: 'rgba(0, 212, 228, 0.1)',
-                      borderColor: 'rgba(0, 212, 228, 0.3)'
-                    }}>
-                      <div className="font-medium" style={{
-                        color: '#00D4E4'
-                      }}>Word Count</div>
-                      <div style={{
-                        color: '#FFFFFF'
-                      }}>{uploadedContent[0].metadata?.wordCount || uploadedContent[0].content.split(' ').length} words</div>
+                  {/* Document Stats */}
+                  <div className="grid grid-cols-3 gap-3 mt-4 pt-4 border-t border-gray-700">
+                    <div className="text-center">
+                      <p className="text-2xl font-bold text-[#00D4E4]">{wordCount.toLocaleString()}</p>
+                      <p className="text-xs text-gray-400">Words</p>
                     </div>
-                    <div className="backdrop-blur-sm rounded-lg p-3 border" style={{
-                      backgroundColor: 'rgba(0, 212, 228, 0.1)',
-                      borderColor: 'rgba(0, 212, 228, 0.3)'
-                    }}>
-                      <div className="font-medium" style={{
-                        color: '#00D4E4'
-                      }}>Est. Reading Time</div>
-                      <div style={{
-                        color: '#FFFFFF'
-                      }}>{Math.ceil((uploadedContent[0].metadata?.wordCount || uploadedContent[0].content.split(' ').length) / 250)} min</div>
+                    <div className="text-center">
+                      <p className="text-2xl font-bold text-[#00D4E4]">{Math.ceil(wordCount / 5)}</p>
+                      <p className="text-xs text-gray-400">Sentences</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-2xl font-bold text-[#00D4E4]">~{Math.ceil(wordCount / 150)}</p>
+                      <p className="text-xs text-gray-400">Minutes</p>
                     </div>
                   </div>
-                )}
-              </>
-            ) : (
-              <>
-                <h2 className="text-xl font-bold mb-2" style={{
-                  color: '#FFFFFF'
-                }}>Upload Your Document</h2>
-                <p className="text-sm mb-6" style={{
-                  color: 'rgba(255, 255, 255, 0.7)'
-                }}>We support PDF, EPUB, DOCX, and TXT formats. Maximum file size is 50MB.</p>
-
-                {/* Upload Area */}
-                <div
-                  {...getRootProps()}
-                  className={`border-2 border-dashed rounded-lg p-6 text-center mb-4 transition-colors cursor-pointer backdrop-blur-sm ${
-                    isDragActive
-                      ? 'bg-cyan-500/20'
-                      : 'bg-white/5 hover:bg-white/10'
-                  }`}
-                  style={{
-                    borderColor: isDragActive ? '#00D4E4' : 'rgba(255, 255, 255, 0.2)'
-                  }}
-                >
-                  <input {...getInputProps()} />
-                  <Upload className="w-10 h-10 mx-auto mb-3" style={{
-                    color: 'rgba(255, 255, 255, 0.5)'
-                  }} />
-                  {isDragActive ? (
-                    <p className="text-sm mb-3" style={{
-                      color: '#00D4E4'
-                    }}>Drop your file here</p>
-                  ) : (
-                    <>
-                      <p className="text-sm mb-3" style={{
-                        color: 'rgba(255, 255, 255, 0.7)'
-                      }}>Drag and drop your file here or click to browse</p>
-                      <div className="px-4 py-2 text-white rounded-lg text-sm font-medium transition-all duration-300 inline-block shadow-lg" style={{
-                        background: '#00D4E4'
-                      }}>Choose File</div>
-                    </>
-                  )}
                 </div>
               </>
             )}
-          </GlassCard>
+          </div>
+        );
 
-          {/* Podcast Style Selection */}
-          <GlassCard variant="medium" className="p-6" glow>
-            <h2 className="text-xl font-bold mb-4" style={{
-              color: '#FFFFFF'
-            }}>Choose Conversation Style</h2>
+      case 2: // AI Content Analysis
+        return (
+          <div className="space-y-6">
+            <div className="text-center mb-6">
+              <h2 className="text-2xl font-bold text-white mb-2">AI Content Analysis</h2>
+              <p className="text-gray-400">Understanding your document to recommend the best conversation style</p>
+            </div>
 
+            {contentAnalysis && (
+              <div className="p-5 rounded-xl bg-gradient-to-br from-purple-900/20 to-blue-900/20 border border-purple-500/30">
+                <div className="flex items-center space-x-2 mb-3">
+                  <Sparkles className="w-5 h-5 text-purple-400" />
+                  <h3 className="text-white font-semibold">AI Content Analysis</h3>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="p-3 rounded-lg bg-black/30 border border-gray-700/50">
+                    <p className="text-xs text-gray-400 mb-1">Content Type</p>
+                    <div className="flex items-center space-x-2">
+                      <span className="text-lg">📚</span>
+                      <span className="text-sm font-semibold text-white">{contentAnalysis.contentType}</span>
+                    </div>
+                  </div>
+
+                  <div className="p-3 rounded-lg bg-black/30 border border-gray-700/50">
+                    <p className="text-xs text-gray-400 mb-1">Tone</p>
+                    <div className="flex items-center space-x-2">
+                      <span className="text-lg">
+                        {contentAnalysis.tone === 'Enthusiastic' ? '🎉' :
+                         contentAnalysis.tone === 'Serious' ? '📋' :
+                         contentAnalysis.tone === 'Narrative' ? '📖' : '💬'}
+                      </span>
+                      <span className="text-sm font-semibold text-white">{contentAnalysis.tone}</span>
+                    </div>
+                  </div>
+
+                  <div className="p-3 rounded-lg bg-black/30 border border-gray-700/50">
+                    <p className="text-xs text-gray-400 mb-1">Reading Level</p>
+                    <div className="flex items-center space-x-2">
+                      <span className="text-lg">
+                        {contentAnalysis.complexity === 'simple' ? '🟢' :
+                         contentAnalysis.complexity === 'moderate' ? '🟡' : '🔴'}
+                      </span>
+                      <span className="text-sm font-semibold text-white">{contentAnalysis.readingLevel}</span>
+                    </div>
+                  </div>
+
+                  <div className="p-3 rounded-lg bg-black/30 border border-gray-700/50">
+                    <p className="text-xs text-gray-400 mb-1">Complexity</p>
+                    <div className="flex items-center space-x-2">
+                      <span className="text-lg">⚙️</span>
+                      <span className="text-sm font-semibold text-white capitalize">{contentAnalysis.complexity}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {contentAnalysis.topics.length > 0 && (
+                  <div className="mt-3 pt-3 border-t border-gray-700/50">
+                    <p className="text-xs text-gray-400 mb-2">Key Topics</p>
+                    <div className="flex flex-wrap gap-2">
+                      {contentAnalysis.topics.map((topic, index) => (
+                        <span
+                          key={index}
+                          className="px-2 py-1 rounded-md text-xs font-medium bg-purple-500/20 text-purple-300 border border-purple-500/30"
+                        >
+                          #{topic}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        );
+
+      case 3: // Choose Style & Configure
+        return (
+          <div className="space-y-6">
+            <div className="text-center mb-6">
+              <h2 className="text-2xl font-bold text-white mb-2">Choose Conversation Style</h2>
+              <p className="text-gray-400">Select the format that best fits your content</p>
+            </div>
+
+            {/* Podcast Style Selection */}
             <div className="grid grid-cols-2 gap-4">
               {podcastStyles.map((style: any) => (
                 <button
                   key={style.id}
                   onClick={() => handleStyleSelection(style.id)}
                   disabled={isAnalyzingContent && style.id === 'ai-smart'}
-                  className={`p-4 rounded-xl border-2 transition-all text-left ${
+                  className={`p-4 rounded-xl border-2 transition-all text-left relative ${
                     selectedStyle === style.id || (style.id === 'ai-smart' && showAiInsights)
-                      ? 'border-cyan-500 bg-cyan-500/20'
-                      : 'border-gray-300/30 bg-transparent hover:bg-gray-500/10'
-                  } ${style.isSpecial ? 'relative overflow-hidden' : ''}`}
-                  style={{
-                    borderColor: (selectedStyle === style.id || (style.id === 'ai-smart' && showAiInsights))
-                      ? '#00D4E4'
-                      : 'rgba(255, 255, 255, 0.1)',
-                    backgroundColor: (selectedStyle === style.id || (style.id === 'ai-smart' && showAiInsights))
-                      ? 'rgba(0, 212, 228, 0.15)'
-                      : 'transparent',
-                    boxShadow: (selectedStyle === style.id || (style.id === 'ai-smart' && showAiInsights))
-                      ? '0 0 20px rgba(0, 212, 228, 0.2)'
-                      : 'none'
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!(selectedStyle === style.id || (style.id === 'ai-smart' && showAiInsights))) {
-                      e.currentTarget.style.backgroundColor = 'rgba(0, 212, 228, 0.05)';
-                      e.currentTarget.style.borderColor = 'rgba(0, 212, 228, 0.3)';
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!(selectedStyle === style.id || (style.id === 'ai-smart' && showAiInsights))) {
-                      e.currentTarget.style.backgroundColor = 'transparent';
-                      e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)';
-                    }
-                  }}
+                      ? 'border-[#00D4E4] bg-[#00D4E4]/20'
+                      : 'border-gray-600 hover:border-[#00D4E4]/50'
+                  }`}
                 >
                   {style.isSpecial && (
                     <div className="absolute top-0 right-0 px-2 py-1 bg-gradient-to-r from-purple-500 to-blue-500 text-white text-xs rounded-bl-lg">
@@ -766,13 +883,9 @@ const MultiVoiceConversationPanel: React.FC<MultiVoiceConversationPanelProps> = 
                   )}
                   <div className="flex items-center gap-3 mb-2">
                     <span className="text-2xl">{isAnalyzingContent && style.id === 'ai-smart' ? '🔄' : style.icon}</span>
-                    <h3 className="font-semibold" style={{
-                      color: theme === 'professional-dark' ? '#E8EAED' : theme === 'dark' ? '#FFFFFF' : '#1F2937'
-                    }}>{style.name}</h3>
+                    <h3 className="font-semibold text-white">{style.name}</h3>
                   </div>
-                  <p className="text-sm" style={{
-                    color: theme === 'professional-dark' ? '#9AA0A6' : theme === 'dark' ? 'rgba(255, 255, 255, 0.7)' : '#4B5563'
-                  }}>
+                  <p className="text-sm text-gray-400">
                     {isAnalyzingContent && style.id === 'ai-smart' ? 'Analyzing your content...' : style.description}
                   </p>
                 </button>
@@ -786,35 +899,19 @@ const MultiVoiceConversationPanel: React.FC<MultiVoiceConversationPanelProps> = 
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: 'auto' }}
                   exit={{ opacity: 0, height: 0 }}
-                  className="mt-4 p-4 rounded-lg border"
-                  style={{
-                    backgroundColor: 'rgba(0, 212, 228, 0.1)',
-                    borderColor: '#00D4E4'
-                  }}
+                  className="p-4 rounded-lg border bg-[#00D4E4]/10 border-[#00D4E4]"
                 >
                   <div className="flex items-start gap-3">
-                    <Sparkles className="w-5 h-5 mt-0.5" style={{color: '#00D4E4'}} />
+                    <Sparkles className="w-5 h-5 mt-0.5 text-[#00D4E4]" />
                     <div className="flex-1">
-                      <h4 className="font-semibold mb-2" style={{
-                        color: '#00D4E4'
-                      }}>
-                        AI Analysis Results
-                      </h4>
-                      <p className="text-sm mb-3" style={{
-                        color: theme === 'professional-dark' ? '#E8EAED' : theme === 'dark' ? 'rgba(255, 255, 255, 0.9)' : '#1F2937'
-                      }}>
-                        {aiRecommendation.reasoning}
-                      </p>
+                      <h4 className="font-semibold mb-2 text-[#00D4E4]">AI Analysis Results</h4>
+                      <p className="text-sm mb-3 text-white/90">{aiRecommendation.reasoning}</p>
                       <div className="grid grid-cols-2 gap-2 text-xs">
-                        <div className="p-2 rounded" style={{
-                          backgroundColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)'
-                        }}>
+                        <div className="p-2 rounded bg-black/30">
                           <span className="opacity-70">Recommended Style:</span>
                           <div className="font-semibold capitalize mt-1">{aiRecommendation.style.replace('-', ' ')}</div>
                         </div>
-                        <div className="p-2 rounded" style={{
-                          backgroundColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)'
-                        }}>
+                        <div className="p-2 rounded bg-black/30">
                           <span className="opacity-70">Confidence:</span>
                           <div className="font-semibold mt-1">{Math.round(aiRecommendation.confidence * 100)}%</div>
                         </div>
@@ -824,14 +921,7 @@ const MultiVoiceConversationPanel: React.FC<MultiVoiceConversationPanelProps> = 
                           <span className="text-xs opacity-70">Key Themes:</span>
                           <div className="flex flex-wrap gap-2 mt-1">
                             {aiRecommendation.key_themes.map((theme: string, idx: number) => (
-                              <span
-                                key={idx}
-                                className="px-2 py-1 rounded-full text-xs"
-                                style={{
-                                  backgroundColor: 'rgba(0, 212, 228, 0.15)',
-                                  color: '#00D4E4'
-                                }}
-                              >
+                              <span key={idx} className="px-2 py-1 rounded-full text-xs bg-[#00D4E4]/15 text-[#00D4E4]">
                                 {theme}
                               </span>
                             ))}
@@ -843,236 +933,499 @@ const MultiVoiceConversationPanel: React.FC<MultiVoiceConversationPanelProps> = 
                 </motion.div>
               )}
             </AnimatePresence>
-          </GlassCard>
 
-          {/* Configuration Options */}
-          <GlassCard variant="medium" className="p-6" glow>
-            <h2 className="text-xl font-bold mb-4 flex items-center gap-2" style={{
-              color: theme === 'professional-dark' ? '#E8EAED' : theme === 'dark' ? '#FFFFFF' : '#1F2937'
-            }}>
-              <Settings className="w-5 h-5" />
-              Customize Conversation
-            </h2>
+            {/* Configuration */}
+            <GlassCard variant="medium" className="p-6">
+              <h3 className="text-xl font-bold mb-4 text-white flex items-center gap-2">
+                <Settings className="w-5 h-5" />
+                Customize Conversation
+              </h3>
 
-            {/* Number of Speakers */}
-            <div className="mb-6">
-              <label className="text-sm font-medium block mb-2" style={{
-                color: theme === 'professional-dark' ? '#E8EAED' : theme === 'dark' ? '#FFFFFF' : '#1F2937'
-              }}>Number of Speakers</label>
-              <div className="flex items-center gap-4">
-                {[2, 3, 4].map((num) => (
-                  <button
-                    key={num}
-                    onClick={() => setNumberOfSpeakers(num)}
-                    className={`px-6 py-2 rounded-lg border-2 transition-all ${
-                      numberOfSpeakers === num
-                        ? 'border-cyan-500 bg-cyan-500/20'
-                        : 'border-gray-300/30 bg-transparent hover:bg-gray-500/10'
-                    }`}
-                    style={{
-                      borderColor: numberOfSpeakers === num ? '#00D4E4' : 'rgba(255, 255, 255, 0.1)',
-                      backgroundColor: numberOfSpeakers === num ? 'rgba(0, 212, 228, 0.15)' : 'transparent',
-                      color: '#FFFFFF',
-                      boxShadow: numberOfSpeakers === num ? '0 0 15px rgba(0, 212, 228, 0.2)' : 'none'
-                    }}
-                    onMouseEnter={(e) => {
-                      if (numberOfSpeakers !== num) {
-                        e.currentTarget.style.backgroundColor = 'rgba(0, 212, 228, 0.05)';
-                        e.currentTarget.style.borderColor = 'rgba(0, 212, 228, 0.3)';
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      if (numberOfSpeakers !== num) {
-                        e.currentTarget.style.backgroundColor = 'transparent';
-                        e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)';
-                      }
-                    }}
-                  >
-                    {num} {num === 1 ? 'Speaker' : 'Speakers'}
-                  </button>
-                ))}
+              {/* Number of Speakers */}
+              <div className="mb-6">
+                <label className="text-sm font-medium block mb-2 text-white">Number of Speakers</label>
+                <div className="flex items-center gap-4">
+                  {[2, 3, 4].map((num) => (
+                    <button
+                      key={num}
+                      onClick={() => setNumberOfSpeakers(num)}
+                      className={`px-6 py-2 rounded-lg border-2 transition-all ${
+                        numberOfSpeakers === num
+                          ? 'border-[#00D4E4] bg-[#00D4E4]/20 text-white'
+                          : 'border-gray-600 text-gray-400 hover:border-[#00D4E4]/50'
+                      }`}
+                    >
+                      {num} {num === 1 ? 'Speaker' : 'Speakers'}
+                    </button>
+                  ))}
+                </div>
               </div>
+
+              {/* Conversation Tone */}
+              <div>
+                <label className="text-sm font-medium block mb-2 text-white">Conversation Tone</label>
+                <div className="grid grid-cols-2 gap-3">
+                  {conversationTones.map((tone) => (
+                    <button
+                      key={tone.id}
+                      onClick={() => setConversationTone(tone.id)}
+                      className={`p-3 rounded-lg border-2 transition-all text-left ${
+                        conversationTone === tone.id
+                          ? 'border-[#00D4E4] bg-[#00D4E4]/20'
+                          : 'border-gray-600 hover:border-[#00D4E4]/50'
+                      }`}
+                    >
+                      <div className="font-medium mb-1 text-white">{tone.name}</div>
+                      <div className="text-xs text-gray-400">{tone.description}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </GlassCard>
+          </div>
+        );
+
+      case 4: // Configure Voices
+        return (
+          <div className="space-y-6">
+            <div className="text-center mb-6">
+              <h2 className="text-2xl font-bold text-white mb-2">Configure Voices</h2>
+              <p className="text-gray-400">Choose the perfect voice for each speaker</p>
             </div>
 
-            {/* Conversation Tone */}
-            <div>
-              <label className="text-sm font-medium block mb-2" style={{
-                color: theme === 'professional-dark' ? '#E8EAED' : theme === 'dark' ? '#FFFFFF' : '#1F2937'
-              }}>Conversation Tone</label>
-              <div className="grid grid-cols-2 gap-3">
-                {conversationTones.map((tone) => (
-                  <button
-                    key={tone.id}
-                    onClick={() => setConversationTone(tone.id)}
-                    className={`p-3 rounded-lg border-2 transition-all text-left ${
-                      conversationTone === tone.id
-                        ? 'border-cyan-500 bg-cyan-500/20'
-                        : 'border-gray-300/30 bg-transparent hover:bg-gray-500/10'
-                    }`}
-                    style={{
-                      borderColor: conversationTone === tone.id ? '#00D4E4' : 'rgba(255, 255, 255, 0.1)',
-                      backgroundColor: conversationTone === tone.id ? 'rgba(0, 212, 228, 0.15)' : 'transparent',
-                      boxShadow: conversationTone === tone.id ? '0 0 15px rgba(0, 212, 228, 0.2)' : 'none'
-                    }}
-                    onMouseEnter={(e) => {
-                      if (conversationTone !== tone.id) {
-                        e.currentTarget.style.backgroundColor = 'rgba(0, 212, 228, 0.05)';
-                        e.currentTarget.style.borderColor = 'rgba(0, 212, 228, 0.3)';
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      if (conversationTone !== tone.id) {
-                        e.currentTarget.style.backgroundColor = 'transparent';
-                        e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)';
-                      }
-                    }}
-                  >
-                    <div className="font-medium mb-1" style={{
-                      color: theme === 'professional-dark' ? '#E8EAED' : '#1F2937'
-                    }}>{tone.name}</div>
-                    <div className="text-xs" style={{
-                      color: theme === 'professional-dark' ? '#9AA0A6' : '#6B7280'
-                    }}>{tone.description}</div>
-                  </button>
-                ))}
-              </div>
-            </div>
-          </GlassCard>
+            {/* Host Voice */}
+            <GlassCard className="p-6">
+              <h3 className="text-lg font-semibold text-white mb-4">🎙️ Host Voice</h3>
+              <VoicePreview
+                voiceId={hostVoice}
+                onVoiceChange={setHostVoice}
+                voices={allVoices}
+                previewText="Welcome to today's podcast. We're going to discuss some fascinating topics that I think you'll find really interesting."
+              />
+            </GlassCard>
 
-          {/* Generate Button */}
-          <div className="flex justify-center">
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={handleGenerate}
-              disabled={isGenerating}
-              className={`px-8 py-4 rounded-2xl font-semibold text-lg flex items-center gap-3 transition-all ${
-                isGenerating
-                  ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
-                  : 'text-white shadow-lg'
-              }`}
-              style={{
-                backgroundColor: isGenerating ? undefined : '#00D4E4',
-                boxShadow: isGenerating ? 'none' : '0 0 30px rgba(0, 212, 228, 0.4)'
-              }}
-              onMouseEnter={(e) => {
-                if (!isGenerating) {
-                  e.currentTarget.style.backgroundColor = '#00E8FA';
-                  e.currentTarget.style.boxShadow = '0 0 40px rgba(0, 212, 228, 0.6)';
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (!isGenerating) {
-                  e.currentTarget.style.backgroundColor = '#00D4E4';
-                  e.currentTarget.style.boxShadow = '0 0 30px rgba(0, 212, 228, 0.4)';
-                }
-              }}
-            >
-              <Sparkles size={20} />
-              {isGenerating ? 'Generating Conversation...' : 'Generate Multi-Voice Podcast'}
-            </motion.button>
+            {/* Guest Voice */}
+            <GlassCard className="p-6">
+              <h3 className="text-lg font-semibold text-white mb-4">👤 Guest Voice</h3>
+              <VoicePreview
+                voiceId={guestVoice}
+                onVoiceChange={setGuestVoice}
+                voices={allVoices}
+                previewText="Thanks for having me! I'm excited to share my insights and expertise on this subject with your audience."
+              />
+            </GlassCard>
+
+            {/* Co-Host Voice (if 3+ speakers) */}
+            {numberOfSpeakers >= 3 && (
+              <GlassCard className="p-6">
+                <h3 className="text-lg font-semibold text-white mb-4">🎧 Co-Host Voice</h3>
+                <VoicePreview
+                  voiceId={cohostVoice}
+                  onVoiceChange={setCohostVoice}
+                  voices={allVoices}
+                  previewText="That's a great point! Let me add something interesting to this discussion that I think complements what was just said."
+                />
+              </GlassCard>
+            )}
+
+            {/* Advanced Audio Options */}
+            <GlassCard className="p-6">
+              <h3 className="text-lg font-semibold text-white mb-4">🎵 Advanced Audio Options</h3>
+
+              {/* Voice Speed */}
+              <div className="mb-6">
+                <label className="text-sm font-medium block mb-2 text-white">
+                  Voice Speed: {voiceSpeed.toFixed(1)}x
+                </label>
+                <input
+                  type="range"
+                  min="0.5"
+                  max="2.0"
+                  step="0.1"
+                  value={voiceSpeed}
+                  onChange={(e) => setVoiceSpeed(parseFloat(e.target.value))}
+                  className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-[#00D4E4]"
+                />
+                <div className="flex justify-between text-xs text-gray-500 mt-1">
+                  <span>Slower (0.5x)</span>
+                  <span>Normal (1.0x)</span>
+                  <span>Faster (2.0x)</span>
+                </div>
+              </div>
+
+              {/* Background Music */}
+              <div className="mb-6">
+                <label className="text-sm font-medium block mb-2 text-white">Background Music</label>
+                <select
+                  value={backgroundMusic}
+                  onChange={(e) => setBackgroundMusic(e.target.value)}
+                  className="w-full p-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-[#00D4E4]"
+                >
+                  <option value="none">None</option>
+                  <option value="ambient">Ambient</option>
+                  <option value="upbeat">Upbeat</option>
+                  <option value="calm">Calm</option>
+                  <option value="professional">Professional</option>
+                </select>
+              </div>
+
+              {backgroundMusic !== 'none' && (
+                <div className="mb-6">
+                  <label className="text-sm font-medium block mb-2 text-white">
+                    Music Volume: {Math.round(musicVolume * 100)}%
+                  </label>
+                  <input
+                    type="range"
+                    min="0"
+                    max="1"
+                    step="0.1"
+                    value={musicVolume}
+                    onChange={(e) => setMusicVolume(parseFloat(e.target.value))}
+                    className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-[#00D4E4]"
+                  />
+                </div>
+              )}
+
+              {/* Intro/Outro */}
+              <div className="flex items-center justify-between p-3 bg-gray-800/50 rounded-lg">
+                <div>
+                  <p className="text-white font-medium">Add Intro & Outro</p>
+                  <p className="text-xs text-gray-400">Professional opening and closing segments</p>
+                </div>
+                <button
+                  onClick={() => setAddIntroOutro(!addIntroOutro)}
+                  className={`w-12 h-6 rounded-full transition-colors ${
+                    addIntroOutro ? 'bg-[#00D4E4]' : 'bg-gray-600'
+                  }`}
+                >
+                  <div className={`w-5 h-5 rounded-full bg-white transition-transform ${
+                    addIntroOutro ? 'translate-x-6' : 'translate-x-1'
+                  }`} />
+                </button>
+              </div>
+            </GlassCard>
+
+            {/* Save as Preset */}
+            <GlassCard className="p-6">
+              <h3 className="text-lg font-semibold text-white mb-4">💾 Save Configuration as Preset</h3>
+              <div className="space-y-3">
+                <input
+                  type="text"
+                  placeholder="Preset name..."
+                  value={presetName}
+                  onChange={(e) => setPresetName(e.target.value)}
+                  className="w-full p-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-[#00D4E4]"
+                />
+                <input
+                  type="text"
+                  placeholder="Description (optional)..."
+                  value={presetDescription}
+                  onChange={(e) => setPresetDescription(e.target.value)}
+                  className="w-full p-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-[#00D4E4]"
+                />
+                <button
+                  onClick={handleSaveAsPreset}
+                  className="w-full px-4 py-3 bg-[#00D4E4] hover:bg-[#00E8FA] text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
+                >
+                  <Save className="w-4 h-4" />
+                  Save as Preset
+                </button>
+              </div>
+            </GlassCard>
+          </div>
+        );
+
+      case 5: // Generate
+        return (
+          <div className="space-y-6">
+            <div className="text-center mb-6">
+              <h2 className="text-2xl font-bold text-white mb-2">Ready to Generate</h2>
+              <p className="text-gray-400">Review your settings and create your podcast</p>
+            </div>
+
+            {/* Estimation Panel */}
+            <EstimationPanel
+              duration={getEstimation().duration}
+              cost={getEstimation().cost}
+              wordCount={getEstimation().words}
+            />
+
+            {/* Configuration Summary */}
+            <GlassCard className="p-6">
+              <h3 className="text-lg font-semibold text-white mb-4">📋 Configuration Summary</h3>
+              <div className="space-y-3 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-gray-400">Style:</span>
+                  <span className="text-white font-medium capitalize">{selectedStyle.replace('-', ' ')}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-400">Speakers:</span>
+                  <span className="text-white font-medium">{numberOfSpeakers}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-400">Tone:</span>
+                  <span className="text-white font-medium capitalize">{conversationTone}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-400">Script Words:</span>
+                  <span className="text-white font-medium">{scriptWordCount}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-400">Host Voice:</span>
+                  <span className="text-white font-medium">{allVoices.find(v => v.id === hostVoice)?.name}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-400">Guest Voice:</span>
+                  <span className="text-white font-medium">{allVoices.find(v => v.id === guestVoice)?.name}</span>
+                </div>
+                {numberOfSpeakers >= 3 && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Co-Host Voice:</span>
+                    <span className="text-white font-medium">{allVoices.find(v => v.id === cohostVoice)?.name}</span>
+                  </div>
+                )}
+              </div>
+            </GlassCard>
+
+            {/* Generate Button */}
+            <div className="flex justify-center">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={handleGenerate}
+                disabled={isGenerating}
+                className={`px-8 py-4 rounded-2xl font-semibold text-lg flex items-center gap-3 transition-all ${
+                  isGenerating
+                    ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                    : 'bg-[#00D4E4] hover:bg-[#00E8FA] text-white shadow-lg shadow-[#00D4E4]/30'
+                }`}
+              >
+                <Sparkles size={20} />
+                {isGenerating ? 'Generating Podcast...' : 'Generate Multi-Voice Podcast'}
+              </motion.button>
+            </div>
+
+            {/* Progress Indicator */}
+            <AnimatePresence>
+              {isGenerating && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="space-y-4"
+                >
+                  <div className="flex justify-center">
+                    <div className="relative w-32 h-32">
+                      <motion.div
+                        animate={{ rotate: 360 }}
+                        transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+                        className="w-32 h-32 rounded-full border-4 border-[#00D4E4]/30 border-t-[#00D4E4]"
+                      />
+                      <div className="absolute inset-4 rounded-full bg-gradient-to-br from-[#00D4E4] to-[#00E8FA] flex items-center justify-center">
+                        <motion.div
+                          animate={{ scale: [1, 1.2, 1] }}
+                          transition={{ duration: 1.5, repeat: Infinity }}
+                        >
+                          <Sparkles size={32} className="text-white" />
+                        </motion.div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="text-center">
+                    <div className="text-white font-medium mb-2">{generationStage}</div>
+                    <div className="w-full bg-gray-700 rounded-full h-2">
+                      <div
+                        className="bg-[#00D4E4] h-2 rounded-full transition-all duration-300"
+                        style={{ width: `${generationProgress}%` }}
+                      />
+                    </div>
+                    <div className="text-sm text-gray-400 mt-2">{Math.round(generationProgress)}%</div>
+                  </div>
+                </motion.div>
+              )}
+
+              {/* Audio Player */}
+              {showPlayer && currentAudio && !isGenerating && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 20 }}
+                >
+                  <ModernAudioPlayer
+                    audioUrl={currentAudio.audioUrl}
+                    trackData={currentAudio.trackData}
+                    onClose={() => setShowPlayer(false)}
+                  />
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        );
+
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex">
+      <ToastContainer toasts={toast.toasts} onRemoveToast={toast.removeToast} />
+
+      {/* Backdrop */}
+      <div className="flex-1 bg-black/30 backdrop-blur-sm" onClick={onClose} />
+
+      {/* Main Panel */}
+      <div className={`${isExpanded ? 'w-3/4' : 'w-1/2'} backdrop-blur-3xl border-l shadow-2xl overflow-hidden flex flex-col relative bg-black border-gray-800 transition-all duration-500`}>
+
+        {/* Top Control Bar */}
+        <div className="absolute top-6 left-6 z-[100] flex items-center space-x-3">
+          <button
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="p-3 bg-[#00D4E4]/10 border border-[#00D4E4]/30 hover:bg-[#00D4E4]/20 text-[#00D4E4] rounded-lg transition-colors shadow-xl"
+          >
+            {isExpanded ? <Minimize2 className="w-6 h-6" /> : <Maximize2 className="w-6 h-6" />}
+          </button>
+          <button
+            onClick={onMinimize}
+            className="p-3 bg-[#00D4E4] hover:bg-[#00E8FA] text-white rounded-lg transition-colors shadow-xl"
+          >
+            <Minimize2 className="w-6 h-6" />
+          </button>
+          <button
+            onClick={onClose}
+            className="p-3 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors shadow-xl"
+          >
+            <X className="w-6 h-6" />
+          </button>
+          <button
+            onClick={() => setShowHistory(!showHistory)}
+            className="p-3 bg-purple-600/10 border border-purple-500/30 hover:bg-purple-600/20 text-purple-400 rounded-lg transition-colors shadow-xl"
+          >
+            <History className="w-6 h-6" />
+          </button>
+        </div>
+
+        {/* Header */}
+        <div className="relative flex items-center justify-between p-6 backdrop-blur-md border-b bg-[#14191a] border-gray-800 z-10">
+          <h1 className="text-2xl font-bold flex items-center space-x-3 text-white">
+            <div className="w-8 h-8 rounded-full bg-[#00D4E4] flex items-center justify-center">
+              <Users className="w-4 h-4 text-white" />
+            </div>
+            <span>Multi-Voice Conversation</span>
+          </h1>
+        </div>
+
+        {/* Wizard Navigation */}
+        <div className="px-6 pt-6 z-10">
+          <WizardNavigation
+            steps={wizardSteps}
+            currentStep={currentStep}
+            onStepClick={(step) => {
+              // Only allow navigation to completed steps
+              if (step < currentStep) {
+                setCurrentStep(step);
+              }
+            }}
+          />
+        </div>
+
+        {/* Main Content */}
+        <div className="flex-1 overflow-y-auto relative z-10 p-6">
+          {renderStepContent()}
+        </div>
+
+        {/* Navigation Buttons */}
+        <div className="p-6 border-t border-gray-800 bg-[#14191a] flex justify-between items-center z-10">
+          <button
+            onClick={() => setCurrentStep(Math.max(1, currentStep - 1))}
+            disabled={currentStep === 1}
+            className={`px-6 py-3 rounded-lg font-medium flex items-center gap-2 transition-colors ${
+              currentStep === 1
+                ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
+                : 'bg-gray-700 hover:bg-gray-600 text-white'
+            }`}
+          >
+            <ArrowLeft size={20} />
+            Previous
+          </button>
+
+          <div className="text-sm text-gray-400">
+            Step {currentStep} of {wizardSteps.length}
           </div>
 
-          {/* Audio Visualizer */}
-          <AnimatePresence>
-            {isGenerating && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.8 }}
-                className="flex justify-center"
-              >
-                <div className="relative w-32 h-32">
-                  <motion.div
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
-                    className="w-32 h-32 rounded-full border-4"
-                    style={{
-                      borderColor: 'rgba(0, 212, 228, 0.3)',
-                      borderTopColor: '#00D4E4'
-                    }}
-                  />
-                  <div className="absolute inset-4 rounded-full flex items-center justify-center"
-                       style={{
-                         background: 'linear-gradient(135deg, #00D4E4, #00E8FA)'
-                       }}>
-                    <motion.div
-                      animate={{ scale: [1, 1.2, 1] }}
-                      transition={{ duration: 1.5, repeat: Infinity }}
-                    >
-                      <Sparkles size={32} className="text-white" />
-                    </motion.div>
-                  </div>
-                </div>
-              </motion.div>
-            )}
-
-            {/* Audio Player */}
-            {podcastAudioUrl && podcastMetadata && !isGenerating && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 20 }}
-                className="mt-6"
-              >
-                <GlassCard className="p-6">
-                  <div className="space-y-4">
-                    {/* Podcast Title */}
-                    <div className="flex items-center gap-3">
-                      <div className="p-3 bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl">
-                        <Mic size={24} className="text-white" />
-                      </div>
-                      <div>
-                        <h3 className="text-lg font-semibold text-white">
-                          {podcastMetadata.title || 'Your Podcast'}
-                        </h3>
-                        <p className="text-sm text-gray-400">
-                          {Math.floor(podcastMetadata.duration / 60)}:{String(Math.floor(podcastMetadata.duration % 60)).padStart(2, '0')} • {podcastMetadata.turns} segments
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Audio Player */}
-                    <audio
-                      controls
-                      src={podcastAudioUrl}
-                      className="w-full h-12 rounded-lg"
-                      style={{
-                        filter: theme === 'dark' ? 'invert(0.9) hue-rotate(180deg)' : 'none'
-                      }}
-                    />
-
-                    {/* Metadata */}
-                    <div className="flex items-center justify-between text-sm">
-                      <div className="flex gap-4">
-                        <span className="text-gray-400">
-                          Host: <span className="text-white">{podcastMetadata.voices.host || 'Unknown'}</span>
-                        </span>
-                        <span className="text-gray-400">
-                          Guest: <span className="text-white">{podcastMetadata.voices.guest || 'Unknown'}</span>
-                        </span>
-                      </div>
-                      <a
-                        href={podcastAudioUrl}
-                        download
-                        className="flex items-center gap-2 px-4 py-2 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 rounded-lg transition-colors"
-                      >
-                        <Download size={16} />
-                        Download
-                      </a>
-                    </div>
-
-                    {/* Cost */}
-                    <div className="text-xs text-gray-500 text-center">
-                      Generation cost: ${podcastMetadata.cost.toFixed(4)}
-                    </div>
-                  </div>
-                </GlassCard>
-              </motion.div>
-            )}
-          </AnimatePresence>
+          <button
+            onClick={() => {
+              if (currentStep < wizardSteps.length) {
+                setCurrentStep(currentStep + 1);
+              }
+            }}
+            disabled={
+              currentStep === wizardSteps.length ||
+              (currentStep === 1 && !backendProcessedContent) ||
+              (currentStep === 3 && !selectedStyle)
+            }
+            className={`px-6 py-3 rounded-lg font-medium flex items-center gap-2 transition-colors ${
+              currentStep === wizardSteps.length ||
+              (currentStep === 1 && !backendProcessedContent) ||
+              (currentStep === 3 && !selectedStyle)
+                ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
+                : 'bg-[#00D4E4] hover:bg-[#00E8FA] text-white'
+            }`}
+          >
+            {currentStep === wizardSteps.length ? 'Finish' : 'Next'}
+            <ArrowRight size={20} />
+          </button>
         </div>
       </div>
+
+      {/* History Panel */}
+      <AnimatePresence>
+        {showHistory && (
+          <motion.div
+            initial={{ x: '100%' }}
+            animate={{ x: 0 }}
+            exit={{ x: '100%' }}
+            className="fixed right-0 top-0 bottom-0 w-96 bg-gray-900 border-l border-gray-800 shadow-2xl z-[60]"
+          >
+            <GenerationHistory
+              history={generationHistory}
+              onClose={() => setShowHistory(false)}
+              onPlayItem={(item) => {
+                setCurrentAudio({
+                  id: item.id,
+                  audioUrl: item.audioUrl,
+                  trackData: {
+                    title: item.title,
+                    artist: `${item.voiceName} • IntelliCast AI`,
+                    duration: item.duration,
+                    artwork: "https://images.unsplash.com/photo-1478737270239-2f02b77fc618?w=400",
+                    description: ''
+                  }
+                });
+                setShowPlayer(true);
+              }}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <style>{`
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: rgba(0, 0, 0, 0.2);
+          border-radius: 3px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: rgba(0, 212, 228, 0.5);
+          border-radius: 3px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: rgba(0, 212, 228, 0.7);
+        }
+      `}</style>
     </div>
   );
 };
