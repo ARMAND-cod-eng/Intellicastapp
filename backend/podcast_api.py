@@ -402,6 +402,154 @@ async def upload_document(file: UploadFile = File(...)):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+class TrendingTopicsRequest(BaseModel):
+    """Request model for trending topics discovery"""
+    category: Optional[str] = "all"
+    limit: int = 10
+
+
+@app.post("/api/trending/discover")
+async def discover_trending_topics(request: TrendingTopicsRequest):
+    """
+    Discover trending topics using Tavily real-time web search
+    Fetches actual trending news articles based on category
+    """
+    try:
+        from tavily import TavilyClient
+        import os
+        import hashlib
+
+        # Initialize Tavily client
+        tavily_api_key = os.getenv('TAVILY_API_KEY')
+        if not tavily_api_key:
+            raise ValueError("TAVILY_API_KEY not found in environment")
+
+        client = TavilyClient(api_key=tavily_api_key)
+
+        # Map category to search query
+        category_queries = {
+            'all': 'trending news today 2025',
+            'technology': 'trending technology news AI innovation 2025',
+            'business': 'trending business news markets economy 2025',
+            'science': 'trending science discoveries research 2025',
+            'health': 'trending health medical breakthroughs 2025',
+            'entertainment': 'trending entertainment news media 2025',
+            'sports': 'trending sports news events 2025'
+        }
+
+        search_query = category_queries.get(request.category, category_queries['all'])
+
+        print(f"\n[TAVILY] Searching for: {search_query}")
+        print(f"[TAVILY] Category: {request.category}, Limit: {request.limit}")
+
+        # Search with Tavily
+        search_response = client.search(
+            query=search_query,
+            search_depth="advanced",
+            max_results=min(request.limit, 10),
+            include_raw_content=True,
+            topic="news"
+        )
+
+        # Transform Tavily results to our format
+        topics = []
+        for idx, result in enumerate(search_response.get('results', [])):
+            # Extract keywords from content
+            content = result.get('raw_content') or result.get('content', '')
+            words = content.split()
+            keywords = list(set([w.strip('.,!?;:').lower() for w in words if len(w) > 5]))[:5]
+
+            # Calculate estimated duration based on content length
+            word_count = len(words)
+            duration_min = max(5, min(12, word_count // 150))
+
+            # Generate unique ID
+            topic_id = hashlib.md5(f"{result.get('title', '')}{idx}".encode()).hexdigest()[:12]
+
+            # Calculate trend score from Tavily score (0-1) to our scale (70-99)
+            tavily_score = result.get('score', 0.5)
+            trend_score = int(70 + (tavily_score * 29))
+
+            topic = {
+                'id': topic_id,
+                'title': result.get('title', 'Untitled Topic'),
+                'category': request.category if request.category != 'all' else 'general',
+                'trendScore': trend_score,
+                'sources': 1,
+                'description': content[:200] + '...' if len(content) > 200 else content,
+                'keywords': keywords,
+                'estimatedDuration': f'{duration_min}-{duration_min + 2} min',
+                'content': content
+            }
+
+            topics.append(topic)
+
+        print(f"[TAVILY] Found {len(topics)} trending topics")
+
+        return {
+            "success": True,
+            "topics": topics,
+            "total": len(topics),
+            "category": request.category
+        }
+
+    except Exception as e:
+        import traceback
+        print(f"[TAVILY ERROR] {traceback.format_exc()}")
+        raise HTTPException(status_code=500, detail=f"Failed to discover trending topics: {str(e)}")
+
+
+@app.post("/api/trending/generate-content")
+async def generate_topic_content(request: StyleRecommendationRequest):
+    """
+    Generate detailed content for a trending topic to use in podcast generation
+    """
+    try:
+        from together import Together
+        import os
+
+        client = Together(api_key=os.getenv('TOGETHER_API_KEY'))
+
+        prompt = f"""Expand the following topic into detailed content suitable for a podcast:
+
+{request.document_text}
+
+Provide 4-5 paragraphs of comprehensive, engaging information that covers:
+- Background and context
+- Key developments or findings
+- Expert perspectives
+- Implications and future outlook
+- Real-world applications or examples
+
+Make it informative, balanced, and suitable for an educational podcast."""
+
+        response = client.chat.completions.create(
+            model=os.getenv('TOGETHER_CONVERSATION_MODEL', 'meta-llama/Llama-3-70b-chat-hf'),
+            messages=[
+                {
+                    "role": "system",
+                    "content": "You are an expert content writer who creates detailed, balanced content for educational podcasts."
+                },
+                {
+                    "role": "user",
+                    "content": prompt
+                }
+            ],
+            max_tokens=2000,
+            temperature=0.7
+        )
+
+        content = response.choices[0].message.content.strip()
+
+        return {
+            "success": True,
+            "content": content
+        }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to generate content: {str(e)}")
+
+
 if __name__ == "__main__":
     import uvicorn
 
