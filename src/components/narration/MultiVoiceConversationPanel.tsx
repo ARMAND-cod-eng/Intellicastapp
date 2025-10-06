@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { X, FileText, ArrowRight, ArrowLeft, Sparkles, History, Minimize2, Maximize2, Users, Settings, Play, Download, Mic, Trash2, Save } from 'lucide-react';
+import { X, FileText, ArrowRight, ArrowLeft, Sparkles, History, Minimize2, Maximize2, Users, Settings, Play, Download, Mic, Trash2, Save, Share2, Code } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { DocumentContent } from '../../types/document';
 import { NarrationAPI } from '../../services/narrationApi';
@@ -99,6 +99,7 @@ const MultiVoiceConversationPanel: React.FC<MultiVoiceConversationPanelProps> = 
   const [hostVoice, setHostVoice] = useState('829ccd10-f8b3-43cd-b8a0-4aeaa81f3b30'); // Linda
   const [guestVoice, setGuestVoice] = useState('e07c00bc-4134-4eae-9ea4-1a55fb45746b'); // Brooke
   const [cohostVoice, setCohostVoice] = useState('a167e0f3-df7e-4d52-a9c3-f949145efdab'); // Blake
+  const [moderatorVoice, setModeratorVoice] = useState('5345cf08-6f37-424d-a5d9-8ae1101b9377'); // Julia
   const [voiceSpeed, setVoiceSpeed] = useState(1.0);
 
   // Advanced Audio State
@@ -129,24 +130,28 @@ const MultiVoiceConversationPanel: React.FC<MultiVoiceConversationPanelProps> = 
       name: 'Conversational Chat',
       description: 'Friendly, casual discussion between hosts',
       icon: '💬',
+      previewSample: 'Hey there! Today we\'re diving into something really fascinating. What do you think about this topic?'
     },
     {
       id: 'expert-panel',
       name: 'Expert Panel',
       description: 'Professional analysis with expert perspectives',
       icon: '🎓',
+      previewSample: 'From an industry perspective, this represents a significant shift in our understanding of the subject matter.'
     },
     {
       id: 'debate',
       name: 'Debate Style',
       description: 'Opposing viewpoints and critical discussion',
       icon: '⚖️',
+      previewSample: 'While I respect that viewpoint, I fundamentally disagree. Let me explain why this alternative approach makes more sense.'
     },
     {
       id: 'interview',
       name: 'Interview Format',
       description: 'Host interviewing an expert guest',
       icon: '🎙️',
+      previewSample: 'Welcome to the show! Can you tell our listeners about your experience with this and what insights you\'ve gained?'
     },
     {
       id: 'ai-smart',
@@ -205,9 +210,10 @@ const MultiVoiceConversationPanel: React.FC<MultiVoiceConversationPanelProps> = 
     maxSize: 50 * 1024 * 1024,
   });
 
-  // AI Content Analysis
-  const analyzeContent = (text: string) => {
+  // AI Content Analysis - Client-side fallback
+  const analyzeContentFallback = (text: string) => {
     const words = text.toLowerCase();
+    const textWordCount = text.split(/\s+/).length;
 
     // Determine tone
     let tone = 'Neutral';
@@ -220,7 +226,7 @@ const MultiVoiceConversationPanel: React.FC<MultiVoiceConversationPanelProps> = 
     }
 
     // Determine reading level
-    const avgWordLength = text.split(/\s+/).reduce((sum, word) => sum + word.length, 0) / wordCount;
+    const avgWordLength = text.split(/\s+/).reduce((sum, word) => sum + word.length, 0) / textWordCount;
     let readingLevel = 'General';
     let complexity: 'simple' | 'moderate' | 'complex' = 'moderate';
     if (avgWordLength < 5) {
@@ -259,6 +265,34 @@ const MultiVoiceConversationPanel: React.FC<MultiVoiceConversationPanelProps> = 
     return { tone, readingLevel, contentType, topics, complexity };
   };
 
+  // AI Content Analysis - Backend-powered
+  const analyzeContent = async (text: string) => {
+    setIsAnalyzingContent(true);
+    try {
+      const response = await NarrationAPI.analyzeDocumentContent(text);
+
+      if (response.success && response.analysis) {
+        return {
+          tone: response.analysis.tone || 'Neutral',
+          readingLevel: response.analysis.reading_level || 'General',
+          contentType: response.analysis.content_type || 'General',
+          topics: response.analysis.key_topics || [],
+          complexity: response.analysis.complexity_level || 'moderate'
+        };
+      } else {
+        // Fallback to client-side analysis
+        console.warn('Backend AI analysis failed, using fallback');
+        return analyzeContentFallback(text);
+      }
+    } catch (error) {
+      console.error('AI analysis error:', error);
+      // Fallback to client-side analysis
+      return analyzeContentFallback(text);
+    } finally {
+      setIsAnalyzingContent(false);
+    }
+  };
+
   // Process document
   const processDocument = async (files?: File[]) => {
     const filesToProcess = files || uploadedFiles || internalUploadedFiles;
@@ -272,8 +306,8 @@ const MultiVoiceConversationPanel: React.FC<MultiVoiceConversationPanelProps> = 
         setBackendProcessedContent(response.document.text);
         setWordCount(response.document.analysis.wordCount);
 
-        // Perform AI content analysis
-        const analysis = analyzeContent(response.document.text);
+        // Perform AI content analysis (now async)
+        const analysis = await analyzeContent(response.document.text);
         setContentAnalysis(analysis);
 
         toast.success('Document processed!', `${response.document.analysis.wordCount} words analyzed`);
@@ -483,6 +517,21 @@ const MultiVoiceConversationPanel: React.FC<MultiVoiceConversationPanelProps> = 
     const cost = `$${(baseCost * multiSpeakerMultiplier).toFixed(4)}`;
 
     return { duration, cost, words };
+  };
+
+  // State for cancellation
+  const [generationJobId, setGenerationJobId] = useState<string | null>(null);
+  const [isCancelling, setIsCancelling] = useState(false);
+
+  // Cancel generation
+  const handleCancelGeneration = () => {
+    setIsCancelling(true);
+    setIsGenerating(false);
+    setGenerationProgress(0);
+    setGenerationStage('');
+    setGenerationJobId(null);
+    toast.warning('Generation cancelled', 'Podcast generation was stopped');
+    setIsCancelling(false);
   };
 
   // Generate podcast
@@ -765,7 +814,9 @@ const MultiVoiceConversationPanel: React.FC<MultiVoiceConversationPanelProps> = 
                       <p className="text-xs text-gray-400">Words</p>
                     </div>
                     <div className="text-center">
-                      <p className="text-2xl font-bold text-[#00D4E4]">{Math.ceil(wordCount / 5)}</p>
+                      <p className="text-2xl font-bold text-[#00D4E4]">
+                        {(backendProcessedContent.match(/[.!?]+/g) || []).length}
+                      </p>
                       <p className="text-xs text-gray-400">Sentences</p>
                     </div>
                     <div className="text-center">
@@ -870,7 +921,7 @@ const MultiVoiceConversationPanel: React.FC<MultiVoiceConversationPanelProps> = 
                   key={style.id}
                   onClick={() => handleStyleSelection(style.id)}
                   disabled={isAnalyzingContent && style.id === 'ai-smart'}
-                  className={`p-4 rounded-xl border-2 transition-all text-left relative ${
+                  className={`p-4 rounded-xl border-2 transition-all text-left relative group ${
                     selectedStyle === style.id || (style.id === 'ai-smart' && showAiInsights)
                       ? 'border-[#00D4E4] bg-[#00D4E4]/20'
                       : 'border-gray-600 hover:border-[#00D4E4]/50'
@@ -885,9 +936,24 @@ const MultiVoiceConversationPanel: React.FC<MultiVoiceConversationPanelProps> = 
                     <span className="text-2xl">{isAnalyzingContent && style.id === 'ai-smart' ? '🔄' : style.icon}</span>
                     <h3 className="font-semibold text-white">{style.name}</h3>
                   </div>
-                  <p className="text-sm text-gray-400">
+                  <p className="text-sm text-gray-400 mb-3">
                     {isAnalyzingContent && style.id === 'ai-smart' ? 'Analyzing your content...' : style.description}
                   </p>
+
+                  {/* Style Preview Sample - Shows on Hover */}
+                  {style.previewSample && (
+                    <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                      <div className="p-2 rounded-lg bg-black/40 border border-[#00D4E4]/20">
+                        <div className="flex items-center gap-2 mb-1">
+                          <Play size={12} className="text-[#00D4E4]" />
+                          <span className="text-xs text-[#00D4E4] font-medium">Preview Sample</span>
+                        </div>
+                        <p className="text-xs text-gray-300 italic line-clamp-2">
+                          "{style.previewSample}"
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </button>
               ))}
             </div>
@@ -996,22 +1062,64 @@ const MultiVoiceConversationPanel: React.FC<MultiVoiceConversationPanelProps> = 
             {/* Host Voice */}
             <GlassCard className="p-6">
               <h3 className="text-lg font-semibold text-white mb-4">🎙️ Host Voice</h3>
+
+              {/* Voice Selector Dropdown */}
+              <div className="mb-4">
+                <label className="text-sm font-medium text-gray-300 mb-2 block">Select Voice</label>
+                <select
+                  value={hostVoice}
+                  onChange={(e) => setHostVoice(e.target.value)}
+                  className="w-full px-4 py-3 rounded-lg bg-gray-800/50 border border-gray-600 text-white focus:border-[#00D4E4] focus:outline-none transition-colors"
+                >
+                  {allVoices.map((voice) => (
+                    <option key={voice.id} value={voice.id}>
+                      {voice.name} - {voice.desc}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Voice Preview */}
               <VoicePreview
                 voiceId={hostVoice}
-                onVoiceChange={setHostVoice}
-                voices={allVoices}
+                voiceName={allVoices.find(v => v.id === hostVoice)?.name || 'Unknown'}
+                voiceDescription={allVoices.find(v => v.id === hostVoice)?.desc || ''}
                 previewText="Welcome to today's podcast. We're going to discuss some fascinating topics that I think you'll find really interesting."
+                podcastStyle={selectedStyle}
+                onPreviewStart={() => {}}
+                onPreviewEnd={() => {}}
               />
             </GlassCard>
 
             {/* Guest Voice */}
             <GlassCard className="p-6">
               <h3 className="text-lg font-semibold text-white mb-4">👤 Guest Voice</h3>
+
+              {/* Voice Selector Dropdown */}
+              <div className="mb-4">
+                <label className="text-sm font-medium text-gray-300 mb-2 block">Select Voice</label>
+                <select
+                  value={guestVoice}
+                  onChange={(e) => setGuestVoice(e.target.value)}
+                  className="w-full px-4 py-3 rounded-lg bg-gray-800/50 border border-gray-600 text-white focus:border-[#00D4E4] focus:outline-none transition-colors"
+                >
+                  {allVoices.map((voice) => (
+                    <option key={voice.id} value={voice.id}>
+                      {voice.name} - {voice.desc}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Voice Preview */}
               <VoicePreview
                 voiceId={guestVoice}
-                onVoiceChange={setGuestVoice}
-                voices={allVoices}
+                voiceName={allVoices.find(v => v.id === guestVoice)?.name || 'Unknown'}
+                voiceDescription={allVoices.find(v => v.id === guestVoice)?.desc || ''}
                 previewText="Thanks for having me! I'm excited to share my insights and expertise on this subject with your audience."
+                podcastStyle={selectedStyle}
+                onPreviewStart={() => {}}
+                onPreviewEnd={() => {}}
               />
             </GlassCard>
 
@@ -1019,11 +1127,66 @@ const MultiVoiceConversationPanel: React.FC<MultiVoiceConversationPanelProps> = 
             {numberOfSpeakers >= 3 && (
               <GlassCard className="p-6">
                 <h3 className="text-lg font-semibold text-white mb-4">🎧 Co-Host Voice</h3>
+
+                {/* Voice Selector Dropdown */}
+                <div className="mb-4">
+                  <label className="text-sm font-medium text-gray-300 mb-2 block">Select Voice</label>
+                  <select
+                    value={cohostVoice}
+                    onChange={(e) => setCohostVoice(e.target.value)}
+                    className="w-full px-4 py-3 rounded-lg bg-gray-800/50 border border-gray-600 text-white focus:border-[#00D4E4] focus:outline-none transition-colors"
+                  >
+                    {allVoices.map((voice) => (
+                      <option key={voice.id} value={voice.id}>
+                        {voice.name} - {voice.desc}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Voice Preview */}
                 <VoicePreview
                   voiceId={cohostVoice}
-                  onVoiceChange={setCohostVoice}
-                  voices={allVoices}
+                  voiceName={allVoices.find(v => v.id === cohostVoice)?.name || 'Unknown'}
+                  voiceDescription={allVoices.find(v => v.id === cohostVoice)?.desc || ''}
                   previewText="That's a great point! Let me add something interesting to this discussion that I think complements what was just said."
+                  podcastStyle={selectedStyle}
+                  onPreviewStart={() => {}}
+                  onPreviewEnd={() => {}}
+                />
+              </GlassCard>
+            )}
+
+            {/* Moderator/Expert Voice (if 4 speakers) */}
+            {numberOfSpeakers === 4 && (
+              <GlassCard className="p-6">
+                <h3 className="text-lg font-semibold text-white mb-4">🎯 Moderator/Expert Voice</h3>
+
+                {/* Voice Selector Dropdown */}
+                <div className="mb-4">
+                  <label className="text-sm font-medium text-gray-300 mb-2 block">Select Voice</label>
+                  <select
+                    value={moderatorVoice}
+                    onChange={(e) => setModeratorVoice(e.target.value)}
+                    className="w-full px-4 py-3 rounded-lg bg-gray-800/50 border border-gray-600 text-white focus:border-[#00D4E4] focus:outline-none transition-colors"
+                  >
+                    {allVoices.map((voice) => (
+                      <option key={voice.id} value={voice.id}>
+                        {voice.name} - {voice.desc}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Voice Preview */}
+                <VoicePreview
+                  voiceId={moderatorVoice}
+                  voiceName={allVoices.find(v => v.id === moderatorVoice)?.name || 'Unknown'}
+                  voiceDescription={allVoices.find(v => v.id === moderatorVoice)?.desc || ''}
+                  previewText="Let me provide some expert perspective on this topic. From my experience, there are several key factors we should consider here."
+                  podcastStyle={selectedStyle}
+                  onPreviewStart={() => {}}
+                  onPreviewEnd={() => {}}
                 />
               </GlassCard>
             )}
@@ -1145,9 +1308,13 @@ const MultiVoiceConversationPanel: React.FC<MultiVoiceConversationPanelProps> = 
 
             {/* Estimation Panel */}
             <EstimationPanel
-              duration={getEstimation().duration}
-              cost={getEstimation().cost}
               wordCount={getEstimation().words}
+              estimatedDuration={getEstimation().duration}
+              estimatedCost={getEstimation().cost}
+              voiceName={`${numberOfSpeakers} Speakers - ${selectedStyle}`}
+              quality="premium"
+              onGenerate={handleGenerate}
+              isGenerating={isGenerating}
             />
 
             {/* Configuration Summary */}
@@ -1167,8 +1334,8 @@ const MultiVoiceConversationPanel: React.FC<MultiVoiceConversationPanelProps> = 
                   <span className="text-white font-medium capitalize">{conversationTone}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-400">Script Words:</span>
-                  <span className="text-white font-medium">{scriptWordCount}</span>
+                  <span className="text-gray-400">Document Words:</span>
+                  <span className="text-white font-medium">{wordCount.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-400">Host Voice:</span>
@@ -1182,6 +1349,12 @@ const MultiVoiceConversationPanel: React.FC<MultiVoiceConversationPanelProps> = 
                   <div className="flex justify-between">
                     <span className="text-gray-400">Co-Host Voice:</span>
                     <span className="text-white font-medium">{allVoices.find(v => v.id === cohostVoice)?.name}</span>
+                  </div>
+                )}
+                {numberOfSpeakers === 4 && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Moderator Voice:</span>
+                    <span className="text-white font-medium">{allVoices.find(v => v.id === moderatorVoice)?.name}</span>
                   </div>
                 )}
               </div>
@@ -1241,6 +1414,17 @@ const MultiVoiceConversationPanel: React.FC<MultiVoiceConversationPanelProps> = 
                       />
                     </div>
                     <div className="text-sm text-gray-400 mt-2">{Math.round(generationProgress)}%</div>
+
+                    {/* Cancel Button */}
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={handleCancelGeneration}
+                      disabled={isCancelling}
+                      className="mt-4 px-6 py-2 rounded-lg bg-red-500/20 border border-red-500/30 text-red-400 font-medium hover:bg-red-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isCancelling ? 'Cancelling...' : 'Cancel Generation'}
+                    </motion.button>
                   </div>
                 </motion.div>
               )}
@@ -1257,6 +1441,79 @@ const MultiVoiceConversationPanel: React.FC<MultiVoiceConversationPanelProps> = 
                     trackData={currentAudio.trackData}
                     onClose={() => setShowPlayer(false)}
                   />
+
+                  {/* Download and Sharing Section */}
+                  <GlassCard className="p-6 mt-6">
+                    <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                      <Download size={20} className="text-[#00D4E4]" />
+                      Download & Share
+                    </h3>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      {/* Download MP3 */}
+                      <motion.button
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={() => {
+                          const link = document.createElement('a');
+                          link.href = currentAudio.audioUrl;
+                          link.download = `podcast-${Date.now()}.mp3`;
+                          document.body.appendChild(link);
+                          link.click();
+                          document.body.removeChild(link);
+                          toast.success('Download started!', 'Your podcast is downloading...');
+                        }}
+                        className="px-4 py-3 rounded-lg bg-[#00D4E4]/20 border border-[#00D4E4]/30 text-[#00D4E4] font-medium hover:bg-[#00D4E4]/30 transition-all flex items-center justify-center gap-2"
+                      >
+                        <Download size={18} />
+                        Download MP3
+                      </motion.button>
+
+                      {/* Copy Link */}
+                      <motion.button
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={() => {
+                          navigator.clipboard.writeText(currentAudio.audioUrl);
+                          toast.success('Link copied!', 'Audio URL copied to clipboard');
+                        }}
+                        className="px-4 py-3 rounded-lg bg-purple-500/20 border border-purple-500/30 text-purple-400 font-medium hover:bg-purple-500/30 transition-all flex items-center justify-center gap-2"
+                      >
+                        <Share2 size={18} />
+                        Copy Link
+                      </motion.button>
+
+                      {/* Embed Code */}
+                      <motion.button
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={() => {
+                          const embedCode = `<audio controls src="${currentAudio.audioUrl}"></audio>`;
+                          navigator.clipboard.writeText(embedCode);
+                          toast.success('Embed code copied!', 'Paste into your website HTML');
+                        }}
+                        className="px-4 py-3 rounded-lg bg-green-500/20 border border-green-500/30 text-green-400 font-medium hover:bg-green-500/30 transition-all flex items-center justify-center gap-2"
+                      >
+                        <Code size={18} />
+                        Embed Code
+                      </motion.button>
+
+                      {/* Share to Social */}
+                      <motion.button
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={() => {
+                          const shareText = `Check out this AI-generated podcast! 🎙️`;
+                          const shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(currentAudio.audioUrl)}`;
+                          window.open(shareUrl, '_blank', 'width=600,height=400');
+                        }}
+                        className="px-4 py-3 rounded-lg bg-blue-500/20 border border-blue-500/30 text-blue-400 font-medium hover:bg-blue-500/30 transition-all flex items-center justify-center gap-2"
+                      >
+                        <Share2 size={18} />
+                        Share
+                      </motion.button>
+                    </div>
+                  </GlassCard>
                 </motion.div>
               )}
             </AnimatePresence>
