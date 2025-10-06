@@ -28,8 +28,9 @@ class PodcastOptions:
     host_voice: str = "host_male_friendly"
     guest_voice: str = "guest_female_expert"
     cohost_voice: str = "cohost_male_casual"  # Third speaker for 3-speaker podcasts
+    moderator_voice: Optional[str] = None  # Fourth speaker for 4-speaker podcasts
     style: str = "conversational"  # "conversational", "expert-panel", "debate", "interview"
-    num_speakers: int = 2  # 2 or 3 speakers
+    num_speakers: int = 2  # 2, 3, or 4 speakers
     output_format: str = "mp3"  # "wav", "mp3", "ogg"
     add_pauses: bool = True
     normalize_audio: bool = True
@@ -277,11 +278,18 @@ class TogetherNotebookLM:
                 print(f"   Co-Host voice: {options.cohost_voice}")
 
             # Configure TTS with selected voices
-            # For debate style, ensure opposing genders for clarity
+            # For debate style, ensure opposing genders for clarity (only when using presets)
             host_voice = options.host_voice
             guest_voice = options.guest_voice
 
-            if options.style == "debate":
+            # Check if voices are Cartesia IDs (UUID format) or presets
+            import re
+            uuid_pattern = r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+            is_host_cartesia_id = re.match(uuid_pattern, host_voice, re.IGNORECASE) is not None
+            is_guest_cartesia_id = re.match(uuid_pattern, guest_voice, re.IGNORECASE) is not None
+
+            # Only apply debate auto-adjustment for preset names, not raw Cartesia IDs
+            if options.style == "debate" and not is_host_cartesia_id and not is_guest_cartesia_id:
                 # Ensure male/female distinction for debates
                 # Check if both voices are same gender, if so swap one
                 from tts_generator import CartesiaTTSGenerator as TTS
@@ -296,15 +304,23 @@ class TogetherNotebookLM:
                         else:
                             guest_voice = "guest_male"
                         print(f"   [DEBATE] Auto-adjusted voices for gender contrast")
+            elif options.style == "debate" and (is_host_cartesia_id or is_guest_cartesia_id):
+                print(f"   [DEBATE] Using custom Cartesia IDs - skipping auto-adjustment")
 
-            # Initialize TTS with cohost voice if 3 speakers
-            if options.num_speakers == 3:
-                self.tts_generator = CartesiaTTSGenerator(
-                    api_key=self.cartesia_api_key,
-                    host_voice=host_voice,
-                    guest_voice=guest_voice,
-                    cohost_voice=options.cohost_voice
-                )
+            # Initialize TTS with appropriate voices based on number of speakers
+            if options.num_speakers >= 3:
+                init_params = {
+                    'api_key': self.cartesia_api_key,
+                    'host_voice': host_voice,
+                    'guest_voice': guest_voice,
+                    'cohost_voice': options.cohost_voice
+                }
+
+                # Add moderator voice for 4-speaker mode
+                if options.num_speakers == 4 and options.moderator_voice:
+                    init_params['moderator_voice'] = options.moderator_voice
+
+                self.tts_generator = CartesiaTTSGenerator(**init_params)
             else:
                 self.tts_generator = CartesiaTTSGenerator(
                     api_key=self.cartesia_api_key,

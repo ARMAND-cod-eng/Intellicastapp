@@ -52,6 +52,7 @@ class PodcastGenerationRequest(BaseModel):
     host_voice: str = "host_male_friendly"
     guest_voice: str = "guest_female_expert"
     cohost_voice: str = "cohost_male_casual"  # Third speaker for 3-speaker podcasts
+    moderator_voice: Optional[str] = None  # Fourth speaker for 4-speaker podcasts
     style: str = "conversational"
     tone: str = "friendly"
     num_speakers: int = 2
@@ -129,6 +130,8 @@ async def generate_podcast(request: PodcastGenerationRequest, background_tasks: 
         print(f"Host Voice: {request.host_voice}")
         print(f"Guest Voice: {request.guest_voice}")
         print(f"Co-Host Voice: {request.cohost_voice}")
+        if request.moderator_voice:
+            print(f"Moderator Voice: {request.moderator_voice}")
         print(f"{'='*70}\n")
 
         # Create unique job ID
@@ -151,11 +154,23 @@ async def generate_podcast(request: PodcastGenerationRequest, background_tasks: 
             f.write(request.document_text)
 
         # Configure options
+        print(f"\n{'='*70}")
+        print(f"[VOICE DEBUG] Voice IDs received from frontend:")
+        print(f"{'='*70}")
+        print(f"   Host Voice: {request.host_voice}")
+        print(f"   Guest Voice: {request.guest_voice}")
+        if request.cohost_voice:
+            print(f"   Co-Host Voice: {request.cohost_voice}")
+        if request.moderator_voice:
+            print(f"   Moderator Voice: {request.moderator_voice}")
+        print(f"{'='*70}\n")
+
         options = PodcastOptions(
             length=request.length,
             host_voice=request.host_voice,
             guest_voice=request.guest_voice,
             cohost_voice=request.cohost_voice,
+            moderator_voice=request.moderator_voice,
             style=request.style,
             num_speakers=request.num_speakers,
             output_format=request.output_format,
@@ -228,6 +243,7 @@ async def generate_podcast_sync(request: PodcastGenerationRequest):
             host_voice=request.host_voice,
             guest_voice=request.guest_voice,
             cohost_voice=request.cohost_voice,
+            moderator_voice=request.moderator_voice,
             style=request.style,
             num_speakers=request.num_speakers,
             output_format=request.output_format,

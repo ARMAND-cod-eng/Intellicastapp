@@ -234,6 +234,7 @@ export class NarrationAPI {
     hostVoice?: string;
     guestVoice?: string;
     cohostVoice?: string;
+    moderatorVoice?: string;
     style?: string;
     tone?: string;
     numSpeakers?: number;
@@ -253,9 +254,14 @@ export class NarrationAPI {
         save_script: params.saveScript !== false
       };
 
-      // Add cohost_voice only if 3 speakers
-      if (params.numSpeakers === 3 && params.cohostVoice) {
+      // Add cohost_voice if 3+ speakers
+      if (params.numSpeakers && params.numSpeakers >= 3 && params.cohostVoice) {
         requestBody.cohost_voice = params.cohostVoice;
+      }
+
+      // Add moderator_voice if 4 speakers
+      if (params.numSpeakers === 4 && params.moderatorVoice) {
+        requestBody.moderator_voice = params.moderatorVoice;
       }
 
       const response = await fetch(ENDPOINTS.PODCAST.GENERATE, {

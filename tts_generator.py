@@ -128,21 +128,64 @@ class CartesiaTTSGenerator:
     PAUSE_AFTER_QUESTION = 500  # Additional pause after questions
     PAUSE_INTRO_OUTRO = 1200   # Longer pause for intro/outro
 
+    def _resolve_voice(self, voice_input: str, role: str = "Speaker") -> VoiceConfig:
+        """
+        Resolve voice input to VoiceConfig - supports both Cartesia IDs and preset names
+
+        Args:
+            voice_input: Either a Cartesia voice ID (UUID format) or preset name
+            role: Speaker role for display (Host, Guest, Co-Host)
+
+        Returns:
+            VoiceConfig object
+        """
+        # Check if it's a Cartesia UUID (format: 8-4-4-4-12 hex characters)
+        import re
+        uuid_pattern = r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+
+        if re.match(uuid_pattern, voice_input, re.IGNORECASE):
+            # It's a raw Cartesia ID - create dynamic VoiceConfig
+            print(f"[VOICE] Using Cartesia ID for {role}: {voice_input}")
+            return VoiceConfig(
+                id=voice_input,
+                name=f"Custom {role} Voice",
+                gender="neutral",
+                description=f"Custom Cartesia voice for {role}",
+                speed=1.0
+            )
+        else:
+            # It's a preset name - look up in VOICE_PRESETS
+            preset_config = self.VOICE_PRESETS.get(voice_input)
+            if preset_config:
+                print(f"[VOICE] Using preset for {role}: {preset_config.name}")
+                return preset_config
+            else:
+                # Fallback to default based on role
+                print(f"[VOICE] Warning: Unknown voice '{voice_input}', using default for {role}")
+                if role.lower() == "host":
+                    return self.VOICE_PRESETS["host_male_friendly"]
+                elif role.lower() == "guest":
+                    return self.VOICE_PRESETS["guest_female_expert"]
+                else:
+                    return self.VOICE_PRESETS["cohost_male_casual"]
+
     def __init__(
         self,
         api_key: Optional[str] = None,
         host_voice: str = "host_male_friendly",
         guest_voice: str = "guest_female_expert",
-        cohost_voice: Optional[str] = None
+        cohost_voice: Optional[str] = None,
+        moderator_voice: Optional[str] = None
     ):
         """
         Initialize Cartesia TTS generator
 
         Args:
             api_key: Cartesia API key (defaults to env var)
-            host_voice: Voice preset for host
-            guest_voice: Voice preset for guest
-            cohost_voice: Optional voice preset for co-host (3-speaker mode)
+            host_voice: Voice preset name OR Cartesia voice ID (UUID)
+            guest_voice: Voice preset name OR Cartesia voice ID (UUID)
+            cohost_voice: Optional voice preset name OR Cartesia voice ID (UUID) for 3rd speaker
+            moderator_voice: Optional voice preset name OR Cartesia voice ID (UUID) for 4th speaker
         """
         self.api_key = api_key or os.getenv('CARTESIA_API_KEY')
         if not self.api_key:
@@ -151,21 +194,27 @@ class CartesiaTTSGenerator:
         self.api_url = os.getenv('CARTESIA_API_URL', 'https://api.cartesia.ai')
         self.tracker = get_tracker()
 
-        # Set voice configuration
+        # Set voice configuration - now supports both preset names and Cartesia IDs
         self.voices = {
-            "host": self.VOICE_PRESETS.get(host_voice, self.VOICE_PRESETS["host_male_friendly"]),
-            "guest": self.VOICE_PRESETS.get(guest_voice, self.VOICE_PRESETS["guest_female_expert"])
+            "host": self._resolve_voice(host_voice, "Host"),
+            "guest": self._resolve_voice(guest_voice, "Guest")
         }
 
         # Add cohost if provided
         if cohost_voice:
-            self.voices["cohost"] = self.VOICE_PRESETS.get(cohost_voice, self.VOICE_PRESETS["cohost_male_casual"])
+            self.voices["cohost"] = self._resolve_voice(cohost_voice, "Co-Host")
+
+        # Add moderator if provided (4-speaker mode)
+        if moderator_voice:
+            self.voices["moderator"] = self._resolve_voice(moderator_voice, "Moderator")
 
         print(f"[VOICE] Configured voices:")
-        print(f"   Host: {self.voices['host'].name}")
-        print(f"   Guest: {self.voices['guest'].name}")
+        print(f"   Host: {self.voices['host'].name} (ID: {self.voices['host'].id})")
+        print(f"   Guest: {self.voices['guest'].name} (ID: {self.voices['guest'].id})")
         if cohost_voice:
-            print(f"   Co-Host: {self.voices['cohost'].name}")
+            print(f"   Co-Host: {self.voices['cohost'].name} (ID: {self.voices['cohost'].id})")
+        if moderator_voice:
+            print(f"   Moderator: {self.voices['moderator'].name} (ID: {self.voices['moderator'].id})")
 
     def generate_speech(
         self,
@@ -197,6 +246,11 @@ class CartesiaTTSGenerator:
             speed_str = "slow"
         else:
             speed_str = "normal"
+
+        # Debug: Log voice ID being sent to Cartesia
+        print(f"[TTS DEBUG] Sending to Cartesia API:")
+        print(f"   Voice ID: {voice_config.id}")
+        print(f"   Voice Name: {voice_config.name}")
 
         payload = {
             "model_id": "sonic-2",
@@ -301,6 +355,7 @@ class CartesiaTTSGenerator:
 
             # Get voice configuration
             voice_config = self.voices.get(speaker, self.voices['host'])
+            print(f"     → Using voice: {voice_config.name} (ID: {voice_config.id})")
 
             # Get speed (with optional override)
             speed = None
