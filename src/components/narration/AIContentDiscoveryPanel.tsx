@@ -1190,46 +1190,6 @@ const AIContentDiscoveryPanel: React.FC<AIContentDiscoveryPanelProps> = ({
                   trackData={currentAudio.trackData}
                   onClose={() => setShowPlayer(false)}
                 />
-
-                <GlassCard className="p-6 mt-6">
-                  <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                    <Download size={20} className="text-[#00D4E4]" />
-                    Download & Share
-                  </h3>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <motion.button
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={() => {
-                        const link = document.createElement('a');
-                        link.href = currentAudio.audioUrl;
-                        link.download = `podcast-${Date.now()}.mp3`;
-                        document.body.appendChild(link);
-                        link.click();
-                        document.body.removeChild(link);
-                        toast.success('Download started!', 'Your podcast is downloading...');
-                      }}
-                      className="px-4 py-3 rounded-lg bg-[#00D4E4]/20 border border-[#00D4E4]/30 text-[#00D4E4] font-medium hover:bg-[#00D4E4]/30 transition-all flex items-center justify-center gap-2"
-                    >
-                      <Download size={18} />
-                      Download MP3
-                    </motion.button>
-
-                    <motion.button
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={() => {
-                        navigator.clipboard.writeText(currentAudio.audioUrl);
-                        toast.success('Link copied!', 'Audio URL copied to clipboard');
-                      }}
-                      className="px-4 py-3 rounded-lg bg-purple-500/20 border border-purple-500/30 text-purple-400 font-medium hover:bg-purple-500/30 transition-all flex items-center justify-center gap-2"
-                    >
-                      <Share2 size={18} />
-                      Copy Link
-                    </motion.button>
-                  </div>
-                </GlassCard>
               </motion.div>
             )}
           </AnimatePresence>

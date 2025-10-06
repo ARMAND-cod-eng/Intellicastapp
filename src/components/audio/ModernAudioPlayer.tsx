@@ -15,7 +15,8 @@ import {
   Share2,
   Maximize2,
   Minimize2,
-  Loader2
+  Loader2,
+  Keyboard
 } from 'lucide-react';
 import WaveformVisualizer from './WaveformVisualizer';
 import GlassCard from '../ui/GlassCard';
@@ -45,7 +46,10 @@ const ModernAudioPlayer: React.FC<ModernAudioPlayerProps> = ({
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(247); // Mock duration
-  const [volume, setVolume] = useState(0.8);
+  const [volume, setVolume] = useState(() => {
+    const saved = localStorage.getItem('intellicast_audio_volume');
+    return saved ? parseFloat(saved) : 0.8;
+  });
   const [isMuted, setIsMuted] = useState(false);
   const [isRepeat, setIsRepeat] = useState(false);
   const [isShuffle, setIsShuffle] = useState(false);
@@ -56,6 +60,7 @@ const ModernAudioPlayer: React.FC<ModernAudioPlayerProps> = ({
   const [isDragging, setIsDragging] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [showKeyboardHelp, setShowKeyboardHelp] = useState(false);
   const audioRef = useRef<HTMLAudioElement>(null);
   const progressRef = useRef<HTMLDivElement>(null);
 
@@ -101,6 +106,7 @@ const ModernAudioPlayer: React.FC<ModernAudioPlayerProps> = ({
         console.error('Audio playback error:', e);
         setIsPlaying(false);
         setIsLoading(false);
+        alert('Audio playback error. The file may be corrupted or unavailable.');
       };
 
       const handleWaiting = () => {
@@ -127,7 +133,20 @@ const ModernAudioPlayer: React.FC<ModernAudioPlayerProps> = ({
         audio.removeEventListener('canplay', handleCanPlay);
       };
     }
-  }, [audioUrl, volume, isMuted, isRepeat]);
+  }, [audioUrl, isRepeat]);
+
+  // Update volume and muted properties without reloading audio
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.volume = volume;
+      audioRef.current.muted = isMuted;
+    }
+  }, [volume, isMuted]);
+
+  // Save volume to localStorage
+  useEffect(() => {
+    localStorage.setItem('intellicast_audio_volume', volume.toString());
+  }, [volume]);
 
   const formatTime = (time: number) => {
     const minutes = Math.floor(time / 60);
@@ -149,7 +168,7 @@ const ModernAudioPlayer: React.FC<ModernAudioPlayerProps> = ({
     } catch (error) {
       console.error('Playback error:', error);
       setIsPlaying(false);
-      // Could add toast notification here
+      alert('Playback error. Please check your audio file and try again.');
     }
   };
 
@@ -389,6 +408,62 @@ const ModernAudioPlayer: React.FC<ModernAudioPlayerProps> = ({
               >
                 <div className="w-2 h-2 rounded-full animate-pulse" style={{backgroundColor: '#00D4E4'}} />
                 <span className="text-sm font-medium" style={{color: 'rgba(255, 255, 255, 0.7)'}}>Now Playing</span>
+                <div className="relative">
+                  <button
+                    onMouseEnter={() => setShowKeyboardHelp(true)}
+                    onMouseLeave={() => setShowKeyboardHelp(false)}
+                    className="w-6 h-6 p-0 rounded-full flex items-center justify-center transition-all"
+                    style={{
+                      backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                      color: 'rgba(255, 255, 255, 0.5)'
+                    }}
+                    aria-label="Keyboard shortcuts"
+                  >
+                    <Keyboard size={12} />
+                  </button>
+                  <AnimatePresence>
+                    {showKeyboardHelp && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        className="absolute left-0 top-8 z-50 p-3 rounded-lg text-xs whitespace-nowrap"
+                        style={{
+                          backgroundColor: '#1a1a1a',
+                          border: '1px solid rgba(0, 212, 228, 0.3)',
+                          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.5)'
+                        }}
+                      >
+                        <div className="space-y-1" style={{color: 'rgba(255, 255, 255, 0.9)'}}>
+                          <div className="flex items-center gap-2">
+                            <kbd className="px-1.5 py-0.5 rounded" style={{backgroundColor: 'rgba(255, 255, 255, 0.1)'}}>Space</kbd>
+                            <span>Play/Pause</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <kbd className="px-1.5 py-0.5 rounded" style={{backgroundColor: 'rgba(255, 255, 255, 0.1)'}}>←</kbd>
+                            <span>Skip back 10s</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <kbd className="px-1.5 py-0.5 rounded" style={{backgroundColor: 'rgba(255, 255, 255, 0.1)'}}>→</kbd>
+                            <span>Skip forward 10s</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <kbd className="px-1.5 py-0.5 rounded" style={{backgroundColor: 'rgba(255, 255, 255, 0.1)'}}>↑</kbd>
+                            <span>Volume up</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <kbd className="px-1.5 py-0.5 rounded" style={{backgroundColor: 'rgba(255, 255, 255, 0.1)'}}>↓</kbd>
+                            <span>Volume down</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <kbd className="px-1.5 py-0.5 rounded" style={{backgroundColor: 'rgba(255, 255, 255, 0.1)'}}>M</kbd>
+                            <span>Mute/Unmute</span>
+                          </div>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
               </motion.div>
 
               <div className="flex items-center space-x-2">
@@ -490,6 +565,22 @@ const ModernAudioPlayer: React.FC<ModernAudioPlayerProps> = ({
                   </button>
 
                   <button
+                    onClick={async () => {
+                      try {
+                        if (navigator.share && audioUrl) {
+                          await navigator.share({
+                            title: currentTrack.title,
+                            text: currentTrack.description,
+                            url: audioUrl
+                          });
+                        } else if (audioUrl) {
+                          await navigator.clipboard.writeText(audioUrl);
+                          alert('Audio link copied to clipboard!');
+                        }
+                      } catch (error) {
+                        console.error('Share error:', error);
+                      }
+                    }}
                     className="w-8 h-8 p-0 rounded-full flex items-center justify-center transition-all"
                     style={{
                       backgroundColor: 'rgba(255, 255, 255, 0.05)',
@@ -659,25 +750,6 @@ const ModernAudioPlayer: React.FC<ModernAudioPlayerProps> = ({
             >
               {/* Left controls */}
               <div className="flex items-center space-x-3">
-                <button
-                  onClick={() => setIsShuffle(!isShuffle)}
-                  className="w-10 h-10 p-0 rounded-full flex items-center justify-center transition-all"
-                  style={{
-                    backgroundColor: isShuffle ? 'rgba(0, 212, 228, 0.15)' : 'rgba(255, 255, 255, 0.05)',
-                    color: isShuffle ? '#00D4E4' : '#FFFFFF'
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!isShuffle) e.currentTarget.style.backgroundColor = 'rgba(0, 212, 228, 0.1)';
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!isShuffle) e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.05)';
-                  }}
-                  aria-label={isShuffle ? 'Disable shuffle' : 'Enable shuffle'}
-                  aria-pressed={isShuffle}
-                >
-                  <Shuffle size={18} />
-                </button>
-
                 <button
                   onClick={skipBackward}
                   className="w-10 h-10 p-0 rounded-full flex items-center justify-center transition-all"
