@@ -355,7 +355,7 @@ class CartesiaTTSGenerator:
 
             # Get voice configuration
             voice_config = self.voices.get(speaker, self.voices['host'])
-            print(f"     → Using voice: {voice_config.name} (ID: {voice_config.id})")
+            print(f"     -> Using voice: {voice_config.name} (ID: {voice_config.id})")
 
             # Get speed (with optional override)
             speed = None

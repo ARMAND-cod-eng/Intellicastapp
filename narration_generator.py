@@ -512,7 +512,7 @@ Output a laser-focused summary readable in 30 seconds that conveys the document'
 PREMIUM SUMMARY STANDARDS:
 - LENGTH: 300-500 words - prioritize depth over brevity
 - ANALYTICAL RIGOR: Demonstrate sophisticated understanding through nuanced interpretation
-- STRUCTURE: Purpose → Key findings → Implications → Significance
+- STRUCTURE: Purpose -> Key findings -> Implications -> Significance
 - INSIGHT DENSITY: Every sentence delivers substantial analytical value
 - CRITICAL PERSPECTIVE: Show awareness of strengths, limitations, and broader context
 

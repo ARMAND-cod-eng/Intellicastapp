@@ -210,7 +210,7 @@ class TogetherNotebookLM:
         options: Optional[PodcastOptions] = None
     ) -> PodcastResult:
         """
-        Complete pipeline: Document → Script → Audio → Podcast
+        Complete pipeline: Document -> Script -> Audio -> Podcast
 
         Args:
             document_path: Path to input document
@@ -432,7 +432,7 @@ class TogetherNotebookLM:
         print("[SUCCESS] PODCAST GENERATION COMPLETE")
         print(f"{'='*70}\n")
 
-        print(f"📁 Audio File: {result.audio_file}")
+        print(f"[FILE] Audio File: {result.audio_file}")
         if result.script_file:
             print(f"[DOC] Script File: {result.script_file}")
 
@@ -470,7 +470,7 @@ class TogetherNotebookLM:
         """
         results = []
 
-        print(f"\n🎬 Batch generating {len(document_paths)} podcasts...\n")
+        print(f"\n[BATCH] Batch generating {len(document_paths)} podcasts...\n")
 
         for i, doc_path in enumerate(document_paths, 1):
             print(f"\n{'='*70}")
@@ -481,7 +481,7 @@ class TogetherNotebookLM:
             results.append(result)
 
             if not result.success:
-                print(f"⚠️  Skipping due to error\n")
+                print(f"[!] Skipping due to error\n")
 
         # Print batch summary
         successful = sum(1 for r in results if r.success)

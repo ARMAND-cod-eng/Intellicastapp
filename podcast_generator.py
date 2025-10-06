@@ -148,7 +148,7 @@ Format your output EXACTLY as follows:
 Guidelines:
 - Aim for 20-30 conversational turns (more variety with 3 speakers)
 - Each turn should be 2-4 sentences (natural speaking length)
-- Vary the speaker order - don't always go S1→S2→S3
+- Vary the speaker order - don't always go S1->S2->S3
 - Include moments where S2 and S3 discuss directly
 - Show organic conversation flow with natural transitions
 - Use contractions and casual language
@@ -241,7 +241,7 @@ Guidelines:
 Create a natural, insightful dialogue that explores the key ideas, implications, and interesting aspects of this content. Make it conversational and engaging!"""
 
         # Generate with Together AI
-        print(f"🎙️  Generating {num_speakers}-speaker podcast script with Llama-3-70b...")
+        print(f"[GEN] Generating {num_speakers}-speaker podcast script with Llama-3-70b...")
 
         try:
             response = self.client.chat.completions.create(
@@ -276,8 +276,8 @@ Create a natural, insightful dialogue that explores the key ideas, implications,
             # Parse the generated script
             podcast_script = self._parse_script(script_text, num_speakers)
 
-            print(f"✓ Generated {podcast_script.total_turns} turns")
-            print(f"✓ Estimated duration: {podcast_script.estimated_duration}s")
+            print(f"[OK] Generated {podcast_script.total_turns} turns")
+            print(f"[OK] Estimated duration: {podcast_script.estimated_duration}s")
 
             return podcast_script
 
@@ -401,7 +401,7 @@ Create a natural, insightful dialogue that explores the key ideas, implications,
             if script.outro:
                 f.write(f"## Conclusion\n\n{script.outro}\n")
 
-        print(f"✓ Script saved to: {output_file}")
+        print(f"[OK] Script saved to: {output_file}")
 
     def export_for_tts(self, script: PodcastScript) -> List[Dict[str, str]]:
         """
@@ -508,7 +508,7 @@ The future of work isn't human versus machine. It's human plus machine, each doi
 
     # Export for TTS
     tts_segments = generator.export_for_tts(script)
-    print(f"\n✓ Ready for TTS: {len(tts_segments)} segments")
+    print(f"\n[OK] Ready for TTS: {len(tts_segments)} segments")
 
     print(f"\n{'='*70}\n")
 

@@ -119,14 +119,14 @@ class Config:
         print("=" * 60)
 
         if validation['valid']:
-            print("✓ All required credentials configured")
+            print("[OK] All required credentials configured")
         else:
-            print("✗ Missing required credentials:")
+            print("[X] Missing required credentials:")
             for cred in validation['missing']:
                 print(f"  - {cred}")
 
         if validation['warnings']:
-            print("\n⚠ Warnings:")
+            print("\n[!] Warnings:")
             for warning in validation['warnings']:
                 print(f"  - {warning}")
 

@@ -289,7 +289,7 @@ CO-HOST (Active Participant - 30% speaking time):
 CONVERSATION DYNAMICS (CRITICAL):
 ✓ Natural interruptions and overlaps: "Oh! That reminds me of—" "Yeah exactly!"
 ✓ Building on each other: "Yes, and to add to that..." "Following up on what you said..."
-✓ Three-way exchanges: HOST asks → GUEST responds → CO-HOST adds nuance → GUEST elaborates
+✓ Three-way exchanges: HOST asks -> GUEST responds -> CO-HOST adds nuance -> GUEST elaborates
 ✓ Shared laughter and surprise moments
 ✓ "Aha!" moments where all three connect ideas
 ✓ Sometimes CO-HOST and GUEST discuss while HOST listens, then weighs in
@@ -314,7 +314,7 @@ FORMAT YOUR RESPONSE AS A JSON OBJECT:
 }
 
 IMPORTANT:
-- Create 20-30 turns with varied speaker patterns (not always host→guest→cohost)
+- Create 20-30 turns with varied speaker patterns (not always host->guest->cohost)
 - Each turn: 2-4 sentences of natural speech
 - Include verbal reactions: "Right?!", "Exactly!", "Whoa!", "That's crazy!"
 - Show genuine curiosity and excitement from all three
@@ -524,7 +524,7 @@ IMPORTANT:
 - Create 20-30 turns with natural back-and-forth
 - GUEST should have longest turns (storytelling needs space)
 - HOST guides narrative, CO-HOST digs into details
-- Vary speaker patterns - don't always go host→guest→cohost→guest
+- Vary speaker patterns - don't always go host->guest->cohost->guest
 - Include genuine reactions and emotional moments
 - Build to revelations and "aha!" moments
 - Return valid JSON format""",
@@ -835,8 +835,8 @@ class TogetherLLMGenerator:
         if length not in self.LENGTH_CONFIGS:
             raise ValueError(f"Length must be one of: {list(self.LENGTH_CONFIGS.keys())}")
 
-        if num_speakers not in [2, 3]:
-            raise ValueError(f"num_speakers must be 2 or 3, got {num_speakers}")
+        if num_speakers not in [2, 3, 4]:
+            raise ValueError(f"num_speakers must be 2, 3, or 4, got {num_speakers}")
 
         # Get configuration
         config = self.LENGTH_CONFIGS[length]
@@ -899,7 +899,7 @@ class TogetherLLMGenerator:
         # Generate with retry logic
         for attempt in range(self.MAX_RETRIES):
             try:
-                print(f"🤖 Generating dialogue (attempt {attempt + 1}/{self.MAX_RETRIES})...")
+                print(f"[GEN] Generating dialogue (attempt {attempt + 1}/{self.MAX_RETRIES})...")
 
                 response = self._call_together_api(
                     messages=messages,
@@ -910,21 +910,21 @@ class TogetherLLMGenerator:
                 # Parse and validate response
                 dialogue = self._parse_and_validate_response(response, config)
 
-                print(f"✓ Generated {len(dialogue.turns)} turns successfully")
+                print(f"[OK] Generated {len(dialogue.turns)} turns successfully")
                 return dialogue
 
             except Exception as e:
                 self.failed_requests += 1
-                print(f"✗ Attempt {attempt + 1} failed: {e}")
+                print(f"[X] Attempt {attempt + 1} failed: {e}")
 
                 if attempt < self.MAX_RETRIES - 1:
                     # Try fallback model on second attempt
                     if attempt == 1 and self.model != self.FALLBACK_MODEL:
-                        print(f"⚠ Switching to fallback model: {self.FALLBACK_MODEL}")
+                        print(f"[!] Switching to fallback model: {self.FALLBACK_MODEL}")
                         original_model = self.model
                         self.model = self.FALLBACK_MODEL
 
-                    print(f"⏳ Retrying in {self.RETRY_DELAY}s...")
+                    print(f"[...] Retrying in {self.RETRY_DELAY}s...")
                     time.sleep(self.RETRY_DELAY)
                 else:
                     raise RuntimeError(f"Failed to generate dialogue after {self.MAX_RETRIES} attempts: {e}")

@@ -44,10 +44,10 @@ class SetupValidator:
     def print_status(self, status: str, message: str):
         """Print status message with icon"""
         icons = {
-            'success': '✓',
-            'error': '✗',
-            'warning': '⚠',
-            'info': 'ℹ'
+            'success': '[OK]',
+            'error': '[X]',
+            'warning': '[!]',
+            'info': '[i]'
         }
         icon = icons.get(status, '•')
         print(f"{icon} {message}")
@@ -310,21 +310,21 @@ class SetupValidator:
         self.print_header("Setup Summary")
 
         if not self.errors and not self.warnings:
-            print("\n🎉 Setup completed successfully! All systems ready.\n")
+            print("\n[OK] Setup completed successfully! All systems ready.\n")
             print("Next steps:")
             print("  1. Run: python test_setup.py")
             print("  2. Generate your first podcast!")
         elif not self.errors:
-            print(f"\n✓ Setup completed with {len(self.warnings)} warning(s)\n")
+            print(f"\n[OK] Setup completed with {len(self.warnings)} warning(s)\n")
             print("Warnings:")
             for warning in self.warnings:
-                print(f"  ⚠ {warning}")
+                print(f"  [!] {warning}")
             print("\nYou can proceed, but some features may not work optimally.")
         else:
-            print(f"\n✗ Setup failed with {len(self.errors)} error(s)\n")
+            print(f"\n[X] Setup failed with {len(self.errors)} error(s)\n")
             print("Errors:")
             for error in self.errors:
-                print(f"  ✗ {error}")
+                print(f"  [X] {error}")
             print("\nPlease fix these errors before proceeding.")
 
         print("\n" + "=" * 70 + "\n")

@@ -152,9 +152,9 @@ class ChatterboxTTSService:
             'zh': ['chinese', 'zh', 'chi', 'zho', '中文', 'mandarin']
         }
         
-        logger.info(f"🎙️  Exclusive Chatterbox TTS Service initialized on {self.device}")
-        logger.info(f"🌍 23 supported languages: {list(self.language_patterns.keys())}")
-        logger.info("🚫 No fallback TTS - Chatterbox exclusive mode enabled")
+        logger.info(f"[TTS] Exclusive Chatterbox TTS Service initialized on {self.device}")
+        logger.info(f"[LANG] 23 supported languages: {list(self.language_patterns.keys())}")
+        logger.info("[INFO] No fallback TTS - Chatterbox exclusive mode enabled")
 
     def _check_cuda(self) -> bool:
         """Check if CUDA is available"""
@@ -203,7 +203,7 @@ class ChatterboxTTSService:
                 self.mtl_tts = ChatterboxMultilingualTTS.from_pretrained(device=self.device)
                 supported_languages = ChatterboxMultilingualTTS.get_supported_languages()
                 logger.info(f"✅ Multilingual Chatterbox TTS model loaded ({len(supported_languages)} languages)")
-                logger.info(f"🌍 Supported languages: {list(supported_languages.keys())}")
+                logger.info(f"[LANG] Supported languages: {list(supported_languages.keys())}")
             finally:
                 # Restore stdout
                 sys.stdout = original_stdout
@@ -214,7 +214,7 @@ class ChatterboxTTSService:
             logger.error(f"❌ Failed to load Chatterbox TTS model: {str(e)}")
             import traceback
             logger.error(f"Full traceback: {traceback.format_exc()}")
-            logger.error("🚫 Chatterbox TTS is required - no fallback available")
+            logger.error("[ERROR] Chatterbox TTS is required - no fallback available")
             return False
 
     def detect_language(self, text: str) -> str:
@@ -291,7 +291,7 @@ class ChatterboxTTSService:
                 random.seed(seed)
                 np.random.seed(seed)
             
-            logger.info(f"🎤 Generating with Chatterbox: lang={language}, exag={exaggeration}, temp={temperature}, cfg={cfg_weight}, seed={seed}")
+            logger.info(f"[GEN] Generating with Chatterbox: lang={language}, exag={exaggeration}, temp={temperature}, cfg={cfg_weight}, seed={seed}")
             
             # Redirect stdout during generation to prevent interference with JSON output
             import sys
@@ -519,7 +519,7 @@ class ChatterboxTTSService:
                 if voice not in self.voices or self.voices[voice]['language'] != detected_lang:
                     # Get appropriate voice for detected language
                     suggested_voice = self.get_voice_for_language(detected_lang)
-                    logger.info(f"🌍 Language detected: {detected_lang}, suggesting voice: {suggested_voice}")
+                    logger.info(f"[LANG] Language detected: {detected_lang}, suggesting voice: {suggested_voice}")
                     voice = suggested_voice
             
             # Get voice configuration
@@ -536,13 +536,13 @@ class ChatterboxTTSService:
             
             output_path = self.audio_dir / output_file
             
-            logger.info(f"🎤 Generating audio: voice='{voice}', lang={voice_config['language']}, exaggeration={final_exaggeration}, temp={temperature}, cfg={cfg_weight}")
+            logger.info(f"[GEN] Generating audio: voice='{voice}', lang={voice_config['language']}, exaggeration={final_exaggeration}, temp={temperature}, cfg={cfg_weight}")
             
             # Check if text is very long and needs chunking
             if len(text) > 800:  # Chunk for texts longer than 800 characters
-                logger.info(f"📄 Long text detected ({len(text)} chars), using chunked processing")
+                logger.info(f"[DOC] Long text detected ({len(text)} chars), using chunked processing")
                 chunks = self._chunk_text(text, max_chunk_size=600)
-                logger.info(f"📊 Split into {len(chunks)} chunks")
+                logger.info(f"[INFO] Split into {len(chunks)} chunks")
                 
                 # Generate audio for each chunk
                 chunk_files = []
@@ -710,7 +710,7 @@ class ChatterboxTTSService:
             logger.info(f"✅ Chatterbox TTS dependencies found (device: {self.device})")
         except ImportError as e:
             logger.error(f"❌ Chatterbox TTS dependencies missing: {str(e)}")
-            logger.error("🚫 Chatterbox TTS is required - system cannot function without it")
+            logger.error("[ERROR] Chatterbox TTS is required - system cannot function without it")
             status['chatterbox_available'] = False
         
         try:
