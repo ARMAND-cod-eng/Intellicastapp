@@ -450,6 +450,8 @@ class TogetherNotebookLM:
         print(f"   Guest: {result.metadata['voices']['guest']}")
         if 'cohost' in result.metadata['voices']:
             print(f"   Co-Host: {result.metadata['voices']['cohost']}")
+        if 'moderator' in result.metadata['voices']:
+            print(f"   Moderator: {result.metadata['voices']['moderator']}")
 
         print(f"\n{'='*70}\n")
 
