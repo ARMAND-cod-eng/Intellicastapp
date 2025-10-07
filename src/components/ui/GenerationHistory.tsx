@@ -1,6 +1,7 @@
 import React from 'react';
-import { Play, Download, Trash2, Clock, FileAudio } from 'lucide-react';
+import { Play, Download, Trash2, Clock, FileAudio, History } from 'lucide-react';
 import type { HistoryItem } from '../../types/narration';
+import EmptyState from './EmptyState';
 
 interface GenerationHistoryProps {
   history: HistoryItem[];
@@ -32,11 +33,12 @@ const GenerationHistory: React.FC<GenerationHistoryProps> = ({
   if (history.length === 0) {
     return (
       <div className="h-full flex items-center justify-center p-8">
-        <div className="text-center">
-          <FileAudio className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-          <p className="text-gray-400 text-sm">No generation history yet</p>
-          <p className="text-gray-500 text-xs mt-2">Your generated podcasts will appear here</p>
-        </div>
+        <EmptyState
+          icon={History}
+          title="No podcast history yet"
+          description="Your generated podcasts will appear here. Start creating to build your podcast library!"
+          iconColor="text-[#00D4E4]"
+        />
       </div>
     );
   }

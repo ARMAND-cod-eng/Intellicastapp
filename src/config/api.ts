@@ -59,6 +59,12 @@ export const ENDPOINTS = {
     ANALYZE_CONTENT: `${API_URLS.PYTHON_API}/podcast/analyze-content`,
   },
 
+  // Trending Topics API
+  TRENDING: {
+    DISCOVER: `${API_URLS.PYTHON_API}/trending/discover`,
+    GENERATE_CONTENT: `${API_URLS.PYTHON_API}/trending/generate-content`,
+  },
+
   // Health Check Endpoints
   HEALTH: {
     NODE: `${API_URLS.NODE_BASE}/health`,

@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { X, Minimize2, TrendingUp, RefreshCw, Globe, Filter, Play, Clock, BarChart3, Zap, ChevronDown, Settings, Laptop, Briefcase, Microscope, Heart, Film, Trophy, Mic, History, Download, Share2, Volume2, Eye, Edit3, Check, Loader2, Trash2, List } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { X, Minimize2, TrendingUp, RefreshCw, Globe, Filter, Play, Clock, BarChart3, Zap, ChevronDown, Settings, Laptop, Briefcase, Microscope, Heart, Film, Trophy, Mic, History, Download, Share2, Volume2, Eye, Edit3, Check, Loader2, Trash2, List, Search } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import GlassCard from '../ui/GlassCard';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -36,6 +36,31 @@ interface ScriptPreviewData {
   estimatedDuration: number;
 }
 
+const TopicCardSkeleton: React.FC = () => (
+  <div className="p-4 rounded-lg border-2 border-gray-600/50 bg-gray-800/30 min-h-[120px] animate-pulse">
+    <div className="flex items-start justify-between mb-2">
+      <div className="flex-1 space-y-2">
+        <div className="h-4 bg-gray-700/50 rounded w-3/4"></div>
+        <div className="h-3 bg-gray-700/30 rounded w-full"></div>
+        <div className="h-3 bg-gray-700/30 rounded w-5/6"></div>
+      </div>
+      <div className="ml-4 flex flex-col items-end gap-2">
+        <div className="h-5 w-12 bg-gray-700/50 rounded"></div>
+        <div className="h-5 w-16 bg-gray-700/30 rounded-full"></div>
+      </div>
+    </div>
+    <div className="flex items-center gap-2 mb-2">
+      <div className="h-5 w-16 bg-gray-700/30 rounded-full"></div>
+      <div className="h-5 w-20 bg-gray-700/30 rounded-full"></div>
+      <div className="h-5 w-14 bg-gray-700/30 rounded-full"></div>
+    </div>
+    <div className="flex items-center gap-4">
+      <div className="h-3 w-20 bg-gray-700/30 rounded"></div>
+      <div className="h-3 w-24 bg-gray-700/30 rounded"></div>
+    </div>
+  </div>
+);
+
 const AIContentDiscoveryPanel: React.FC<AIContentDiscoveryPanelProps> = ({
   isOpen,
   onClose,
@@ -50,6 +75,9 @@ const AIContentDiscoveryPanel: React.FC<AIContentDiscoveryPanelProps> = ({
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [trendingTopics, setTrendingTopics] = useState<TrendingTopic[]>([]);
   const [selectedTopics, setSelectedTopics] = useState<Set<string>>(new Set());
+  const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   // Voice Configuration
   const [selectedHostVoice, setSelectedHostVoice] = useState('829ccd10-f8b3-43cd-b8a0-4aeaa81f3b30'); // Linda
@@ -65,6 +93,9 @@ const AIContentDiscoveryPanel: React.FC<AIContentDiscoveryPanelProps> = ({
 
   // Podcast Generation State
   const [isGeneratingPodcast, setIsGeneratingPodcast] = useState(false);
+  const [generationProgress, setGenerationProgress] = useState(0);
+  const [generationJobId, setGenerationJobId] = useState<string | null>(null);
+  const [isCancelling, setIsCancelling] = useState(false);
 
   // Estimation State
   const [showEstimation, setShowEstimation] = useState(false);
@@ -83,6 +114,9 @@ const AIContentDiscoveryPanel: React.FC<AIContentDiscoveryPanelProps> = ({
   // History State
   const [generationHistory, setGenerationHistory] = useState<HistoryItem[]>([]);
   const [showHistory, setShowHistory] = useState(false);
+
+  // Accessibility State
+  const [srAnnouncement, setSrAnnouncement] = useState('');
 
   const categories = [
     { id: 'all', name: 'All Topics', icon: Globe },
@@ -107,6 +141,49 @@ const AIContentDiscoveryPanel: React.FC<AIContentDiscoveryPanelProps> = ({
     { id: '5c5ad5e7-1020-476b-8b91-fdcbe9cc313c', name: 'Daniela', desc: 'Relaxed & Friendly', gender: 'female', accent: 'Spanish' }
   ];
 
+  // Helper function to get user-friendly error messages
+  const getErrorMessage = (error: any, context: string): string => {
+    if (!error) return 'An unexpected error occurred. Please try again.';
+
+    const errorMessage = error.message || error.toString();
+    const errorStatus = error.response?.status || error.status;
+
+    if (!navigator.onLine || errorMessage.includes('NetworkError') || errorMessage.includes('Failed to fetch')) {
+      return 'Connection failed. Please check your internet and try again.';
+    }
+
+    if (errorStatus === 429 || errorMessage.includes('rate limit')) {
+      return 'Too many requests. Please wait a minute and try again.';
+    }
+
+    if (errorStatus === 500 || errorStatus === 503) {
+      return 'Server error. Please try again in a moment.';
+    }
+
+    if (errorStatus === 404) {
+      return 'Resource not found. Please try a different request.';
+    }
+
+    if (errorMessage.includes('timeout') || errorMessage.includes('timed out')) {
+      if (context === 'generation') {
+        return 'Generation took too long. Try a simpler topic or retry.';
+      }
+      return 'Request timed out. Please try again.';
+    }
+
+    if (errorMessage.includes('empty') || errorMessage.includes('no topics')) {
+      return 'No topics found. Try a different category or refresh.';
+    }
+
+    return errorMessage || 'An error occurred. Please try again.';
+  };
+
+  // Helper function to announce to screen readers
+  const announce = (message: string) => {
+    setSrAnnouncement(message);
+    setTimeout(() => setSrAnnouncement(''), 100);
+  };
+
   // Load history on mount
   useEffect(() => {
     const history = ContentDiscoveryStorage.getHistory();
@@ -124,6 +201,77 @@ const AIContentDiscoveryPanel: React.FC<AIContentDiscoveryPanelProps> = ({
     setGenerationQueue(queue);
   }, []);
 
+  // Debounce search query
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Escape: Close modals/panels
+      if (e.key === 'Escape') {
+        if (showScriptPreview) {
+          setShowScriptPreview(false);
+        } else if (showEstimation) {
+          setShowEstimation(false);
+        } else if (showQueue) {
+          setShowQueue(false);
+        } else if (showHistory) {
+          setShowHistory(false);
+        } else if (showPlayer) {
+          setShowPlayer(false);
+        }
+      }
+
+      // Ctrl/Cmd + R: Refresh topics
+      if ((e.ctrlKey || e.metaKey) && e.key === 'r') {
+        e.preventDefault();
+        if (!isDiscovering) {
+          discoverTrendingTopics();
+        }
+      }
+
+      // Ctrl/Cmd + A: Select all topics
+      if ((e.ctrlKey || e.metaKey) && e.key === 'a' && !showScriptPreview) {
+        e.preventDefault();
+        setSelectedTopics(new Set(filteredTopics.map(t => t.id)));
+      }
+
+      // Ctrl/Cmd + D: Deselect all topics
+      if ((e.ctrlKey || e.metaKey) && e.key === 'd') {
+        e.preventDefault();
+        setSelectedTopics(new Set());
+      }
+
+      // Ctrl/Cmd + Q: Toggle queue
+      if ((e.ctrlKey || e.metaKey) && e.key === 'q') {
+        e.preventDefault();
+        setShowQueue(!showQueue);
+      }
+
+      // Ctrl/Cmd + H: Toggle history
+      if ((e.ctrlKey || e.metaKey) && e.key === 'h') {
+        e.preventDefault();
+        setShowHistory(!showHistory);
+      }
+
+      // Ctrl/Cmd + F: Focus search
+      if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+      }
+    };
+
+    if (isOpen) {
+      window.addEventListener('keydown', handleKeyDown);
+      return () => window.removeEventListener('keydown', handleKeyDown);
+    }
+  }, [isOpen, showScriptPreview, showEstimation, showQueue, showHistory, showPlayer, isDiscovering, trendingTopics, selectedCategory]);
+
   // Auto-discover on open
   useEffect(() => {
     if (isOpen && trendingTopics.length === 0) {
@@ -134,6 +282,7 @@ const AIContentDiscoveryPanel: React.FC<AIContentDiscoveryPanelProps> = ({
   const discoverTrendingTopics = async () => {
     setIsDiscovering(true);
     toast.info('Discovering trends', 'Using AI to find compelling topics...');
+    announce('Discovering trending topics');
 
     try {
       const response = await TrendingAPI.discoverTopics(selectedCategory, 10);
@@ -141,27 +290,43 @@ const AIContentDiscoveryPanel: React.FC<AIContentDiscoveryPanelProps> = ({
       if (response.success && response.topics) {
         setTrendingTopics(response.topics);
         toast.success('Discovery complete', `Found ${response.topics.length} trending topics`);
+        announce(`Found ${response.topics.length} trending topics`);
       } else {
         throw new Error('Failed to discover topics');
       }
     } catch (error: any) {
       console.error('Discovery error:', error);
-      toast.error('Discovery failed', error.message || 'Please try again');
-    } finally {
+      const userMessage = getErrorMessage(error, 'discovery');
+      toast.error('Discovery failed', userMessage);
+      announce(`Discovery failed. ${userMessage}`);
+    } finally{
       setIsDiscovering(false);
     }
   };
 
-  const filteredTopics = selectedCategory === 'all'
-    ? trendingTopics
-    : trendingTopics.filter(topic => topic.category === selectedCategory);
+  const filteredTopics = trendingTopics
+    .filter(topic => selectedCategory === 'all' || topic.category === selectedCategory)
+    .filter(topic => {
+      if (!debouncedSearchQuery.trim()) return true;
+      const query = debouncedSearchQuery.toLowerCase();
+      return (
+        topic.title.toLowerCase().includes(query) ||
+        topic.description.toLowerCase().includes(query) ||
+        topic.keywords.some(keyword => keyword.toLowerCase().includes(query))
+      );
+    });
 
   const toggleTopicSelection = (topicId: string) => {
     const newSelection = new Set(selectedTopics);
+    const topic = trendingTopics.find(t => t.id === topicId);
+    const topicTitle = topic?.title || 'topic';
+
     if (newSelection.has(topicId)) {
       newSelection.delete(topicId);
+      announce(`Deselected topic: ${topicTitle}`);
     } else {
       newSelection.add(topicId);
+      announce(`Selected topic: ${topicTitle}`);
     }
     setSelectedTopics(newSelection);
   };
@@ -209,7 +374,8 @@ const AIContentDiscoveryPanel: React.FC<AIContentDiscoveryPanelProps> = ({
       }
     } catch (error: any) {
       console.error('Script generation error:', error);
-      toast.error('Script generation failed', error.message || 'Please try again');
+      const userMessage = getErrorMessage(error, 'script');
+      toast.error('Script generation failed', userMessage);
       setShowScriptPreview(false);
     } finally {
       setIsGeneratingScript(false);
@@ -244,9 +410,10 @@ const AIContentDiscoveryPanel: React.FC<AIContentDiscoveryPanelProps> = ({
       }
     } catch (error: any) {
       console.error('Estimation error:', error);
-      toast.error('Estimation failed', error.message || 'Please try again');
+      const userMessage = getErrorMessage(error, 'estimation');
+      toast.error('Estimation failed', userMessage);
       setShowEstimation(false);
-    } finally {
+    } finally{
       setIsEstimating(false);
     }
   };
@@ -364,12 +531,17 @@ const AIContentDiscoveryPanel: React.FC<AIContentDiscoveryPanelProps> = ({
           });
           setGenerationQueue(ContentDiscoveryStorage.getQueue());
 
-          // Poll for completion
+          // Poll for completion with exponential backoff
           let completed = false;
           let attempts = 0;
+          const getBackoffDelay = (attempt: number) => {
+            const delays = [2000, 3000, 5000, 7000, 10000];
+            return delays[Math.min(attempt, delays.length - 1)];
+          };
 
           while (!completed && attempts < 60) {
-            await new Promise(resolve => setTimeout(resolve, 5000));
+            const delay = getBackoffDelay(attempts);
+            await new Promise(resolve => setTimeout(resolve, delay));
 
             const statusResponse = await NarrationAPI.getPodcastStatus(response.job_id);
 
@@ -433,17 +605,28 @@ const AIContentDiscoveryPanel: React.FC<AIContentDiscoveryPanelProps> = ({
         }
       } catch (error: any) {
         console.error('Queue processing error:', error);
+        const userMessage = getErrorMessage(error, 'generation');
         ContentDiscoveryStorage.updateQueueItem(item.id, {
           status: 'failed',
-          error: error.message
+          error: userMessage
         });
         setGenerationQueue(ContentDiscoveryStorage.getQueue());
-        toast.error('Generation failed', `${item.topicTitle}: ${error.message}`);
+        toast.error('Generation failed', `${item.topicTitle}: ${userMessage}`);
       }
     }
 
     setIsProcessingQueue(false);
     toast.success('Queue processed', 'All podcasts generated');
+  };
+
+  // Cancel generation
+  const handleCancelGeneration = () => {
+    setIsCancelling(true);
+    setIsGeneratingPodcast(false);
+    setGenerationProgress(0);
+    setGenerationJobId(null);
+    setIsCancelling(false);
+    toast.info('Generation cancelled', 'Podcast generation has been stopped');
   };
 
   // Generate podcast directly
@@ -466,6 +649,7 @@ const AIContentDiscoveryPanel: React.FC<AIContentDiscoveryPanelProps> = ({
     }
 
     setIsGeneratingPodcast(true);
+    setGenerationProgress(0);
     toast.info('Generating podcast', 'Creating audio from topic...');
 
     try {
@@ -482,12 +666,21 @@ const AIContentDiscoveryPanel: React.FC<AIContentDiscoveryPanelProps> = ({
       });
 
       if (response.success && response.job_id) {
-        // Poll for completion
+        setGenerationJobId(response.job_id);
+        setGenerationProgress(10);
+
+        // Poll for completion with exponential backoff
         let completed = false;
         let attempts = 0;
+        const getBackoffDelay = (attempt: number) => {
+          // Exponential backoff: 2s, 3s, 5s, 7s, 10s (capped at 10s)
+          const delays = [2000, 3000, 5000, 7000, 10000];
+          return delays[Math.min(attempt, delays.length - 1)];
+        };
 
-        while (!completed && attempts < 60) {
-          await new Promise(resolve => setTimeout(resolve, 5000));
+        while (!completed && attempts < 60 && !isCancelling) {
+          const delay = getBackoffDelay(attempts);
+          await new Promise(resolve => setTimeout(resolve, delay));
 
           const statusResponse = await NarrationAPI.getPodcastStatus(response.job_id);
 
@@ -496,6 +689,7 @@ const AIContentDiscoveryPanel: React.FC<AIContentDiscoveryPanelProps> = ({
 
             if (job.status === 'completed') {
               completed = true;
+              setGenerationProgress(100);
 
               const audioFile = job.result.audio_file;
               const filename = audioFile.split(/[\/\\]/).pop();
@@ -535,21 +729,28 @@ const AIContentDiscoveryPanel: React.FC<AIContentDiscoveryPanelProps> = ({
               toast.success('Podcast generated!', topic.title);
             } else if (job.status === 'failed') {
               throw new Error(job.message || 'Generation failed');
+            } else {
+              // Update progress based on attempts
+              const progress = Math.min(90, 10 + (attempts * 3));
+              setGenerationProgress(progress);
             }
           }
 
           attempts++;
         }
 
-        if (!completed) {
+        if (!completed && !isCancelling) {
           throw new Error('Generation timed out');
         }
       }
     } catch (error: any) {
       console.error('Generation error:', error);
-      toast.error('Generation failed', error.message || 'Please try again');
+      const userMessage = getErrorMessage(error, 'generation');
+      toast.error('Generation failed', userMessage);
     } finally {
       setIsGeneratingPodcast(false);
+      setGenerationProgress(0);
+      setGenerationJobId(null);
     }
   };
 
@@ -577,12 +778,17 @@ const AIContentDiscoveryPanel: React.FC<AIContentDiscoveryPanelProps> = ({
       });
 
       if (response.success && response.job_id) {
-        // Poll for completion
+        // Poll for completion with exponential backoff
         let completed = false;
         let attempts = 0;
+        const getBackoffDelay = (attempt: number) => {
+          const delays = [2000, 3000, 5000, 7000, 10000];
+          return delays[Math.min(attempt, delays.length - 1)];
+        };
 
         while (!completed && attempts < 60) {
-          await new Promise(resolve => setTimeout(resolve, 5000));
+          const delay = getBackoffDelay(attempts);
+          await new Promise(resolve => setTimeout(resolve, delay));
 
           const statusResponse = await NarrationAPI.getPodcastStatus(response.job_id);
 
@@ -643,7 +849,8 @@ const AIContentDiscoveryPanel: React.FC<AIContentDiscoveryPanelProps> = ({
       }
     } catch (error: any) {
       console.error('Generation error:', error);
-      toast.error('Generation failed', error.message || 'Please try again');
+      const userMessage = getErrorMessage(error, 'generation');
+      toast.error('Generation failed', userMessage);
     }
   };
 
@@ -661,17 +868,19 @@ const AIContentDiscoveryPanel: React.FC<AIContentDiscoveryPanelProps> = ({
             <div className="flex flex-col items-center space-y-1">
               <button
                 onClick={onMinimize}
-                className="p-1 rounded transition-colors text-white/70 hover:text-white"
+                className="p-2.5 rounded transition-colors text-white/70 hover:text-white min-w-[44px] min-h-[44px] flex items-center justify-center"
                 title="Expand Panel"
+                aria-label="Expand Panel"
               >
-                <ChevronDown className="w-4 h-4 transform rotate-90" />
+                <ChevronDown className="w-5 h-5 transform rotate-90" />
               </button>
               <button
                 onClick={onClose}
-                className="p-1 rounded transition-colors text-white/70 hover:text-white"
+                className="p-2.5 rounded transition-colors text-white/70 hover:text-white min-w-[44px] min-h-[44px] flex items-center justify-center"
                 title="Close Panel"
+                aria-label="Close Panel"
               >
-                <X className="w-4 h-4" />
+                <X className="w-5 h-5" />
               </button>
             </div>
           </div>
@@ -684,11 +893,20 @@ const AIContentDiscoveryPanel: React.FC<AIContentDiscoveryPanelProps> = ({
     <div className="fixed inset-0 z-50 flex">
       <ToastContainer toasts={toast.toasts} onRemoveToast={toast.removeToast} />
 
+      {/* ARIA Live Region for Screen Readers */}
+      <div
+        aria-live="polite"
+        aria-atomic="true"
+        className="sr-only"
+      >
+        {srAnnouncement}
+      </div>
+
       {/* Backdrop */}
       <div className="flex-1 bg-black/30 backdrop-blur-sm" onClick={onClose} />
 
       {/* Main Panel Container */}
-      <div className="w-1/2 backdrop-blur-3xl border-l shadow-2xl overflow-hidden flex flex-col relative bg-black border-gray-800">
+      <div className="w-[95%] md:w-3/4 lg:w-1/2 xl:w-2/5 backdrop-blur-3xl border-l shadow-2xl overflow-hidden flex flex-col relative bg-black border-gray-800 rounded-l-2xl md:rounded-l-none">
         {/* Top Control Bar */}
         <div className="absolute top-6 left-6 z-[100] flex items-center space-x-3">
           <button
@@ -738,7 +956,8 @@ const AIContentDiscoveryPanel: React.FC<AIContentDiscoveryPanelProps> = ({
           <button
             onClick={discoverTrendingTopics}
             disabled={isDiscovering}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#00D4E4] hover:bg-[#00E8FA] text-white transition-all shadow-[0_0_15px_rgba(0,212,228,0.3)] disabled:opacity-50"
+            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#00D4E4] hover:bg-[#00E8FA] text-white transition-all shadow-[0_0_15px_rgba(0,212,228,0.3)] disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-[#00D4E4] focus:ring-offset-2 focus:ring-offset-black"
+            aria-label="Refresh trending topics (Ctrl+R)"
           >
             <RefreshCw className={`w-4 h-4 ${isDiscovering ? 'animate-spin' : ''}`} />
             {isDiscovering ? 'Discovering...' : 'Refresh Topics'}
@@ -757,18 +976,20 @@ const AIContentDiscoveryPanel: React.FC<AIContentDiscoveryPanelProps> = ({
               </h2>
             </div>
 
-            <div className="grid grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               {categories.map((category) => {
                 const IconComponent = category.icon;
                 return (
                   <button
                     key={category.id}
                     onClick={() => setSelectedCategory(category.id)}
-                    className={`p-3 rounded-lg border-2 transition-all text-center ${
+                    className={`p-3 rounded-lg border-2 transition-all text-center min-h-[60px] flex flex-col items-center justify-center focus:outline-none focus:ring-2 focus:ring-[#00D4E4] focus:ring-offset-2 focus:ring-offset-black ${
                       selectedCategory === category.id
                         ? 'border-[#00D4E4] bg-[#00D4E4]/20 shadow-[0_0_20px_rgba(0,212,228,0.2)]'
                         : 'border-gray-600 bg-transparent hover:bg-[#00D4E4]/5 hover:border-[#00D4E4]/30'
                     }`}
+                    aria-label={`Filter by ${category.name}`}
+                    aria-pressed={selectedCategory === category.id}
                   >
                     <IconComponent className={`w-6 h-6 mx-auto mb-1 ${
                       selectedCategory === category.id ? 'text-[#00D4E4]' : 'text-gray-400'
@@ -780,6 +1001,42 @@ const AIContentDiscoveryPanel: React.FC<AIContentDiscoveryPanelProps> = ({
                 );
               })}
             </div>
+          </GlassCard>
+
+          {/* Search Bar */}
+          <GlassCard variant="medium" className="p-6" glow>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-bold flex items-center gap-2 text-white">
+                <Search size={20} />
+                Search Topics
+              </h2>
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="text-sm text-[#00D4E4] hover:text-[#00E8FA] transition-colors"
+                  aria-label="Clear search"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <input
+                ref={searchInputRef}
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search by title, keywords, or description... (Ctrl+F)"
+                className="w-full pl-11 pr-4 py-3 bg-gray-800/50 border border-gray-600 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#00D4E4] focus:border-transparent transition-all"
+                aria-label="Search topics"
+              />
+            </div>
+            {debouncedSearchQuery && (
+              <div className="mt-3 text-sm text-gray-400">
+                {filteredTopics.length} {filteredTopics.length === 1 ? 'topic' : 'topics'} found
+              </div>
+            )}
           </GlassCard>
 
           {/* Voice Configuration */}
@@ -808,7 +1065,7 @@ const AIContentDiscoveryPanel: React.FC<AIContentDiscoveryPanelProps> = ({
                   {/* Host Voice */}
                   <div>
                     <label className="text-sm font-medium text-gray-300 mb-2 block">Host Voice</label>
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <select
                         value={selectedHostVoice}
                         onChange={(e) => setSelectedHostVoice(e.target.value)}
@@ -832,7 +1089,7 @@ const AIContentDiscoveryPanel: React.FC<AIContentDiscoveryPanelProps> = ({
                   {/* Guest Voice */}
                   <div>
                     <label className="text-sm font-medium text-gray-300 mb-2 block">Guest Voice</label>
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <select
                         value={selectedGuestVoice}
                         onChange={(e) => setSelectedGuestVoice(e.target.value)}
@@ -890,15 +1147,60 @@ const AIContentDiscoveryPanel: React.FC<AIContentDiscoveryPanelProps> = ({
               </h2>
             </div>
 
+            {/* Bulk Selection Toolbar */}
+            {!isDiscovering && filteredTopics.length > 0 && (
+              <div className="mb-4 p-3 bg-gray-800/30 rounded-lg border border-gray-700/50">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <button
+                      onClick={() => {
+                        setSelectedTopics(new Set(filteredTopics.map(t => t.id)));
+                        announce(`Selected all ${filteredTopics.length} visible topics`);
+                      }}
+                      className="px-3 py-1.5 bg-[#00D4E4]/20 hover:bg-[#00D4E4]/30 text-[#00D4E4] rounded-md text-sm font-medium transition-colors border border-[#00D4E4]/30 focus:outline-none focus:ring-2 focus:ring-[#00D4E4] focus:ring-offset-2 focus:ring-offset-black"
+                      aria-label="Select all visible topics"
+                    >
+                      Select All Visible
+                    </button>
+                    <button
+                      onClick={() => {
+                        setSelectedTopics(new Set());
+                        announce('Cleared all selections');
+                      }}
+                      disabled={selectedTopics.size === 0}
+                      className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors border focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-black ${
+                        selectedTopics.size === 0
+                          ? 'bg-gray-700/50 text-gray-500 border-gray-600 cursor-not-allowed'
+                          : 'bg-red-600/20 hover:bg-red-600/30 text-red-400 border-red-600/30 focus:ring-red-500'
+                      }`}
+                      aria-label="Clear all selections"
+                    >
+                      Clear Selection
+                    </button>
+                  </div>
+                  <div className="text-sm font-medium text-gray-400">
+                    <span className="text-[#00D4E4]">{selectedTopics.size}</span> of {filteredTopics.length} selected
+                  </div>
+                </div>
+              </div>
+            )}
+
             {isDiscovering ? (
-              <div className="flex items-center justify-center py-12">
-                <div className="text-center">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#00D4E4] mx-auto mb-4"></div>
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="space-y-3"
+              >
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#00D4E4]"></div>
                   <p className="text-sm text-gray-400">
                     Using AI to discover trending topics...
                   </p>
                 </div>
-              </div>
+                {[...Array(8)].map((_, index) => (
+                  <TopicCardSkeleton key={index} />
+                ))}
+              </motion.div>
             ) : filteredTopics.length === 0 ? (
               <div className="text-center py-12">
                 <TrendingUp className="w-16 h-16 text-gray-600 mx-auto mb-4" />
@@ -916,11 +1218,21 @@ const AIContentDiscoveryPanel: React.FC<AIContentDiscoveryPanelProps> = ({
                   <div
                     key={topic.id}
                     onClick={() => toggleTopicSelection(topic.id)}
-                    className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                    className={`p-4 rounded-lg border-2 cursor-pointer transition-all min-h-[120px] ${
                       selectedTopics.has(topic.id)
                         ? 'border-[#00D4E4] bg-[#00D4E4]/10 shadow-[0_0_20px_rgba(0,212,228,0.2)]'
                         : 'border-gray-600 bg-transparent hover:bg-[#00D4E4]/5 hover:border-[#00D4E4]/30'
                     }`}
+                    role="button"
+                    tabIndex={0}
+                    aria-pressed={selectedTopics.has(topic.id)}
+                    aria-label={`Select topic: ${topic.title}`}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        toggleTopicSelection(topic.id);
+                      }
+                    }}
                   >
                     <div className="flex items-start justify-between mb-2">
                       <div className="flex-1">
@@ -969,51 +1281,117 @@ const AIContentDiscoveryPanel: React.FC<AIContentDiscoveryPanelProps> = ({
             )}
           </GlassCard>
 
-          {/* Action Buttons */}
-          <div className="flex justify-center gap-4 flex-wrap">
+          {/* Selection Info & Inline Estimation */}
+          {selectedTopics.size > 0 && (
+            <GlassCard variant="medium" className="p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="text-sm text-gray-300">
+                    <span className="font-semibold text-white">{selectedTopics.size}</span> topic{selectedTopics.size > 1 ? 's' : ''} selected
+                  </div>
+                  <div className="h-4 w-px bg-gray-600" />
+                  <div className="text-sm text-gray-400">
+                    Est. time: <span className="text-[#00D4E4] font-medium">{selectedTopics.size * 3}-{selectedTopics.size * 4} min</span>
+                  </div>
+                  <div className="text-sm text-gray-400">
+                    Est. cost: <span className="text-[#00D4E4] font-medium">$0.0{(selectedTopics.size * 17).toString().padStart(3, '0')}</span>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setSelectedTopics(new Set())}
+                  className="text-sm text-gray-400 hover:text-white transition-colors"
+                >
+                  Clear selection
+                </button>
+              </div>
+            </GlassCard>
+          )}
+
+          {/* Generation Progress Indicator */}
+          <AnimatePresence>
+            {isGeneratingPodcast && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+              >
+                <GlassCard variant="medium" className="p-6" role="status" aria-busy="true" aria-live="polite">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <Loader2 className="w-5 h-5 text-[#00D4E4] animate-spin" aria-hidden="true" />
+                      <div>
+                        <h3 className="text-sm font-semibold text-white">Generating Podcast...</h3>
+                        <p className="text-xs text-gray-400">
+                          {generationProgress < 20 ? 'Initializing...' :
+                           generationProgress < 40 ? 'Generating script...' :
+                           generationProgress < 70 ? 'Synthesizing voices...' :
+                           generationProgress < 90 ? 'Finalizing audio...' :
+                           'Almost done...'}
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={handleCancelGeneration}
+                      className="px-4 py-2 bg-red-600/20 hover:bg-red-600/30 text-red-400 rounded-lg text-sm font-medium transition-colors border border-red-600/30 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-black"
+                      aria-label="Cancel generation"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between text-xs text-gray-400">
+                      <span>Progress</span>
+                      <span className="font-semibold text-[#00D4E4]">{generationProgress}%</span>
+                    </div>
+                    <div className="w-full bg-gray-700 rounded-full h-2 overflow-hidden">
+                      <motion.div
+                        className="bg-gradient-to-r from-purple-600 to-[#00D4E4] h-2 rounded-full"
+                        initial={{ width: 0 }}
+                        animate={{ width: `${generationProgress}%` }}
+                        transition={{ duration: 0.3 }}
+                      />
+                    </div>
+                  </div>
+                </GlassCard>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Action Buttons - Simplified */}
+          <div className="flex flex-col sm:flex-row justify-center gap-4">
             <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
               onClick={handleGeneratePodcast}
-              disabled={selectedTopics.size === 0 || isGeneratingPodcast}
-              className={`px-6 py-3 rounded-xl font-semibold flex items-center gap-2 transition-all ${
-                selectedTopics.size === 0 || isGeneratingPodcast
-                  ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
-                  : 'bg-purple-600 hover:bg-purple-700 text-white shadow-lg shadow-purple-600/30'
+              disabled={selectedTopics.size !== 1 || isGeneratingPodcast}
+              className={`px-8 py-4 rounded-xl font-bold text-lg flex items-center justify-center gap-3 transition-all focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-black ${
+                selectedTopics.size !== 1 || isGeneratingPodcast
+                  ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
+                  : 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-xl shadow-purple-600/40'
               }`}
+              aria-label="Generate podcast now (requires 1 selected topic)"
             >
-              {isGeneratingPodcast ? <Loader2 className="animate-spin" size={18} /> : <Play size={18} />}
-              Generate Podcast
+              {isGeneratingPodcast ? <Loader2 className="animate-spin" size={20} /> : <Play size={20} />}
+              <span>Generate Now</span>
+              {selectedTopics.size !== 1 && <span className="text-sm font-normal opacity-70">(select 1 topic)</span>}
             </motion.button>
 
             <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={handleEstimation}
-              disabled={selectedTopics.size === 0 || isEstimating}
-              className={`px-6 py-3 rounded-xl font-semibold flex items-center gap-2 transition-all ${
-                selectedTopics.size === 0 || isEstimating
-                  ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
-                  : 'bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-600/30'
-              }`}
-            >
-              {isEstimating ? <Loader2 className="animate-spin" size={18} /> : <BarChart3 size={18} />}
-              Get Estimation
-            </motion.button>
-
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
               onClick={handleAddToQueue}
               disabled={selectedTopics.size === 0}
-              className={`px-6 py-3 rounded-xl font-semibold flex items-center gap-2 transition-all ${
+              className={`px-8 py-4 rounded-xl font-semibold text-lg flex items-center justify-center gap-3 transition-all focus:outline-none focus:ring-2 focus:ring-[#00D4E4] focus:ring-offset-2 focus:ring-offset-black ${
                 selectedTopics.size === 0
-                  ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
-                  : 'bg-[#00D4E4] hover:bg-[#00E8FA] text-white shadow-lg shadow-[#00D4E4]/30'
+                  ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
+                  : 'bg-[#00D4E4] hover:bg-[#00E8FA] text-black shadow-xl shadow-[#00D4E4]/40'
               }`}
+              aria-label={`Add ${selectedTopics.size} topic(s) to queue`}
             >
-              <Play size={18} />
-              Add to Queue ({selectedTopics.size})
+              <List size={20} />
+              <span>Add to Queue</span>
+              {selectedTopics.size > 0 && <span className="bg-black/30 px-2 py-0.5 rounded-full text-sm">{selectedTopics.size}</span>}
             </motion.button>
           </div>
 
@@ -1039,7 +1417,8 @@ const AIContentDiscoveryPanel: React.FC<AIContentDiscoveryPanelProps> = ({
                     </h3>
                     <button
                       onClick={() => setShowScriptPreview(false)}
-                      className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
+                      className="p-3 hover:bg-gray-800 rounded-lg transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
+                      aria-label="Close Script Preview"
                     >
                       <X size={20} className="text-gray-400" />
                     </button>
@@ -1111,7 +1490,8 @@ const AIContentDiscoveryPanel: React.FC<AIContentDiscoveryPanelProps> = ({
                     </h3>
                     <button
                       onClick={() => setShowEstimation(false)}
-                      className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
+                      className="p-3 hover:bg-gray-800 rounded-lg transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
+                      aria-label="Close Estimation"
                     >
                       <X size={20} className="text-gray-400" />
                     </button>
@@ -1213,7 +1593,8 @@ const AIContentDiscoveryPanel: React.FC<AIContentDiscoveryPanelProps> = ({
                 </h3>
                 <button
                   onClick={() => setShowQueue(false)}
-                  className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
+                  className="p-3 hover:bg-gray-800 rounded-lg transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
+                  aria-label="Close Queue"
                 >
                   <X size={20} className="text-gray-400" />
                 </button>
@@ -1272,9 +1653,10 @@ const AIContentDiscoveryPanel: React.FC<AIContentDiscoveryPanelProps> = ({
                           ContentDiscoveryStorage.removeFromQueue(item.id);
                           setGenerationQueue(ContentDiscoveryStorage.getQueue());
                         }}
-                        className="p-1 hover:bg-gray-700 rounded transition-colors"
+                        className="p-2.5 hover:bg-gray-700 rounded transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
+                        aria-label="Remove from queue"
                       >
-                        <Trash2 size={14} className="text-gray-400" />
+                        <Trash2 size={16} className="text-gray-400" />
                       </button>
                     </div>
 

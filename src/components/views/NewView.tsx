@@ -4,7 +4,7 @@ import type { DocumentContent } from '../../types/document';
 import { useTheme } from '../../contexts/ThemeContext';
 import SingleVoiceNarrationPanel from '../narration/SingleVoiceNarrationPanel';
 import MultiVoiceConversationPanel from '../narration/MultiVoiceConversationPanel';
-import AIContentDiscoveryPanel from '../narration/AIContentDiscoveryPanel';
+import AIContentDiscoveryPanel from '../narration/content-discovery';
 import ModernAudioPlayer from '../audio/ModernAudioPlayer';
 import { getAudioUrl } from '../../config/api';
 

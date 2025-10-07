@@ -32,8 +32,25 @@ export interface QueueItem {
   timestamp: number;
 }
 
+export interface FavoriteItem {
+  topicId: string;
+  topicData: {
+    id: string;
+    title: string;
+    category: string;
+    trendScore: number;
+    sources: number;
+    description: string;
+    keywords: string[];
+    estimatedDuration: string;
+    content?: string;
+  };
+  savedAt: string;
+}
+
 const HISTORY_KEY = 'intellicast_content_discovery_history';
 const QUEUE_KEY = 'intellicast_content_discovery_queue';
+const FAVORITES_KEY = 'intellicast_content_discovery_favorites';
 
 export class ContentDiscoveryStorage {
   /**
@@ -188,6 +205,84 @@ export class ContentDiscoveryStorage {
       localStorage.removeItem(QUEUE_KEY);
     } catch (error) {
       console.error('Failed to clear queue:', error);
+    }
+  }
+
+  /**
+   * Get all favorites
+   */
+  static getFavorites(): FavoriteItem[] {
+    try {
+      const stored = localStorage.getItem(FAVORITES_KEY);
+      if (!stored) return [];
+      return JSON.parse(stored);
+    } catch (error) {
+      console.error('Failed to load favorites:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Add topic to favorites
+   */
+  static addFavorite(topicData: FavoriteItem['topicData']): FavoriteItem {
+    const newFavorite: FavoriteItem = {
+      topicId: topicData.id,
+      topicData,
+      savedAt: new Date().toISOString()
+    };
+
+    const favorites = this.getFavorites();
+
+    // Check if already favorited
+    const existingIndex = favorites.findIndex(f => f.topicId === topicData.id);
+    if (existingIndex !== -1) {
+      // Update existing favorite
+      favorites[existingIndex] = newFavorite;
+    } else {
+      // Add new favorite at the beginning
+      favorites.unshift(newFavorite);
+    }
+
+    try {
+      localStorage.setItem(FAVORITES_KEY, JSON.stringify(favorites));
+    } catch (error) {
+      console.error('Failed to save favorite:', error);
+    }
+
+    return newFavorite;
+  }
+
+  /**
+   * Remove from favorites
+   */
+  static removeFavorite(topicId: string): void {
+    const favorites = this.getFavorites();
+    const filtered = favorites.filter(item => item.topicId !== topicId);
+
+    try {
+      localStorage.setItem(FAVORITES_KEY, JSON.stringify(filtered));
+    } catch (error) {
+      console.error('Failed to remove favorite:', error);
+    }
+  }
+
+  /**
+   * Check if topic is favorited
+   */
+  static isFavorite(topicId: string): boolean {
+    const favorites = this.getFavorites();
+    return favorites.some(item => item.topicId === topicId);
+  }
+
+  /**
+   * Clear all favorites
+   */
+  static clearFavorites(): void {
+    try {
+      localStorage.removeItem(FAVORITES_KEY);
+    } catch (error) {
+      console.error('Failed to clear favorites:', error);
     }
   }
 }
